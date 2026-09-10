@@ -4,9 +4,9 @@
 Governments across India struggle to consolidate citizen feedback and align it with national infrastructure priorities. Development requests live in fragmented systems, leading to misaligned public spending, unaddressed infrastructure gaps, and no way to measure the impact of large-scale digital public infrastructure initiatives.
 
 ## 2. Objective / vision
-Give every citizen — regardless of language, literacy, or device — a way to report an infrastructure gap in under a minute, and give every policymaker a small, trustworthy, ranked list of what to fund next, with the reasoning shown and the outcome tracked.
+Give every citizen — regardless of language, literacy, or device — a way to report an infrastructure gap in under a minute. Give every policymaker an intelligent conversational agent to interrogate this demand—asking natural-language questions to receive a small, trustworthy, ranked list of what to fund next, grounded in cross-referenced infrastructure data and government policy.
 
-Non-negotiable design principle: **the system should be usable by someone with a basic feature phone and no English**, and **defensible in front of a state secretary who will ask "why did you rank this ward above that one?"**
+Non-negotiable design principle: **the system should be usable by someone with a basic feature phone and no English**, and **defensible in front of a state secretary who will ask "why did you rank this ward above that one?"** The AI must refuse to answer if it lacks sufficient data, ensuring zero hallucinations in public funding recommendations.
 
 ## 3. Users & personas
 
@@ -14,16 +14,17 @@ Non-negotiable design principle: **the system should be usable by someone with a
 |---|---|---|
 | **Citizen (Reporter)** | Any resident, any literacy level, any of India's major languages | Report an issue in <60 seconds by voice, text, or WhatsApp; know it was received; eventually confirm if it got fixed |
 | **Field/Block Officer** | Local government staff who verify ground reality | See issues in their jurisdiction, mark verified/disputed, close out resolved ones |
-| **District Collector / Policymaker** | Decision-maker allocating budget | See a ranked, explained list of where to spend next; avoid duplicate funding; report upward |
+| **District Collector / Policymaker** | Decision-maker allocating budget | Ask natural-language questions about constituency needs; get evidence-cited answers cross-referencing demand against planned investment; generate formal policy-grounded briefs |
 | **State Admin** | Platform configuration owner | Manage jurisdiction boundaries, category taxonomy, scoring weights per state |
 
 ## 4. Goals (hackathon MVP)
 - G1: A citizen can submit a report via web text, in-app voice recording, or WhatsApp, in at least 3 Indian languages.
 - G2: Duplicate/near-duplicate reports of the same real-world issue are automatically merged into one canonical `Issue`.
 - G3: Issues are scored by an explainable, multi-factor formula (not a black box) and ranked per region.
-- G4: A policymaker dashboard shows the ranked list with a Gemini-generated, data-grounded justification per item.
-- G5: A basic anti-fraud/verification layer exists (rate limiting, geofencing, duplicate-burst detection).
-- G6: A citizen can confirm resolution after a project is marked complete, and that feeds an `ImpactRecord`.
+- G4: Policymakers can interact with a conversational agent (Gemini with Function Calling) that answers questions by executing real-time data queries.
+- G5: Every agent recommendation explicitly cites its evidence, and the agent refuses to answer if unsupported by data.
+- G6: A basic anti-fraud/verification layer exists (rate limiting, geofencing, duplicate-burst detection).
+- G7: A citizen can confirm resolution after a project is marked complete, and that feeds an `ImpactRecord`.
 
 ## 5. Non-goals (hackathon scope)
 - Full telephony-based IVR integration (voice recording in-app satisfies the voice requirement for MVP; real IVR is a stretch goal — see `ROADMAP.md`).
@@ -47,9 +48,12 @@ Non-negotiable design principle: **the system should be usable by someone with a
 - As a policymaker, I see issues ranked by a composite score combining citizen demand, vulnerability indices, existing infrastructure gaps, and already-committed investment, so that I don't fund the same problem twice.
 - As a policymaker, I can see the exact breakdown of a score (not just the final number), so that I can defend the ranking to stakeholders.
 
-### 6.4 Policymaker dashboard
-- As a policymaker, I see a map and ranked list of top-priority issues in my jurisdiction, each with a short AI-generated brief citing real numbers, so that I can make a funding decision quickly.
-- As a state admin, I can filter/drill down by district, category, and time window.
+### 6.4 Policymaker dashboard & Agent Interface
+- As a policymaker, I can ask a conversational agent natural-language questions about my jurisdiction's infrastructure needs, so I don't have to manually cross-reference dashboards.
+- As a policymaker, every answer I receive includes explicit citations to demand data, demographic metrics, or investment records, so I can defend the decision.
+- As a policymaker, I can ask the agent to generate a formal, policy-grounded brief on demand, so that I can hand something concrete to other decision-makers.
+- As a system operator, I want the agent to explicitly refuse or flag questions that lack supporting data, rather than guessing.
+- As a state admin, I see a map view alongside the chat to filter/drill down geographically.
 
 ### 6.5 Verification & anti-fraud
 - As the system, I flag submissions with implausible location data, unusually high submission bursts from a single source, or low-confidence AI extraction, so that officers review edge cases before they affect public rankings.
@@ -66,8 +70,8 @@ Non-negotiable design principle: **the system should be usable by someone with a
 
 | Judging criterion | What we demo to prove it |
 |---|---|
-| Problem-Solution Fit (20%) | Live demo showing dedup collapsing 10+ raw submissions into 1 issue, and a resolved issue with citizen-confirmed impact — both explicitly named gaps in the brief |
-| AI/Technical Execution (25%) | Real Gemini calls at 3 distinct pipeline stages (extraction, dedup embeddings, grounded generation), all visible in the demo, not mocked |
+| Problem-Solution Fit (20%) | Live demo showing dedup collapsing 10+ raw submissions into 1 issue, and a conversational agent answering questions with citations. |
+| AI/Technical Execution (25%) | Real Gemini function-calling orchestration using tools (`query_fused_data`, `check_investment_status`), not just generating text. Demonstration of explicit refusal guardrails. |
 | Depth & Reach Across India (20%) | Demo dataset spans 3+ states, 3+ languages, 5+ issue categories |
 | Impact Potential (15%) | Dashboard shows population-weighted impact estimate per recommended project |
 | Deployability & Scalability (20%) | Architecture doc shows a single-codebase, per-state config model that a state IT department could stand up without a rewrite |

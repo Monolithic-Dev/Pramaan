@@ -33,9 +33,9 @@ The frontend is locked to the JavaScript/TypeScript ecosystem regardless (React 
 
 | Layer | Language | Framework / library |
 |---|---|---|
-| Frontend (citizen report flow + officer/policymaker dashboard) | TypeScript | React 18 + Vite, Tailwind CSS, one app with role-based routing (see 4.3) |
-| API Gateway (ingestion, auth, dashboard reads) | TypeScript | Fastify — lighter and faster than Express/NestJS for a service this size, first-class TS support |
-| AI Worker (categorization, dedup, scoring, brief generation) | TypeScript | Node.js, deployed as a Cloud Run service triggered by a Pub/Sub push subscription |
+| Frontend (citizen report flow + officer Conversational UI) | TypeScript | React 18 + Vite, Tailwind CSS, one app with role-based routing (see 4.3) |
+| API Gateway (ingestion, auth, agent/dashboard reads) | TypeScript | Fastify — lighter and faster than Express/NestJS for a service this size, first-class TS support |
+| AI Worker (agent orchestration, tools, categorization, dedup) | TypeScript | Node.js, hosts `@google/genai` function schemas for the Agent to call |
 | Shared types/contracts | TypeScript | Internal `@jansetu/shared-types` workspace package, mirrors `DATA_MODEL.md` |
 | Request/schema validation | TypeScript | Zod — same schema used for frontend form validation and backend request validation |
 | Infra as code | Terraform (HCL) if someone on the team knows it; otherwise a scripted `gcloud` setup file | Don't learn Terraform under a hackathon clock just for its own sake — a documented shell script of `gcloud` commands is a perfectly fine substitute for this scope |
@@ -68,11 +68,11 @@ The hackathon submission package asks for **"Source code — public or access-gr
 jansetu/
 ├── apps/
 │   ├── web/                     # React app — citizen report flow (/report) +
-│   │                             officer/policymaker dashboard (/dashboard),
+│   │                             officer conversational AI interface (/chat),
 │   │                             role-based routing, one codebase
-│   ├── api-gateway/              # Fastify — ingestion, auth, dashboard read API
-│   └── worker-ai-pipeline/       # Node service — categorization, dedup,
-│                                  scoring, brief generation (Pub/Sub triggered)
+│   ├── api-gateway/              # Fastify — ingestion, auth, agent endpoint
+│   └── worker-ai-pipeline/       # Node service — agent orchestrator & tool definitions,
+│                                  categorization, dedup, brief generation
 ├── packages/
 │   ├── shared-types/             # TypeScript interfaces mirroring DATA_MODEL.md
 │   ├── shared-utils/             # geospatial helpers, cosine similarity, formatting

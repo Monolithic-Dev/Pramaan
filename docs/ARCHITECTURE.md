@@ -23,12 +23,20 @@ flowchart LR
   DEDUP --> FS[(Firestore: Issues, GeoClusters)]
 
   FS --> SCORE[Prioritization Engine]
-  EXT[(External data: InfraIndex, InvestmentRecord)] --> SCORE
-  SCORE --> BQ[(BigQuery: scored issues)]
-
-  BQ --> GEN[Brief Generation - Gemini, RAG-grounded]
-  GEN --> DASH_API[Dashboard API]
-  DASH_API --> UI[Officer / Policymaker Web App]
+  BQ --> AGENT[AI Agent Layer - Gemini Function Calling]
+  EXT[(External data: InfraIndex, InvestmentRecord)] --> BQ
+  AGENT --> T1[Tool: query_fused_data]
+  AGENT --> T2[Tool: check_investment_status]
+  AGENT --> T3[Tool: score_priority]
+  AGENT --> T4[Tool: generate_brief]
+  
+  T1 --> BQ
+  T2 --> BQ
+  T3 --> BQ
+  T4 --> FS
+  
+  AGENT --> DASH_API[Agent/Dashboard API]
+  DASH_API --> UI[Officer / Policymaker Web App (Chat + Map)]
 
   FS --> VERIFY[Verification / Anti-fraud Service]
   UI --> IMPACT[Impact Tracking Service]
@@ -45,9 +53,12 @@ flowchart LR
 | Categorization Service | Gemini call in JSON/structured-output mode: category, subcategory, severity, extracted location text, short summary, confidence | Low-confidence outputs are routed to manual officer review, not silently trusted |
 | Embedding Service | Generates a vector embedding of the canonical summary | Vertex AI Embeddings API |
 | Dedup & Geo-Clustering Service | Finds candidate existing Issues within a geo-radius + same category, computes similarity, merges or creates new Issue | See `AI_PIPELINE.md` for the algorithm |
-| Prioritization Engine | Computes the composite score per Issue/cluster using demand + vulnerability + gap + duplication-penalty | Deterministic, explainable formula is the reliable path; AutoML ranking model is a documented stretch goal |
-| Brief Generation | Gemini call that writes the natural-language justification for a recommended project, grounded in the exact numbers passed into the prompt | Post-generation consistency check verifies every cited number exists in the input context |
-| Dashboard API | Serves ranked issues, score breakdowns, and briefs to the officer/policymaker UI | Read-heavy, cacheable |
+| AI Agent Layer | Gemini function-calling orchestrator that parses user questions and calls relevant tools below to get data | The primary interface for policymakers |
+| Tool: query_fused_data | Retrieves matching clustered demand records from BigQuery | Used by Agent |
+| Tool: check_investment_status | Cross-references against InvestmentRecord data to see if an issue is funded | Used by Agent |
+| Tool: score_priority | Computes the composite score using demand, vulnerability, and duplication penalty | Used by Agent to rank issues |
+| Tool: generate_brief | Retrieves policy documents and generates a RAG-grounded justification | Used by Agent for formal exports |
+| Agent/Dashboard API | Serves chat responses and map data to the UI | Handles session state and streaming responses |
 | Verification/Anti-fraud Service | Rate limiting, geofencing, burst detection, optional photo plausibility check | Flags for human review, never auto-rejects a citizen report outright |
 | Impact Tracking Service | Sends resolution-confirmation prompts to original reporters, aggregates `ImpactRecord`s | Feeds back into future gap-score calculations |
 
@@ -55,9 +66,9 @@ flowchart LR
 1. Citizen submits via any channel → Ingestion Gateway normalizes and stores raw `Submission`, publishes an event.
 2. Categorization Service extracts structured fields via Gemini.
 3. Embedding Service + Dedup Service decide: merge into an existing `Issue` or create a new one.
-4. Prioritization Engine periodically (or on-demand) recomputes composite scores for all open Issues in a region, joining against `InfraIndex` and `InvestmentRecord` reference tables in BigQuery.
-5. Brief Generation produces a grounded, human-readable justification for the top-N ranked issues per region.
-6. Officer/Policymaker UI reads from the Dashboard API, which serves cached, pre-scored data (scoring doesn't need to be real-time-to-the-second).
+4. The AI Agent Layer stands ready. When a policymaker asks a question via the UI, the Agent invokes the required tools (`query_fused_data`, `check_investment_status`, `score_priority`).
+5. Tools execute SQL queries against BigQuery (joining operational data with reference datasets like `InfraIndex`) and return structured, sourced data to the Agent.
+6. The Agent synthesizes an answer with citations. If asked, it can call `generate_brief` to produce a RAG-grounded policy document.
 7. When an officer marks a project complete, Impact Tracking Service notifies original reporters and records confirmations.
 
 ## 4. Tech stack rationale

@@ -55,7 +55,21 @@ When a photo is attached, a lightweight Gemini Vision call asks whether the imag
 
 This is used as a **soft signal only, never a hard auto-reject** — false positives here would unfairly block a legitimate citizen report, which is a worse failure mode than letting a borderline case through to officer review.
 
-## Stage 5 — Explainable prioritization
+## Stage 5 — The Gemini Agent (Core Orchestration)
+Instead of a static dashboard, officers interrogate the data via a conversational agent.
+
+The agent's job is threefold:
+1. Parse a natural-language question into tool calls.
+2. Synthesize an answer that stays faithful to the structured data returned by tools, with explicit citations.
+3. **Refuse to answer** if the retrieved data does not support a confident response.
+
+Tools available to the agent:
+- `query_fused_data(location, category, timeframe)`: Retrieves matching demand records from BigQuery.
+- `check_investment_status(location, category)`: Cross-references against `InvestmentRecord` to check for prior funding.
+- `score_priority(candidates)`: Runs the prioritization formula (Stage 6) on the fly for the selected candidates.
+- `generate_brief(topic)`: Retrieves policy documents and generates a RAG-grounded brief (Stage 7).
+
+## Stage 6 — Explainable prioritization
 Composite score, computed per `Issue` (or its `GeoCluster`):
 
 ```
@@ -74,30 +88,28 @@ composite_score = 0.35 * demand_score
 
 **Stretch goal (only if time permits):** train a Vertex AI AutoML Tables model on historical scheme-outcome data to learn the weights instead of hand-tuning them. Keep the hand-tuned formula as the permanent fallback and the thing you actually explain in the demo — a government stakeholder will ask "why did my ward score lower than that one," and "a model decided" is a weak answer during a pilot conversation. Explainability here is a design decision, not a shortcut.
 
-## Stage 6 — RAG-grounded justification generation
-This is where hallucination risk is highest, and where most naive implementations will get caught out by a sharp judge. Mitigation: **the prompt always includes the exact numbers to cite**, and Gemini is instructed to use only those numbers.
+## Stage 7 — Policy-Grounded Justification Generation (RAG)
+When the officer asks for a formal brief, the agent executes a genuine document-retrieval RAG pipeline to ground the justification in real government policy.
+
+1. Policy/scheme documents (e.g., PMGSY guidelines, rural infrastructure schemes) are chunked and embedded in Vertex AI Vector Search.
+2. The agent retrieves relevant chunks based on the category/location.
+3. Gemini generates the brief, explicitly citing both the **demand/investment data** and the **scheme/policy basis**.
 
 Example prompt:
 ```
-System: You write short, factual briefs for government officials deciding
-infrastructure funding. Use ONLY the data provided below. Do not invent
-statistics. If a data point is marked "unavailable", say so explicitly
-rather than estimating it.
+System: You write short, factual briefs for government officials.
+Use ONLY the data provided below. Do not invent statistics. 
+Cite the provided scheme guidelines to justify funding eligibility.
 
 Data:
-- Region: Ward 14, Central Delhi
-- Category: Roads (pothole)
-- Distinct issues reported: 14 (from 22 raw submissions)
-- First reported: 2026-09-10, most recent: 2026-09-14
-- Road-related investment in this ward, last 2 fiscal years: none recorded
-- Estimated population within 500m: 3,200
-
-Task: Write a 2-3 sentence funding justification for a policymaker.
+- Demand: Ward 14, Roads (14 distinct reports)
+- Investment: None in last 2 years
+- Policy: [Retrieved chunk from PMGSY guidelines regarding unpaved roads]
 ```
 
-Post-generation guardrail: run a simple consistency check that every number appearing in the generated text also appears in the input context. If a number doesn't match, regenerate once with a stricter reminder, then fall back to a template-based (non-generated) summary rather than shipping an unverified claim.
+Post-generation guardrail: A consistency check ensures every number and policy referenced exists in the tool output. If not, the brief is regenerated or rejected.
 
-## Stage 7 — Impact loop reasoning
+## Stage 8 — Impact loop reasoning
 After a `Project` is marked complete, the Impact Tracking Service messages the original reporters (via their original channel) asking for a resolution confirmation. Aggregated `ImpactRecord`s are joined back into future `gap_score` calculations — e.g. "how often has past investment in this category/region actually resolved the reported issue?" This is a genuine (if simple) feedback loop, and it's the direct answer to the brief's stated gap: "no way to measure the impact."
 
 ## Model/prompt versioning
