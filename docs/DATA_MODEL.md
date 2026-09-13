@@ -13,6 +13,7 @@ erDiagram
   ISSUE ||--o| PROJECT : "becomes"
   PROJECT ||--o{ IMPACTRECORD : "tracked by"
   OFFICERUSER ||--o{ ISSUE : verifies
+  OFFICERUSER ||--o{ AGENTSESSION : "queries"
 ```
 
 ## 2. Entities
@@ -151,11 +152,26 @@ Other `index_type` values: `water_access`, `health_facility_ratio`, `literacy_ra
 }
 ```
 
+### AgentSession (Audit & Traceability)
+```json
+{
+  "session_id": "sess_88b2",
+  "officer_id": "officer_204",
+  "query_text": "What are the top 3 unaddressed road issues here, and are they already funded?",
+  "tool_calls": [
+    { "tool": "query_fused_data", "params": {"category": "roads", "location": "Ward 14"} },
+    { "tool": "check_investment_status", "params": {"category": "roads"} }
+  ],
+  "agent_response": "There are 14 distinct reports about a road hazard near XYZ market. There is no recorded investment in the last 2 fiscal years for this area.",
+  "timestamp": "2026-09-15T09:30:00Z"
+}
+```
+
 ## 3. Storage mapping
 
 | Entity | Primary store | Why |
 |---|---|---|
-| Citizen, Submission, Issue, GeoCluster, OfficerUser | Firestore | Low-latency writes/reads, document shape matches JSON above directly |
+| Citizen, Submission, Issue, GeoCluster, OfficerUser, AgentSession | Firestore | Low-latency writes/reads, document shape matches JSON above directly |
 | InfraIndex, InvestmentRecord, PriorityScore (historical), analytics rollups | BigQuery | SQL joins across reference datasets, cheap large scans |
 | Photos, audio, resolution images | Cloud Storage | Firestore/BigQuery store only the `gs://` URL, not blobs |
 
