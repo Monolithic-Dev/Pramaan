@@ -1,6 +1,6 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { Citizen, Submission } from "@jansetu/shared-types";
-import type { Store } from "./types.js";
+import type { IdempotencyRecord, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
   return {
@@ -32,6 +32,18 @@ export function createFirestoreStore(db: Firestore): Store {
         tx.update(ref, { count });
         return count;
       });
+    },
+    async getIdempotencyRecord(key) {
+      const doc = await db.collection("idempotencyKeys").doc(key).get();
+      return doc.exists ? (doc.data() as IdempotencyRecord) : null;
+    },
+    async putIdempotencyRecord(key, record) {
+      // TTL policy on this collection's `createdAt` field (24h, per docs/EDGE_CASES.md
+      // #14) is configured at the infra level (infra/gcp/setup.sh), not enforced here.
+      await db
+        .collection("idempotencyKeys")
+        .doc(key)
+        .set({ ...record, createdAt: Date.now() });
     },
   };
 }
