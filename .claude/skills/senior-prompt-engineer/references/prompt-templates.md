@@ -18,7 +18,7 @@ User: <translated submission text>
 ```
 Zod schema: `{category: enum, subcategory: string, severity_estimate: enum, extracted_location_text: string, summary: string, confidence: number}`.
 
-## 2. Grounded brief generation (Stage 6)
+## 2. Grounded brief generation (Stage 7)
 ```
 System: You write short, factual briefs for government officials deciding
 infrastructure funding. Use ONLY the data provided below. Do not invent

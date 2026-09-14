@@ -5,13 +5,13 @@ Project-specific skills for coding agents working on JanSetu, generated from the
 ## Portability note
 `.claude/skills/` with `SKILL.md` YAML frontmatter is Claude Code's specific auto-discovery convention — Claude Code reads a skill's `description` automatically and pulls in the rest of the file (and its `references/`) only when relevant. A few other agent tools are adopting compatible conventions, but most won't auto-trigger on this folder as-is. That said, every file here is plain, well-organized markdown: point any other agent, or a human teammate, directly at the relevant `SKILL.md` and it's just as useful as prose documentation — nothing here depends on the auto-discovery mechanism to be readable or correct.
 
-## Skill set (12)
+## Skill set (13)
 
 | Skill | Covers |
 |---|---|
-| `senior-architect` | Structural/service-boundary decisions, the Option A→B federation path |
+| `senior-architect` | Structural/service-boundary decisions, the Option A→B→C federation path |
 | `gcp-cloud-architect` | Cloud Run/Firestore/BigQuery/Pub/Sub provisioning, CI/CD, IAM, cost |
-| `senior-frontend` | `apps/web` — citizen report flow + officer/policymaker dashboard |
+| `senior-frontend` | `apps/web` — citizen report flow + officer/policymaker chat + map interface |
 | `senior-backend` | `apps/api-gateway` + `apps/worker-ai-pipeline` |
 | `senior-database` | Firestore/BigQuery schema, multi-tenancy partitioning |
 | `senior-prompt-engineer` | Gemini/Vertex AI prompts, embeddings, dedup, grounded generation |
@@ -21,6 +21,7 @@ Project-specific skills for coding agents working on JanSetu, generated from the
 | `senior-qa` | Test strategy, prompt regression, demo-day QA |
 | `code-reviewer` | Cross-cutting PR review checklist pulling from every skill above |
 | `localization-voice-ux` | Guardian for the multilingual/voice judging requirement |
+| `git-workflow` | Phase-based branch naming, Conventional Commits, rebase/squash-merge discipline |
 
 ## Updating this set
 This is a snapshot of what the project needs *now*, not a one-time artifact — re-generate or hand-edit individual skills as the stack changes. If skills already exist here from a previous run, update per-skill rather than replacing the whole folder.

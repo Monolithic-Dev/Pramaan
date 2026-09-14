@@ -6,7 +6,7 @@ Governments across India struggle to consolidate citizen feedback and align it w
 ## 2. Objective / vision
 Give every citizen — regardless of language, literacy, or device — a way to report an infrastructure gap in under a minute. Give every policymaker an intelligent conversational agent to interrogate this demand—asking natural-language questions to receive a small, trustworthy, ranked list of what to fund next, grounded in cross-referenced infrastructure data and government policy.
 
-Non-negotiable design principle: **the system should be usable by someone with a basic feature phone and no English**, and **defensible in front of a state secretary who will ask "why did you rank this ward above that one?"** The AI must refuse to answer if it lacks sufficient data, ensuring zero hallucinations in public funding recommendations.
+Non-negotiable design principle: **the system should be usable by someone with a basic feature phone and no English**, and **defensible in front of a state secretary who will ask "why did you rank this ward above that one?"** Every numeric or policy claim in an agent response is traceable to a specific tool result, and responses containing unverifiable claims are regenerated or refused — this is measured, not asserted: see the tool-selection-accuracy and refusal-suite results in `docs/phases/phase-6-agent-rag.md`.
 
 ## 3. Users & personas
 
@@ -27,7 +27,7 @@ Non-negotiable design principle: **the system should be usable by someone with a
 - G7: A citizen can confirm resolution after a project is marked complete, and that feeds an `ImpactRecord`.
 
 ## 5. Non-goals (hackathon scope)
-- Full telephony-based IVR integration (voice recording in-app satisfies the voice requirement for MVP; real IVR is a stretch goal — see `ROADMAP.md`).
+- Full telephony-based IVR integration (voice recording in-app, plus an SMS channel, satisfy the voice/feature-phone requirement for MVP; real IVR is a stretch goal — see `BUILD_PLAN.md`).
 - Full production-grade fraud ML model — MVP uses rule-based heuristics, explicitly documented as an upgrade path.
 - Actual disbursement/budget integration with real government financial systems — MVP recommends, does not execute, funding decisions.
 - Full coverage of all 22 scheduled languages — MVP targets 3, architected to add more.
@@ -71,10 +71,20 @@ Non-negotiable design principle: **the system should be usable by someone with a
 | Judging criterion | What we demo to prove it |
 |---|---|
 | Problem-Solution Fit (20%) | Live demo showing dedup collapsing 10+ raw submissions into 1 issue, and a conversational agent answering questions with citations. |
-| AI/Technical Execution (25%) | Real Gemini function-calling orchestration using tools (`query_fused_data`, `check_investment_status`), not just generating text. Demonstration of explicit refusal guardrails. |
-| Depth & Reach Across India (20%) | Demo dataset spans 3+ states, 3+ languages, 5+ issue categories |
-| Impact Potential (15%) | Dashboard shows population-weighted impact estimate per recommended project |
-| Deployability & Scalability (20%) | Architecture doc shows a single-codebase, per-state config model that a state IT department could stand up without a rewrite |
+| AI/Technical Execution (25%) | Real Gemini function-calling orchestration using tools (`query_fused_data`, `check_investment_status`), not just generating text. Demonstration of explicit refusal guardrails, with measured tool-selection accuracy (target ≥80% exact-match) and refusal-suite accuracy (target 15/15, zero fabricated figures) reported on the pitch deck. |
+| Depth & Reach Across India (20%) | Demo dataset spans 3+ states, 4 languages, 6 issue categories, 4 ingestion channels, plus a live country-profile toggle to Brazil (`CROSS_BORDER_AND_DPG.md`) |
+| Impact Potential (15%) | Dashboard shows population-weighted impact estimate per recommended project, and a region with poor historical `impact_efficacy` visibly scoring lower than an equivalent region with good efficacy — the closed loop, demonstrated as a number changing, not just described |
+| Deployability & Scalability (20%) | Architecture doc shows a single-codebase, per-state config model that a state IT department could stand up without a rewrite; a load-test graph showing ingestion stays responsive under a submission burst |
+
+### Agent & platform metrics (operational, tracked from Phase 6 onward)
+
+| Metric | Target |
+|---|---|
+| Agent time-to-first-token | < 5s |
+| Tool-selection accuracy (30-question set) | ≥ 80% exact-match |
+| Refusal-suite accuracy (15 unanswerable questions) | 15/15 refuse, 0 fabricated figures |
+| Ingestion p95 latency under burst load | < 2s |
+| Dedup threshold precision / recall (120 labelled pairs) | reported, not assumed — see `docs/phases/phase-4-extraction-dedup.md` |
 
 ## 8. Assumptions & constraints
 - Real-time government infrastructure investment data is not fully open — MVP uses realistic sample/mock `InvestmentRecord` data, clearly labeled as such in the demo (permitted per hackathon rules: "real or realistic data").
