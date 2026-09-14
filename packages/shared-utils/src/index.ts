@@ -1,2 +1,3 @@
-// Placeholder — geospatial helpers, cosine similarity, formatting land here in Phase 4.
-export {};
+export { withRetry } from "./withRetry.js";
+export type { WithRetryOptions } from "./withRetry.js";
+export { isWithinIndiaBoundingBox } from "./geo.js";
