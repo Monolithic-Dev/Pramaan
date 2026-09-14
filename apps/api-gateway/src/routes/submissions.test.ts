@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { buildApp } from "../app.js";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
@@ -9,6 +10,10 @@ const validPayload = {
   lng: 77.209,
 };
 
+function idempotencyHeaders(extra: Record<string, string> = {}) {
+  return { "idempotency-key": randomUUID(), ...extra };
+}
+
 describe("POST /submissions", () => {
   it("with valid text returns 202 and a submission_id", async () => {
     const app = buildApp(createFakeDeps());
@@ -16,6 +21,7 @@ describe("POST /submissions", () => {
       method: "POST",
       url: "/v1/submissions",
       payload: validPayload,
+      headers: idempotencyHeaders(),
     });
 
     expect(response.statusCode).toBe(202);
@@ -24,16 +30,67 @@ describe("POST /submissions", () => {
     expect(body.status).toBe("queued");
   });
 
+  it("without an Idempotency-Key header returns 400 VALIDATION_ERROR", async () => {
+    const app = buildApp(createFakeDeps());
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: validPayload,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe("VALIDATION_ERROR");
+  });
+
   it("with no text/audio/photo returns 400 VALIDATION_ERROR", async () => {
     const app = buildApp(createFakeDeps());
     const response = await app.inject({
       method: "POST",
       url: "/v1/submissions",
       payload: { channel: "web", lat: 28.6139, lng: 77.209 },
+      headers: idempotencyHeaders(),
     });
 
     expect(response.statusCode).toBe(400);
     expect(response.json().error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("replaying the same Idempotency-Key with the same body returns the original submission_id", async () => {
+    const app = buildApp(createFakeDeps());
+    const headers = idempotencyHeaders();
+
+    const first = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: validPayload,
+      headers,
+    });
+    const second = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: validPayload,
+      headers,
+    });
+
+    expect(first.statusCode).toBe(202);
+    expect(second.statusCode).toBe(202);
+    expect(second.json().submission_id).toBe(first.json().submission_id);
+  });
+
+  it("replaying the same Idempotency-Key with a different body returns 409 IDEMPOTENCY_CONFLICT", async () => {
+    const app = buildApp(createFakeDeps());
+    const headers = idempotencyHeaders();
+
+    await app.inject({ method: "POST", url: "/v1/submissions", payload: validPayload, headers });
+    const conflict = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: { ...validPayload, text: "a completely different report" },
+      headers,
+    });
+
+    expect(conflict.statusCode).toBe(409);
+    expect(conflict.json().error.code).toBe("IDEMPOTENCY_CONFLICT");
   });
 
   it("from a citizen over their hourly limit returns 429", async () => {
@@ -48,7 +105,7 @@ describe("POST /submissions", () => {
         method: "POST",
         url: "/v1/submissions",
         payload: validPayload,
-        headers,
+        headers: { ...headers, ...idempotencyHeaders() },
       });
     }
 
@@ -63,6 +120,7 @@ describe("POST /submissions", () => {
       method: "POST",
       url: "/v1/submissions",
       payload: { channel: "web", text: "test", lat: 51.5074, lng: -0.1278 },
+      headers: idempotencyHeaders(),
     });
 
     expect(response.statusCode).toBe(202);
@@ -74,7 +132,12 @@ describe("POST /submissions", () => {
   it("publishes a raw-submissions event on success", async () => {
     const deps = createFakeDeps();
     const app = buildApp(deps);
-    await app.inject({ method: "POST", url: "/v1/submissions", payload: validPayload });
+    await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: validPayload,
+      headers: idempotencyHeaders(),
+    });
 
     expect(deps.publishedMessages).toHaveLength(1);
   });
@@ -91,7 +154,7 @@ describe("GET /submissions/:submissionId", () => {
       method: "POST",
       url: "/v1/submissions",
       payload: validPayload,
-      headers,
+      headers: { ...headers, ...idempotencyHeaders() },
     });
     const { submission_id } = created.json();
 
@@ -115,7 +178,7 @@ describe("GET /submissions/:submissionId", () => {
       method: "POST",
       url: "/v1/submissions",
       payload: validPayload,
-      headers: { authorization: "Bearer owner-token" },
+      headers: { authorization: "Bearer owner-token", ...idempotencyHeaders() },
     });
     const { submission_id } = created.json();
 

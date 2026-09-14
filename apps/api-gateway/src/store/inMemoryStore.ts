@@ -1,5 +1,5 @@
 import type { Citizen, Submission } from "@jansetu/shared-types";
-import type { Store } from "./types.js";
+import type { IdempotencyRecord, Store } from "./types.js";
 
 // Used by tests, and as a same-process fallback if no Firestore project is
 // configured — never used for a real deploy (state doesn't survive a restart).
@@ -7,6 +7,7 @@ export function createInMemoryStore(): Store {
   const citizens = new Map<string, Citizen>();
   const submissions = new Map<string, Submission>();
   const rateLimits = new Map<string, { count: number; windowStart: number }>();
+  const idempotencyKeys = new Map<string, IdempotencyRecord>();
 
   return {
     async getCitizen(citizenId) {
@@ -30,6 +31,12 @@ export function createInMemoryStore(): Store {
       }
       existing.count += 1;
       return existing.count;
+    },
+    async getIdempotencyRecord(key) {
+      return idempotencyKeys.get(key) ?? null;
+    },
+    async putIdempotencyRecord(key, record) {
+      idempotencyKeys.set(key, record);
     },
   };
 }

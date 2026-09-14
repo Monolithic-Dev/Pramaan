@@ -43,7 +43,9 @@ export function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
         citizen_id: citizenId,
         phone_hash: hashPhone(phoneNumber),
         preferred_language: "en-IN",
+        country_code: "IN",
         created_at: new Date().toISOString(),
+        erasure_requested_at: null,
       } satisfies Citizen;
       await deps.store.putCitizen(citizen);
     }

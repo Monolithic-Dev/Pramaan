@@ -1,9 +1,14 @@
 [
   { "name": "investment_id", "type": "STRING", "mode": "REQUIRED" },
   { "name": "region_id", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "country_code", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "state_id", "type": "STRING", "mode": "REQUIRED" },
   { "name": "scheme_name", "type": "STRING", "mode": "REQUIRED" },
-  { "name": "amount_inr", "type": "INT64", "mode": "REQUIRED" },
+  { "name": "scheme_id", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "amount", "type": "INT64", "mode": "REQUIRED" },
+  { "name": "currency", "type": "STRING", "mode": "REQUIRED" },
   { "name": "category", "type": "STRING", "mode": "REQUIRED" },
   { "name": "fiscal_year", "type": "STRING", "mode": "REQUIRED" },
-  { "name": "state_id", "type": "STRING", "mode": "REQUIRED" }
+  { "name": "sanctioned_at", "type": "DATE", "mode": "NULLABLE" },
+  { "name": "data_origin", "type": "STRING", "mode": "REQUIRED" }
 ]

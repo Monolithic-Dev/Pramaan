@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createSubmissionSchema = z
   .object({
-    channel: z.enum(["web", "voice", "whatsapp"]),
+    channel: z.enum(["web", "voice", "whatsapp", "sms"]),
     text: z.string().min(1).optional(),
     audio_url: z.string().url().nullable().optional(),
     photo_url: z.string().url().nullable().optional(),
@@ -17,3 +17,8 @@ export const createSubmissionSchema = z
   });
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
+
+// Required per API_SPEC.md §2: "Idempotency-Key: <client-generated uuid v4> — required."
+export const idempotencyKeyHeaderSchema = z
+  .string()
+  .min(1, "Idempotency-Key header is required.");
