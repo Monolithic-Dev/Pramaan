@@ -1,0 +1,9 @@
+[
+  { "name": "investment_id", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "region_id", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "scheme_name", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "amount_inr", "type": "INT64", "mode": "REQUIRED" },
+  { "name": "category", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "fiscal_year", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "state_id", "type": "STRING", "mode": "REQUIRED" }
+]
