@@ -24,3 +24,30 @@ gcloud services enable \
 
 echo "Enabled APIs:"
 gcloud services list --enabled --format="value(config.name)"
+
+# --- Phase 2: BigQuery dataset/tables + Cloud Storage buckets ---
+# All idempotent: bq/gsutil no-op (with a warning) when the resource already exists.
+
+bq mk --dataset --location=asia-south1 "${PROJECT_ID}:jansetu_analytics" || true
+
+SCHEMA_DIR="$(dirname "$0")/bigquery-schemas"
+for table in infra_index investment_record priority_score_history; do
+  bq mk --table \
+    "${PROJECT_ID}:jansetu_analytics.${table}" \
+    "${SCHEMA_DIR}/${table}.json" || true
+done
+
+gcloud storage buckets create "gs://jansetu-media" --location=asia-south1 || true
+gcloud storage buckets create "gs://jansetu-audio" --location=asia-south1 || true
+
+# Voice recordings may contain sensitive citizen speech — auto-delete after 90 days
+# per docs/SECURITY_PRIVACY.md's retention policy.
+cat > /tmp/jansetu-audio-lifecycle.json <<'EOF'
+{
+  "rule": [
+    { "action": { "type": "Delete" }, "condition": { "age": 90 } }
+  ]
+}
+EOF
+gcloud storage buckets update "gs://jansetu-audio" \
+  --lifecycle-file=/tmp/jansetu-audio-lifecycle.json

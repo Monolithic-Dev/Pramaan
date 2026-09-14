@@ -1,0 +1,8 @@
+[
+  { "name": "region_id", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "index_type", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "value", "type": "FLOAT64", "mode": "REQUIRED" },
+  { "name": "source", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "year", "type": "INT64", "mode": "REQUIRED" },
+  { "name": "state_id", "type": "STRING", "mode": "REQUIRED" }
+]

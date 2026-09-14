@@ -1,0 +1,9 @@
+investment_id,region_id,state_id,scheme_name,amount_inr,category,fiscal_year
+inv-dl-central-delhi-roads-2324,dl-central-delhi,DL,Sample Road Maintenance Scheme,500000,roads,2023-24
+inv-dl-central-delhi-water-2324,dl-central-delhi,DL,Sample Urban Water Supply Scheme,750000,water,2023-24
+inv-dl-south-delhi-roads-2425,dl-south-delhi,DL,Sample Road Maintenance Scheme,900000,roads,2024-25
+inv-mh-mumbai-city-sanitation-2324,mh-mumbai-city,MH,Sample Sanitation Upgrade Scheme,1200000,sanitation,2023-24
+inv-mh-pune-roads-2425,mh-pune,MH,Sample Road Maintenance Scheme,650000,roads,2024-25
+inv-mh-pune-health-2324,mh-pune,MH,Sample Primary Health Centre Scheme,400000,health,2023-24
+inv-ka-bengaluru-urban-roads-2425,ka-bengaluru-urban,KA,Sample Road Maintenance Scheme,1100000,roads,2024-25
+inv-ka-mysuru-water-2324,ka-mysuru,KA,Sample Rural Water Supply Scheme,300000,water,2023-24
