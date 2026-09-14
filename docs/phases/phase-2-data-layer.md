@@ -1,4 +1,14 @@
-# Phase 2 of 9: Data Layer
+# Phase 2 of 10: Data Layer
+
+> **⚠️ Migration needed before Phase 3 starts (added 15 Sep 2026).** `DATA_MODEL.md`, `API_SPEC.md`, `AI_PIPELINE.md`, and `ARCHITECTURE.md` were corrected after this phase was implemented (PR #2). The schema actually merged here — `GeoCluster` and `region_id` on `InfraIndex`/`InvestmentRecord` in [packages/shared-types/src/index.ts](../../packages/shared-types/src/index.ts) — matches the **old, superseded** data model, which keys reference data to a dynamically-created `GeoCluster` instead of a stable `AdminRegion`. Since a `GeoCluster` doesn't exist until a citizen reports an issue, every `InfraIndex`/`InvestmentRecord` join silently misses, and `vulnerability_score`/`gap_score` fall back to defaults on every issue.
+>
+> Concretely, before Phase 3 (ingestion) is safe to build on:
+> 1. Add `AdminRegion` and `CountryProfile` to `packages/shared-types/src/index.ts` per the corrected `DATA_MODEL.md`.
+> 2. Re-key `InfraIndex.region_id` and `InvestmentRecord.region_id` to `AdminRegion.region_id` (LGD codes), not `GeoCluster.cluster_id`.
+> 3. Re-load `infra_index`/`investment_record` BigQuery tables against real LGD-coded admin regions (see the corrected Phase 2 deliverables below — reference for the target shape, not a re-run of already-completed scaffolding work).
+> 4. Add `idempotency_key` to `Submission`, `distinct_reporter_count`/`embedding`/`geohash` to `Issue` — Phase 4 (extraction & dedup) needs these and they don't exist in the merged shared-types yet.
+>
+> This is a schema fix, not a rewrite — the Firestore rules, BigQuery table scaffolding, and seed-script structure already merged in PR #2 stay valid. What follows below is kept as-written as a record of what was actually built in that PR; treat it as historical, and use the corrected `DATA_MODEL.md` as the target shape going forward.
 
 ## Header
 - **Goal (done = ):** Firestore collections, BigQuery datasets/tables, and Cloud Storage buckets exist matching `DATA_MODEL.md` exactly, populated with real reference data (`InfraIndex`, `InvestmentRecord`), with a reproducible seed script skeleton ready for Phase 9's full synthetic dataset.

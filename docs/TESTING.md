@@ -10,7 +10,11 @@
 - Webhook handlers (WhatsApp/IVR payload → correctly mapped `Submission` schema).
 
 ## 3. Prompt regression tests
-Maintain a fixed set of ~20 sample citizen complaints spanning all target languages and categories, each with an expected category/severity/summary. Re-run this set whenever a prompt changes (Stage 2 and Stage 6 of `AI_PIPELINE.md`) to catch quality drift before it reaches the demo. Store expected vs. actual output diffs, not just pass/fail, so regressions are easy to diagnose.
+Maintain a fixed set of ~20 sample citizen complaints spanning all target languages and categories, each with an expected category/severity/summary. Re-run this set whenever a prompt changes (Stage 2 and Stage 7 of `AI_PIPELINE.md`) to catch quality drift before it reaches the demo. Store expected vs. actual output diffs, not just pass/fail, so regressions are easy to diagnose.
+
+Two additional suites are required for the agent (Stage 5) and are specified in full in `docs/phases/phase-6-agent-rag.md` §5.7 — they did not exist in earlier test planning despite the agent being PRD goal G5:
+- **Tool-selection accuracy:** 30 questions with expected tool-call sequences. Target ≥80% exact-match.
+- **Refusal suite:** 15 questions that cannot be answered from available data. Target 15/15 refuse, zero fabricated figures.
 
 ## 4. Synthetic demo dataset
 Build a small generator script that produces a realistic (not random) dataset for demo day:

@@ -5,7 +5,7 @@ This document makes the implementation decisions concrete. `ARCHITECTURE.md`, `A
 ## TL;DR
 - **Language: TypeScript, end-to-end** — frontend, backend API, and the AI worker service all in one language.
 - **Repo: Monorepo** — pnpm workspaces + Turborepo, one GitHub repo.
-- Both decisions are driven by the same constraint: **a small team with ~18 days and one repo to submit** should minimize coordination overhead everywhere it can, and spend the saved time on the AI pipeline (Phase 3 of `ROADMAP.md`), which is where the judging weight actually is.
+- Both decisions are driven by the same constraint: **a small team with 16 days and one repo to submit** should minimize coordination overhead everywhere it can, and spend the saved time on the AI pipeline and agent (Phases 4-6 of `BUILD_PLAN.md`), which is where the judging weight actually is.
 
 ---
 
@@ -134,4 +134,4 @@ pnpm --filter api-gateway add fastify @google-cloud/firestore
 pnpm turbo run dev
 ```
 
-This gets a running skeleton in under an hour, leaving the rest of Phase 1 (`ROADMAP.md`) for actual data sourcing and schema finalization rather than tooling setup.
+This gets a running skeleton in under an hour, leaving the rest of Phase 1 (`docs/phases/phase-1-foundation.md`) for actual GCP setup rather than tooling scaffolding.

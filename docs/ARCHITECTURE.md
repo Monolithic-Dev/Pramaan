@@ -1,90 +1,119 @@
 # Architecture: JanSetu
 
+**v2 — corrected 15 Sep 2026.** The v1 Mermaid diagram did not render on GitHub (unquoted parentheses in a node label is a parse error), had an undefined `BQ` node, and left `SCORE` and `VERIFY` as dead ends with no path from Firestore to BigQuery.
+
 ## 1. High-level diagram
 
 ```mermaid
-flowchart LR
-  subgraph Ingestion Channels
-    WEB[Web / PWA form]
-    WA[WhatsApp Business API]
-    VOICE[In-app voice recording]
+flowchart TB
+  subgraph CH["Ingestion channels"]
+    WEB["Web / PWA form"]
+    WA["WhatsApp Business API"]
+    SMS["SMS inbound"]
+    VOICE["In-app voice note"]
   end
 
-  WEB --> GW[Ingestion Gateway - Cloud Run]
+  VOICE --> STT["Cloud Speech-to-Text"]
+  WEB --> GW["Ingestion Gateway - Cloud Run"]
   WA --> GW
-  VOICE --> STT[Cloud Speech-to-Text] --> GW
+  SMS --> GW
+  STT --> GW
 
-  GW --> TR[Cloud Translation API]
-  TR --> TOPIC[(Pub/Sub: raw-submissions)]
+  GW --> TR["Cloud Translation API"]
+  GW --> RAW[("Firestore: Submissions")]
+  TR --> TOPIC[("Pub/Sub: raw-submissions")]
 
-  TOPIC --> CAT[Categorization Service - Gemini structured output]
-  CAT --> EMB[Embedding Service - Vertex AI Embeddings]
-  EMB --> DEDUP[Dedup & Geo-Clustering Service]
-  DEDUP --> FS[(Firestore: Issues, GeoClusters)]
+  TOPIC --> CAT["Categorisation - Gemini structured output"]
+  CAT --> EMB["Embedding - Vertex AI text-embedding-005"]
+  EMB --> DEDUP["Dedup and geo-clustering"]
+  DEDUP --> FS[("Firestore: Issues, GeoClusters")]
+  DEDUP --> VERIFY["Verification and anti-fraud"]
+  VERIFY --> FS
 
-  FS --> SCORE[Prioritization Engine]
-  BQ --> AGENT[AI Agent Layer - Gemini Function Calling]
-  EXT[(External data: InfraIndex, InvestmentRecord)] --> BQ
-  AGENT --> T1[Tool: query_fused_data]
-  AGENT --> T2[Tool: check_investment_status]
-  AGENT --> T3[Tool: score_priority]
-  AGENT --> T4[Tool: generate_brief]
-  
-  T1 --> BQ
-  T2 --> BQ
-  T3 --> BQ
-  T4 --> FS
-  
-  AGENT --> DASH_API[Agent/Dashboard API]
-  DASH_API --> UI[Officer / Policymaker Web App (Chat + Map)]
+  FS --> SYNC["Firestore to BigQuery stream"]
+  SYNC --> BQ[("BigQuery: analytics, reference, scores")]
+  EXT[("Reference data: AdminRegion, InfraIndex, InvestmentRecord")] --> BQ
 
-  FS --> VERIFY[Verification / Anti-fraud Service]
-  UI --> IMPACT[Impact Tracking Service]
+  BQ --> SCORE["Prioritisation Engine - Cloud Scheduler"]
+  SCORE --> BQ
+  SCORE --> FS
+
+  BQ --> T1["Tool: query_fused_data"]
+  BQ --> T2["Tool: check_investment_status"]
+  BQ --> T3["Tool: get_priority_scores"]
+  VS[("Vertex AI Vector Search: policy corpus")] --> T4["Tool: generate_brief"]
+  BQ --> T4
+
+  T1 --> AGENT["Agent orchestrator - Gemini function calling"]
+  T2 --> AGENT
+  T3 --> AGENT
+  T4 --> AGENT
+
+  AGENT --> AUDIT[("Firestore: AgentSessions, AgentTurns")]
+  AGENT --> API["Agent and Dashboard API - Cloud Run"]
+  FS --> API
+  API --> UI["Officer and policymaker web app - chat plus map"]
+
+  UI --> IMPACT["Impact Tracking Service"]
   IMPACT --> FS
+  IMPACT --> NOTIFY["Outbound notify - WhatsApp, SMS, push"]
+  NOTIFY --> CH
+  FS --> IMPACT
 ```
+
+Every node now has both an inbound and an outbound path, the reference-data join point is explicit, and the impact loop visibly returns to the ingestion channels — which is the whole thesis of the project and was invisible in v1.
 
 ## 2. Component responsibilities
 
-| Component | Responsibility | Notes |
+| Component | Responsibility | Constraint |
 |---|---|---|
-| Ingestion Gateway | Accepts submissions from all channels, normalizes into one schema, writes raw record, publishes to Pub/Sub | Must respond fast (<2s) even if downstream AI is slow — never block the citizen on AI processing |
-| Speech-to-Text | Converts voice recordings to text in the source language | Google Cloud Speech-to-Text, language auto-detect with a manual override option |
-| Translation API | Translates to a canonical working language for backend processing; translates responses back | Keep original text stored alongside translation — never discard the source |
-| Categorization Service | Gemini call in JSON/structured-output mode: category, subcategory, severity, extracted location text, short summary, confidence | Low-confidence outputs are routed to manual officer review, not silently trusted |
-| Embedding Service | Generates a vector embedding of the canonical summary | Vertex AI Embeddings API |
-| Dedup & Geo-Clustering Service | Finds candidate existing Issues within a geo-radius + same category, computes similarity, merges or creates new Issue | See `AI_PIPELINE.md` for the algorithm |
-| AI Agent Layer | Gemini function-calling orchestrator that parses user questions and calls relevant tools below to get data | The primary interface for policymakers |
-| Tool: query_fused_data | Retrieves matching clustered demand records from BigQuery | Used by Agent |
-| Tool: check_investment_status | Cross-references against InvestmentRecord data to see if an issue is funded | Used by Agent |
-| Tool: score_priority | Computes the composite score using demand, vulnerability, and duplication penalty | Used by Agent to rank issues |
-| Tool: generate_brief | Retrieves policy documents and generates a RAG-grounded justification | Used by Agent for formal exports |
-| Agent/Dashboard API | Serves chat responses and map data to the UI | Handles session state and streaming responses |
-| Verification/Anti-fraud Service | Rate limiting, geofencing, burst detection, optional photo plausibility check | Flags for human review, never auto-rejects a citizen report outright |
-| Impact Tracking Service | Sends resolution-confirmation prompts to original reporters, aggregates `ImpactRecord`s | Feeds back into future gap-score calculations |
+| Ingestion Gateway | Normalise all channels to one schema, enforce idempotency, write raw record, publish | **< 2s response, always.** Never blocks on AI |
+| Speech-to-Text | Voice → text in source language | Auto-detect, manual override below 0.7 confidence |
+| Translation | → canonical working language | Original retained in restricted subcollection |
+| Categorisation | Gemini structured output via `responseSchema` | Schema-typed, not prompt-instructed |
+| Embedding | 768-dim vector of the summary | `text-embedding-005` |
+| Dedup & geo-clustering | Geohash candidate retrieval → Haversine filter → cosine merge | See `AI_PIPELINE.md` Stage 3 |
+| Verification / anti-fraud | Rate limits, geofence, burst detection, photo plausibility | Flags for review. **Never auto-rejects** |
+| Firestore → BigQuery stream | Keeps the analytics store current | The edge v1's diagram was missing entirely |
+| Prioritisation Engine | Batch-computes canonical PriorityScore every 15 min | Single source of truth for all read paths |
+| Agent orchestrator | Gemini function calling; parses questions, invokes tools, cites or refuses | Scope injected server-side per tool |
+| Tools (×6) | Typed, scoped queries against BigQuery / Vector Search | Model arguments validated before execution |
+| Agent & Dashboard API | SSE chat stream, map data, issue reads | `min-instances: 1` on demo day |
+| Impact Tracking | Notify original reporters, aggregate confirmations | Feeds `impact_efficacy` back into scoring |
 
 ## 3. Data flow narrative
-1. Citizen submits via any channel → Ingestion Gateway normalizes and stores raw `Submission`, publishes an event.
-2. Categorization Service extracts structured fields via Gemini.
-3. Embedding Service + Dedup Service decide: merge into an existing `Issue` or create a new one.
-4. The AI Agent Layer stands ready. When a policymaker asks a question via the UI, the Agent invokes the required tools (`query_fused_data`, `check_investment_status`, `score_priority`).
-5. Tools execute SQL queries against BigQuery (joining operational data with reference datasets like `InfraIndex`) and return structured, sourced data to the Agent.
-6. The Agent synthesizes an answer with citations. If asked, it can call `generate_brief` to produce a RAG-grounded policy document.
-7. When an officer marks a project complete, Impact Tracking Service notifies original reporters and records confirmations.
+
+1. Citizen submits on any channel → Gateway normalises, enforces idempotency, writes `Submission`, publishes. Citizen is acknowledged here — nothing downstream can delay this.
+2. Worker categorises (Gemini), embeds (Vertex), and runs dedup → merge or create `Issue`.
+3. Anti-fraud evaluates the new/updated issue, may set `fraud_flags`.
+4. Firestore changes stream to BigQuery, where they join `AdminRegion` / `InfraIndex` / `InvestmentRecord`.
+5. Prioritisation Engine batch-scores on schedule, writes canonical `PriorityScore` to both stores.
+6. Officer asks a question → Agent selects tools → tools execute scoped queries → agent synthesises with citations, or refuses with a stated reason and an offered alternative.
+7. Every turn is written to `AgentTurn` with the full tool trace and result hashes.
+8. Officer marks a project complete → reporters are notified on their original channel → confirmations become `ImpactRecord` → efficacy re-enters step 5.
 
 ## 4. Tech stack rationale
-See `README.md` for the full table. Key rationale points:
+See `README.md` for the full table. Key rationale points, unchanged from v1 and correct as argued:
 - **Cloud Run everywhere** for compute — scales to zero (cost-friendly for a hackathon), no cluster to manage, fast to deploy under time pressure.
 - **Firestore for operational writes, BigQuery for analytics** — Firestore's low-latency document writes are right for "citizen just submitted something," while BigQuery's SQL joins are right for "combine this cluster's demand with three different reference datasets."
 - **Pub/Sub between ingestion and processing** — decouples "citizen got a response" from "AI pipeline finished," which matters both for perceived speed and for resilience if Gemini has a slow moment.
 - **Deterministic scoring formula as the primary path, ML ranking as a stretch** — a government stakeholder will ask "why did my ward score lower," and "the model said so" is a weak answer during a pilot. Explainability is a feature, not a limitation.
 
-## 5. Scalability / federation model ("built for India")
-Two deployment models, and a deliberate choice about which to build for the hackathon:
+One addition: **there is exactly one module permitted to construct a Firestore query** (`scopedQuery()`), and it always injects `country_code` and `state_id` from verified JWT claims. Enforced by an ESLint rule banning direct `.collection()` calls elsewhere. This converts the "Elevation of privilege" threat-model row (`SECURITY_PRIVACY.md` §5) from a promise into a structural guarantee, and it takes five minutes to set up.
 
-- **Option A — Single multi-tenant deployment (build this for the hackathon):** one codebase, one set of services, every table partitioned by `state_id`. Simpler to build and demo in the available time.
-- **Option B — Per-state federated deployment (document as the production target):** each state runs its own instance/project with data residency in-state, and a lightweight national aggregator polls a shared, versioned API contract for cross-state reporting. This mirrors how real Indian Digital Public Infrastructure is typically federated.
+## 5. Scalability / federation model ("built for India, and beyond")
 
-The important engineering decision: **the schema and API contract in `DATA_MODEL.md` / `API_SPEC.md` are designed so that moving from Option A to Option B is a deployment/config change, not a data-model rewrite.** This is worth stating explicitly on a pitch deck slide — it shows the team understood the "scale across India" requirement structurally, not just as a marketing line.
+Three deployment models, and a deliberate choice about which to build for the hackathon:
+
+- **Option A — Single multi-tenant deployment (build this for the hackathon):** one codebase, one set of services, every collection partitioned by `country_code` + `state_id`. Simpler to build and demo in the available time.
+- **Option B — Per-state federated deployment (documented production target):** each state runs its own instance/project with data residency in-state, and a lightweight national aggregator polls a shared, versioned API contract for cross-state reporting. This mirrors how real Indian Digital Public Infrastructure is typically federated.
+- **Option C — Cross-border (hackathon Rule 04):** a second `CountryProfile` document plus a boundary dataset — no application code changes. See `CROSS_BORDER_AND_DPG.md`.
+
+The important engineering decision: **the schema and API contract in `DATA_MODEL.md` / `API_SPEC.md` are designed so that moving A → B → C is a deployment/config change, not a data-model rewrite.** Put this on a pitch deck slide as a three-step diagram — it is the clearest evidence the team treated "scale across India," and Rule 04's cross-border requirement, as a structural decision rather than a marketing line.
 
 ## 6. Attribution
-Any open-source libraries, public datasets, or third-party APIs used must be listed here with source and license, per hackathon Rule 03.
+Maintain a table here of every open-source library, public dataset, and third-party API used, with source and licence, per hackathon Rule 03. `InfraIndex.source_url` and `InfraIndex.licence` carry the per-record version of this. Populate it as you go, not on the last day — reconstructing provenance from memory the night before submission is how teams end up making things up.
+
+| Dataset / Library / API | Source | Licence | Used for |
+|---|---|---|---|
+| _(fill in during Phase 1-2 as real sources are sourced)_ | | | |

@@ -41,18 +41,21 @@ JanSetu is architected around those two gaps, not around the complaint form.
 
 ## Repo / doc structure
 ```
-/jansetu-docs
-  README.md              ← you are here
-  PRD.md                 ← what we're building, for whom, and why
-  ARCHITECTURE.md        ← how the system is put together
-  DATA_MODEL.md          ← schemas and entity relationships
-  API_SPEC.md            ← endpoint contracts
-  AI_PIPELINE.md         ← every place Gemini/Vertex AI is used, with prompts
-  SECURITY_PRIVACY.md    ← auth, PII, fraud prevention, DPDP Act notes
-  DEPLOYMENT.md          ← infra, environments, CI/CD, scaling, federation model
-  EDGE_CASES.md          ← what breaks and how we handle it
-  ROADMAP.md             ← day-by-day build plan for the remaining hackathon window
-  TESTING.md             ← test strategy and demo-day QA checklist
+/docs
+  README.md                  ← you are here
+  PRD.md                     ← what we're building, for whom, and why
+  ARCHITECTURE.md            ← how the system is put together
+  DATA_MODEL.md              ← schemas and entity relationships
+  API_SPEC.md                ← endpoint contracts, including the agent surface
+  AI_PIPELINE.md             ← every place Gemini/Vertex AI is used, with prompts
+  SECURITY_PRIVACY.md        ← auth, PII, fraud prevention, DPDP Act notes
+  DEPLOYMENT.md              ← infra, environments, CI/CD, scaling, federation model
+  EDGE_CASES.md              ← what breaks and how we handle it
+  CROSS_BORDER_AND_DPG.md    ← Rule 04 (BRICS) and Digital Public Good positioning
+  BUILD_PLAN.md              ← the 16-day, 3-track build schedule with hard cut-lines
+  TESTING.md                 ← test strategy and demo-day QA checklist
+  TECH_STACK_AND_REPO.md     ← concrete language/repo/tooling decisions
+  phases/                    ← 10 self-contained, sequential build phases (phase-1 … phase-10)
 ```
 
 ## Attribution
