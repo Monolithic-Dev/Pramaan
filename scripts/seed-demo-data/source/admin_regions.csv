@@ -1,0 +1,10 @@
+region_id,country_code,level,name,parent_region_id,population,boundary_ref,centroid_lat,centroid_lng
+IN-DL,IN,state,Delhi,,16787941,bq://jansetu.reference.in_admin_boundaries/state/DL,28.7041,77.1025
+IN-MH,IN,state,Maharashtra,,112374333,bq://jansetu.reference.in_admin_boundaries/state/MH,19.7515,75.7139
+IN-KA,IN,state,Karnataka,,61095297,bq://jansetu.reference.in_admin_boundaries/state/KA,15.3173,75.7139
+dl-central-delhi,IN,district,Central Delhi,IN-DL,582320,bq://jansetu.reference.in_admin_boundaries/district/dl-central-delhi,28.6519,77.2315
+dl-south-delhi,IN,district,South Delhi,IN-DL,2731929,bq://jansetu.reference.in_admin_boundaries/district/dl-south-delhi,28.5245,77.2066
+mh-mumbai-city,IN,district,Mumbai City,IN-MH,3145966,bq://jansetu.reference.in_admin_boundaries/district/mh-mumbai-city,18.9388,72.8354
+mh-pune,IN,district,Pune,IN-MH,9426959,bq://jansetu.reference.in_admin_boundaries/district/mh-pune,18.5204,73.8567
+ka-bengaluru-urban,IN,district,Bengaluru Urban,IN-KA,9621551,bq://jansetu.reference.in_admin_boundaries/district/ka-bengaluru-urban,12.9716,77.5946
+ka-mysuru,IN,district,Mysuru,IN-KA,3001127,bq://jansetu.reference.in_admin_boundaries/district/ka-mysuru,12.2958,76.6394

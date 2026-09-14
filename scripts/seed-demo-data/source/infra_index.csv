@@ -1,19 +1,19 @@
-region_id,state_id,index_type,value,source,year
-dl-central-delhi,DL,road_density,0.42,Sample derived from public infra survey data,2025
-dl-central-delhi,DL,water_access,0.81,Sample derived from public infra survey data,2025
-dl-central-delhi,DL,literacy_rate,0.87,Sample derived from public infra survey data,2025
-dl-south-delhi,DL,road_density,0.55,Sample derived from public infra survey data,2025
-dl-south-delhi,DL,water_access,0.88,Sample derived from public infra survey data,2025
-dl-south-delhi,DL,literacy_rate,0.9,Sample derived from public infra survey data,2025
-mh-mumbai-city,MH,road_density,0.61,Sample derived from public infra survey data,2025
-mh-mumbai-city,MH,water_access,0.79,Sample derived from public infra survey data,2025
-mh-mumbai-city,MH,poverty_index,0.21,Sample derived from public infra survey data,2025
-mh-pune,MH,road_density,0.58,Sample derived from public infra survey data,2025
-mh-pune,MH,water_access,0.74,Sample derived from public infra survey data,2025
-mh-pune,MH,health_facility_ratio,0.63,Sample derived from public infra survey data,2025
-ka-bengaluru-urban,KA,road_density,0.66,Sample derived from public infra survey data,2025
-ka-bengaluru-urban,KA,water_access,0.7,Sample derived from public infra survey data,2025
-ka-bengaluru-urban,KA,health_facility_ratio,0.58,Sample derived from public infra survey data,2025
-ka-mysuru,KA,road_density,0.4,Sample derived from public infra survey data,2025
-ka-mysuru,KA,water_access,0.68,Sample derived from public infra survey data,2025
-ka-mysuru,KA,poverty_index,0.34,Sample derived from public infra survey data,2025
+region_id,country_code,state_id,index_type,value,source,source_url,licence,year
+dl-central-delhi,IN,DL,road_density,0.42,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+dl-central-delhi,IN,DL,water_access,0.81,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+dl-central-delhi,IN,DL,literacy_rate,0.87,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+dl-south-delhi,IN,DL,road_density,0.55,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+dl-south-delhi,IN,DL,water_access,0.88,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+dl-south-delhi,IN,DL,literacy_rate,0.9,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-mumbai-city,IN,MH,road_density,0.61,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-mumbai-city,IN,MH,water_access,0.79,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-mumbai-city,IN,MH,poverty_index,0.21,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-pune,IN,MH,road_density,0.58,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-pune,IN,MH,water_access,0.74,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+mh-pune,IN,MH,health_facility_ratio,0.63,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-bengaluru-urban,IN,KA,road_density,0.66,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-bengaluru-urban,IN,KA,water_access,0.7,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-bengaluru-urban,IN,KA,health_facility_ratio,0.58,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-mysuru,IN,KA,road_density,0.4,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-mysuru,IN,KA,water_access,0.68,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+ka-mysuru,IN,KA,poverty_index,0.34,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025

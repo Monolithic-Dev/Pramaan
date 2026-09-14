@@ -29,6 +29,7 @@ gcloud services list --enabled --format="value(config.name)"
 # All idempotent: bq/gsutil no-op (with a warning) when the resource already exists.
 
 bq mk --dataset --location=asia-south1 "${PROJECT_ID}:jansetu_analytics" || true
+bq mk --dataset --location=asia-south1 "${PROJECT_ID}:jansetu_reference" || true
 
 SCHEMA_DIR="$(dirname "$0")/bigquery-schemas"
 for table in infra_index investment_record priority_score_history; do
@@ -36,6 +37,13 @@ for table in infra_index investment_record priority_score_history; do
     "${PROJECT_ID}:jansetu_analytics.${table}" \
     "${SCHEMA_DIR}/${table}.json" || true
 done
+
+# admin_regions is the fix for the GeoCluster-keyed reference-data bug (see
+# docs/phases/phase-2-data-layer.md's migration note) — InfraIndex/InvestmentRecord
+# join here, never to a dynamically-created GeoCluster.
+bq mk --table \
+  "${PROJECT_ID}:jansetu_reference.admin_regions" \
+  "${SCHEMA_DIR}/admin_regions.json" || true
 
 gcloud storage buckets create "gs://jansetu-media" --location=asia-south1 || true
 gcloud storage buckets create "gs://jansetu-audio" --location=asia-south1 || true
