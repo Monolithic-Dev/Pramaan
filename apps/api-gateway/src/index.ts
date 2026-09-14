@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
+import { createRealDeps } from "./deps.js";
 
-const app = buildApp();
+const app = buildApp(createRealDeps());
 const port = Number(process.env.PORT ?? 8080);
 
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {

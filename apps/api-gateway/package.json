@@ -12,7 +12,11 @@
   },
   "dependencies": {
     "fastify": "^5.1.0",
-    "@jansetu/shared-types": "workspace:*"
+    "@jansetu/shared-types": "workspace:*",
+    "@jansetu/shared-utils": "workspace:*",
+    "firebase-admin": "^12.7.0",
+    "@google-cloud/pubsub": "^4.10.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

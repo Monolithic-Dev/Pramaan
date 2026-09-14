@@ -38,11 +38,13 @@ export interface Submission {
   submission_id: string;
   citizen_id: string;
   channel: SubmissionChannel;
-  raw_text: string;
+  /** Null until STT transcribes it (voice channel) or immediately set (web/whatsapp text). */
+  raw_text: string | null;
   raw_audio_url: string | null;
   photo_url: string | null;
-  detected_language: string;
-  translated_text: string;
+  /** Both null until the AI pipeline (Phase 4) processes the submission. */
+  detected_language: string | null;
+  translated_text: string | null;
   lat: number;
   lng: number;
   location_confidence: LocationConfidence;
