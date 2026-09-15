@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "fastify": "^5.1.0",
+    "dotenv": "^16.4.5",
     "@jansetu/shared-types": "workspace:*",
     "@jansetu/shared-utils": "workspace:*",
     "firebase-admin": "^12.7.0",
