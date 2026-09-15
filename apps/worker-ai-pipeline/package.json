@@ -14,11 +14,15 @@
     "fastify": "^5.1.0",
     "@jansetu/shared-types": "workspace:*",
     "@jansetu/shared-utils": "workspace:*",
-    "@jansetu/ai-prompts": "workspace:*"
+    "@jansetu/ai-prompts": "workspace:*",
+    "firebase-admin": "^12.7.0",
+    "@google/genai": "^0.15.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
     "tsx": "^4.19.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "pino": "^9.5.0"
   }
 }
