@@ -1,4 +1,4 @@
-import type { Citizen, Submission } from "@jansetu/shared-types";
+import type { Citizen, ConsentRecord, Submission } from "@jansetu/shared-types";
 import type { IdempotencyRecord, Store } from "./types.js";
 
 // Used by tests, and as a same-process fallback if no Firestore project is
@@ -8,6 +8,7 @@ export function createInMemoryStore(): Store {
   const submissions = new Map<string, Submission>();
   const rateLimits = new Map<string, { count: number; windowStart: number }>();
   const idempotencyKeys = new Map<string, IdempotencyRecord>();
+  const consentRecords = new Map<string, ConsentRecord>();
 
   return {
     async getCitizen(citizenId) {
@@ -37,6 +38,9 @@ export function createInMemoryStore(): Store {
     },
     async putIdempotencyRecord(key, record) {
       idempotencyKeys.set(key, record);
+    },
+    async putConsentRecord(record) {
+      consentRecords.set(record.consent_id, record);
     },
   };
 }

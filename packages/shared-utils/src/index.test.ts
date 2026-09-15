@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { isWithinIndiaBoundingBox, withRetry } from "./index.js";
+import { isWithinIndiaBoundingBox, scrubPii, withRetry } from "./index.js";
 
 describe("withRetry", () => {
   it("returns the result on first success", async () => {
@@ -33,5 +33,19 @@ describe("isWithinIndiaBoundingBox", () => {
 
   it("rejects a point far outside India", () => {
     expect(isWithinIndiaBoundingBox(51.5074, -0.1278)).toBe(false);
+  });
+});
+
+describe("scrubPii", () => {
+  it("redacts a phone number", () => {
+    expect(scrubPii("call me on 9812345678 please")).toBe("call me on [redacted] please");
+  });
+
+  it("redacts an email address", () => {
+    expect(scrubPii("contact me at ram@example.com")).toBe("contact me at [redacted]");
+  });
+
+  it("leaves unrelated text untouched", () => {
+    expect(scrubPii("large pothole near the market")).toBe("large pothole near the market");
   });
 });

@@ -1,0 +1,117 @@
+import { createHash, randomUUID } from "node:crypto";
+import type { FastifyBaseLogger } from "fastify";
+import type { ConsentRecord, Submission, SubmissionChannel } from "@jansetu/shared-types";
+import { isWithinIndiaBoundingBox, scrubPii } from "@jansetu/shared-utils";
+import type { Deps } from "../deps.js";
+
+export interface IngestSubmissionInput {
+  channel: SubmissionChannel;
+  text?: string | null;
+  audio_url?: string | null;
+  photo_url?: string | null;
+  lat?: number;
+  lng?: number;
+  location_text?: string | null;
+  consent_version: string;
+  citizenId: string | undefined;
+  idempotencyKey: string;
+  /** Language the consent notice was shown in — defaults to English for channels that don't ask. */
+  languageShown?: string;
+}
+
+export interface IngestSubmissionResult {
+  submission_id: string;
+  status: Submission["status"];
+}
+
+function hashRequestBody(body: unknown): string {
+  return createHash("sha256").update(JSON.stringify(body)).digest("hex");
+}
+
+// Shared by POST /v1/submissions and the WhatsApp/SMS webhooks (API_SPEC.md §9:
+// "calls the same internal ingestion path ... not a parallel implementation").
+export async function ingestSubmission(
+  deps: Deps,
+  input: IngestSubmissionInput,
+  log: FastifyBaseLogger,
+): Promise<{ result: IngestSubmissionResult; conflict?: true }> {
+  const requestHash = hashRequestBody(input);
+
+  // Idempotency-Key replay (docs/EDGE_CASES.md #14): the same key within 24h
+  // returns the original response verbatim; the same key with a different
+  // payload is a conflict, not a silent overwrite.
+  const existing = await deps.store.getIdempotencyRecord(input.idempotencyKey);
+  if (existing) {
+    if (existing.requestHash !== requestHash) {
+      return { result: { submission_id: existing.submissionId, status: "queued" }, conflict: true };
+    }
+    const original = await deps.store.getSubmission(existing.submissionId);
+    return {
+      result: { submission_id: existing.submissionId, status: original?.status ?? "queued" },
+    };
+  }
+
+  const submissionId = `sub_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  const hasCoords = input.lat !== undefined && input.lng !== undefined;
+  const rawText = input.text ?? null;
+
+  const submission: Submission = {
+    submission_id: submissionId,
+    idempotency_key: input.idempotencyKey,
+    citizen_id: input.citizenId ?? "anonymous",
+    country_code: "IN",
+    channel: input.channel,
+    raw_text: rawText,
+    raw_audio_url: input.audio_url ?? null,
+    photo_url: input.photo_url ?? null,
+    detected_language: null,
+    translated_text: null,
+    // Regex-only pass here (cheap, inline); the Gemini pass that catches names/
+    // addresses runs later in the worker (docs/phases/phase-3-ingestion.md §3.5).
+    pii_scrubbed_text: rawText ? scrubPii(rawText) : null,
+    lat: hasCoords ? (input.lat as number) : null,
+    lng: hasCoords ? (input.lng as number) : null,
+    location_text: hasCoords ? null : (input.location_text ?? null),
+    location_confidence: hasCoords
+      ? isWithinIndiaBoundingBox(input.lat as number, input.lng as number)
+        ? "high"
+        : "low"
+      : "low",
+    geohash: null,
+    resolved_region_id: null,
+    state_id: null,
+    issue_id: null,
+    submitted_at: new Date().toISOString(),
+    status: "queued",
+    processing_error: null,
+  };
+
+  const consent: ConsentRecord = {
+    consent_id: `consent_${randomUUID().replace(/-/g, "").slice(0, 12)}`,
+    citizen_id: submission.citizen_id,
+    purpose: "infrastructure_submission",
+    consent_text_version: input.consent_version,
+    language_shown: input.languageShown ?? "en",
+    granted_at: submission.submitted_at,
+    channel: input.channel,
+    withdrawn_at: null,
+  };
+
+  await deps.store.putSubmission(submission);
+  await deps.store.putConsentRecord(consent);
+  await deps.store.putIdempotencyRecord(input.idempotencyKey, { submissionId, requestHash });
+
+  // Ingestion latency must be independent of AI pipeline / Pub/Sub health
+  // (docs/EDGE_CASES.md #18) — the Firestore write already succeeded, so a
+  // publish failure is logged and the submission is marked "deferred", never
+  // surfaced to the citizen as a failure.
+  try {
+    await deps.publisher.publishRawSubmission({ submission_id: submissionId });
+  } catch (err) {
+    log.error({ err, submissionId }, "failed to publish raw-submission event");
+    submission.status = "deferred";
+    await deps.store.putSubmission(submission);
+  }
+
+  return { result: { submission_id: submissionId, status: submission.status } };
+}
