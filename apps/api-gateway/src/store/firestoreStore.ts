@@ -5,8 +5,10 @@ import type {
   AgentTurn,
   Citizen,
   ConsentRecord,
+  ImpactRecord,
   Issue,
   PriorityScore,
+  Project,
   Submission,
 } from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
@@ -130,6 +132,51 @@ export function createFirestoreStore(db: Firestore): Store {
       return snapshot.docs
         .map((doc) => doc.data() as AgentTurn)
         .filter((turn) => !sessionIds || sessionIds.has(turn.session_id));
+    },
+    async getProject(projectId) {
+      const doc = await db.collection("projects").doc(projectId).get();
+      return doc.exists ? (doc.data() as Project) : null;
+    },
+    async putProject(project) {
+      await db.collection("projects").doc(project.project_id).set(project);
+    },
+    async updateProject(projectId, patch) {
+      const ref = db.collection("projects").doc(projectId);
+      return db.runTransaction(async (tx) => {
+        const doc = await tx.get(ref);
+        if (!doc.exists) throw new Error(`updateProject: project ${projectId} not found`);
+        const updated = { ...(doc.data() as Project), ...patch };
+        tx.set(ref, updated);
+        return updated;
+      });
+    },
+    async getSubmissionsByIssue(issueId) {
+      const snapshot = await db.collection("submissions").where("issue_id", "==", issueId).get();
+      return snapshot.docs.map((doc) => doc.data() as Submission);
+    },
+    async getImpactRecord(projectId) {
+      const doc = await db.collection("impactRecords").doc(projectId).get();
+      return doc.exists ? (doc.data() as ImpactRecord) : null;
+    },
+    async putImpactRecord(record) {
+      await db.collection("impactRecords").doc(record.project_id).set(record);
+    },
+    async getSubmissionsByCitizen(citizenId) {
+      const snapshot = await db
+        .collection("submissions")
+        .where("citizen_id", "==", citizenId)
+        .get();
+      return snapshot.docs.map((doc) => doc.data() as Submission);
+    },
+    async getConsentRecordsByCitizen(citizenId) {
+      const snapshot = await db
+        .collection("consentRecords")
+        .where("citizen_id", "==", citizenId)
+        .get();
+      return snapshot.docs.map((doc) => doc.data() as ConsentRecord);
+    },
+    async tombstoneIssue(issueId) {
+      await db.collection("issues").doc(issueId).update({ status: "tombstoned" });
     },
   };
 }

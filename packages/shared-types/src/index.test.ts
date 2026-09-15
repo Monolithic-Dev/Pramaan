@@ -68,6 +68,7 @@ const expectedKeys: Record<string, string[]> = {
     "submitted_at",
     "status",
     "processing_error",
+    "submitter_ip_hash",
   ],
   issueFixture: [
     "issue_id",
@@ -160,6 +161,8 @@ const expectedKeys: Record<string, string[]> = {
     "status",
     "assigned_dept",
     "budget_estimate_inr",
+    "marked_complete_at",
+    "officer_signed_off_at",
   ],
   impactRecordFixture: [
     "impact_id",

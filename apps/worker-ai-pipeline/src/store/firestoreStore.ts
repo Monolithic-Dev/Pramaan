@@ -90,7 +90,11 @@ export function createFirestoreStore(db: Firestore): Store {
       const byId = new Map<string, Issue>();
       for (const doc of [...byReporters.docs, ...byOverride.docs]) {
         const issue = doc.data() as Issue;
-        if (!["resolved", "tombstoned"].includes(issue.status)) byId.set(issue.issue_id, issue);
+        const statusOk = !["resolved", "tombstoned"].includes(issue.status);
+        // Fraud-flagged issues are suppressed unless emergency_override
+        // confirms them (docs/phases/phase-8-fraud-impact-crossborder.md "Traps").
+        const fraudOk = issue.emergency_override || issue.fraud_flags.length === 0;
+        if (statusOk && fraudOk) byId.set(issue.issue_id, issue);
       }
       return [...byId.values()];
     },
@@ -132,6 +136,25 @@ export function createFirestoreStore(db: Firestore): Store {
         .limit(1)
         .get();
       return snapshot.empty ? null : (snapshot.docs[0].data() as PriorityScore);
+    },
+    async countRecentSubmissionsByIpHash(ipHash, sinceIso) {
+      const snapshot = await db
+        .collection("submissions")
+        .where("submitter_ip_hash", "==", ipHash)
+        .where("submitted_at", ">=", sinceIso)
+        .count()
+        .get();
+      return snapshot.data().count;
+    },
+    async addFraudFlag(issueId, flag) {
+      const ref = db.collection("issues").doc(issueId);
+      await db.runTransaction(async (tx) => {
+        const doc = await tx.get(ref);
+        if (!doc.exists) throw new Error(`addFraudFlag: issue ${issueId} not found`);
+        const issue = doc.data() as Issue;
+        if (issue.fraud_flags.includes(flag)) return;
+        tx.update(ref, { fraud_flags: [...issue.fraud_flags, flag] });
+      });
     },
   };
 }

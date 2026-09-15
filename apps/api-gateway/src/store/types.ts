@@ -3,8 +3,10 @@ import type {
   AgentTurn,
   Citizen,
   ConsentRecord,
+  ImpactRecord,
   Issue,
   PriorityScore,
+  Project,
   Submission,
 } from "@jansetu/shared-types";
 
@@ -61,4 +63,21 @@ export interface Store {
     to?: string;
     refused?: boolean;
   }): Promise<AgentTurn[]>;
+
+  // --- Phase 8: impact loop ---
+
+  getProject(projectId: string): Promise<Project | null>;
+  /** No "recommend a project" endpoint exists yet (docs/phases/phase-8-manual-checklist.md)
+   *  — used to seed a Project ahead of mark-complete/confirm-resolution. */
+  putProject(project: Project): Promise<void>;
+  updateProject(projectId: string, patch: Partial<Project>): Promise<Project>;
+  getSubmissionsByIssue(issueId: string): Promise<Submission[]>;
+  getImpactRecord(projectId: string): Promise<ImpactRecord | null>;
+  putImpactRecord(record: ImpactRecord): Promise<void>;
+
+  // --- Phase 8: privacy ---
+
+  getSubmissionsByCitizen(citizenId: string): Promise<Submission[]>;
+  getConsentRecordsByCitizen(citizenId: string): Promise<ConsentRecord[]>;
+  tombstoneIssue(issueId: string): Promise<void>;
 }

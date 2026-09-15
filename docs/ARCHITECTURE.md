@@ -116,4 +116,22 @@ Maintain a table here of every open-source library, public dataset, and third-pa
 
 | Dataset / Library / API | Source | Licence | Used for |
 |---|---|---|---|
-| _(fill in during Phase 1-2 as real sources are sourced)_ | | | |
+| React | reactjs.org | MIT | `apps/web` UI |
+| Vite | vitejs.dev | MIT | Frontend build/dev server |
+| React Router | reactrouter.com | MIT | `apps/web` client-side routing |
+| Tailwind CSS | tailwindcss.com | MIT | Styling across `apps/web` |
+| Noto Sans / Noto Sans Devanagari / Noto Sans Tamil | fonts.google.com/noto | SIL Open Font License 1.1 | Non-Latin script rendering fallback (`apps/web/index.html`) |
+| Fastify | fastify.dev | MIT | `apps/api-gateway`, `apps/worker-ai-pipeline` HTTP servers |
+| Zod | zod.dev | MIT | Request schema validation |
+| Firebase Admin SDK (`firebase-admin`) | firebase.google.com | Apache-2.0 | Firestore + Auth from all backend services |
+| Google Cloud Identity Toolkit REST API | cloud.google.com/identity-platform | Google Cloud ToS | Phone OTP (`apps/api-gateway/src/lib/identityToolkit.ts`) |
+| `@google/genai` | github.com/googleapis/js-genai | Apache-2.0 | Gemini structured-output categorization and agent function calling |
+| Vertex AI (Gemini, `text-embedding-005`) | cloud.google.com/vertex-ai | Google Cloud ToS | Categorization, embeddings, agent orchestration |
+| `@google-cloud/bigquery` | github.com/googleapis/nodejs-bigquery | Apache-2.0 | Reference-data joins (`InfraIndex`, `InvestmentRecord`, `AdminRegion`) |
+| `@google-cloud/pubsub` | github.com/googleapis/nodejs-pubsub | Apache-2.0 | Ingestion → AI pipeline decoupling |
+| `ngeohash` | npmjs.com/package/ngeohash | MIT | Geohash encode/decode for dedup candidate retrieval |
+| `pino` | getpino.io | MIT | Structured logging (test harness) |
+| Turborepo | turbo.build | MIT | Monorepo task orchestration |
+| pnpm | pnpm.io | MIT | Package management/workspaces |
+| Vitest / `@testing-library/react` | vitest.dev, testing-library.com | MIT | Test suites across every package |
+| `InfraIndex`/`InvestmentRecord` seed data (`scripts/seed-demo-data/source/*.csv`) | Authored for this project | N/A | **Clearly-labelled synthetic sample data**, not a live public dataset — see `docs/PRD.md` §8 for the explicit scope disclosure this reflects |

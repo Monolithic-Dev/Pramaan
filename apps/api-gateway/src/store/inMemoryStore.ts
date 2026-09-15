@@ -3,8 +3,10 @@ import type {
   AgentTurn,
   Citizen,
   ConsentRecord,
+  ImpactRecord,
   Issue,
   PriorityScore,
+  Project,
   Submission,
 } from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
@@ -19,6 +21,7 @@ export function createInMemoryStore(): Store & {
   auditLog: AuditLogEntry[];
   agentSessions: Map<string, AgentSession>;
   agentTurns: Map<string, AgentTurn>;
+  projects: Map<string, Project>;
 } {
   const citizens = new Map<string, Citizen>();
   const submissions = new Map<string, Submission>();
@@ -30,6 +33,8 @@ export function createInMemoryStore(): Store & {
   const auditLog: AuditLogEntry[] = [];
   const agentSessions = new Map<string, AgentSession>();
   const agentTurns = new Map<string, AgentTurn>();
+  const projects = new Map<string, Project>();
+  const impactRecords = new Map<string, ImpactRecord>(); // keyed by project_id
 
   return {
     async getCitizen(citizenId) {
@@ -120,10 +125,44 @@ export function createInMemoryStore(): Store & {
         return true;
       });
     },
+    async getProject(projectId) {
+      return projects.get(projectId) ?? null;
+    },
+    async putProject(project) {
+      projects.set(project.project_id, project);
+    },
+    async updateProject(projectId, patch) {
+      const project = projects.get(projectId);
+      if (!project) throw new Error(`updateProject: project ${projectId} not found`);
+      const updated = { ...project, ...patch };
+      projects.set(projectId, updated);
+      return updated;
+    },
+    async getSubmissionsByIssue(issueId) {
+      return [...submissions.values()].filter((s) => s.issue_id === issueId);
+    },
+    async getImpactRecord(projectId) {
+      return impactRecords.get(projectId) ?? null;
+    },
+    async putImpactRecord(record) {
+      impactRecords.set(record.project_id, record);
+    },
+    async getSubmissionsByCitizen(citizenId) {
+      return [...submissions.values()].filter((s) => s.citizen_id === citizenId);
+    },
+    async getConsentRecordsByCitizen(citizenId) {
+      return [...consentRecords.values()].filter((c) => c.citizen_id === citizenId);
+    },
+    async tombstoneIssue(issueId) {
+      const issue = issues.get(issueId);
+      if (!issue) return;
+      issues.set(issueId, { ...issue, status: "tombstoned" });
+    },
     issues,
     priorityScores,
     auditLog,
     agentSessions,
     agentTurns,
+    projects,
   };
 }
