@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { processSubmission } from "./services/processSubmission.js";
+import { runScoringBatch } from "./services/scoring.js";
 
 interface PubSubPushBody {
   message?: { data?: string };
@@ -42,6 +43,14 @@ export function buildApp(deps: Deps) {
     }
 
     return reply.code(204).send();
+  });
+
+  // Triggered by Cloud Scheduler every 15 minutes in production
+  // (docs/phases/phase-5-scoring.md §5.4). Also callable directly for an
+  // immediate rescore (e.g. after an emergency-override flag flips).
+  app.post("/jobs/score", async (request, reply) => {
+    const summary = await runScoringBatch(deps, request.log);
+    return reply.code(200).send(summary);
   });
 
   return app;

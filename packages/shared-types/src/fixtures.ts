@@ -110,6 +110,8 @@ export const issueFixture: Issue = {
   emergency_override: false,
   fraud_flags: [],
   status: "prioritized",
+  composite_score: 0.628,
+  latest_score_id: "score_iss_7d4e_v3",
 };
 
 export const geoClusterFixture: GeoCluster = {

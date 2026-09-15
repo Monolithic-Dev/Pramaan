@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
-import type { Citizen, ConsentRecord, Submission } from "@jansetu/shared-types";
-import type { IdempotencyRecord, Store } from "./types.js";
+import type { Citizen, ConsentRecord, Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
   return {
@@ -47,6 +48,36 @@ export function createFirestoreStore(db: Firestore): Store {
     },
     async putConsentRecord(record) {
       await db.collection("consentRecords").doc(record.consent_id).set(record);
+    },
+    async getIssue(issueId) {
+      const doc = await db.collection("issues").doc(issueId).get();
+      return doc.exists ? (doc.data() as Issue) : null;
+    },
+    async getCanonicalScore(issueId) {
+      const snapshot = await db
+        .collection("priorityScores")
+        .where("issue_id", "==", issueId)
+        .where("is_canonical", "==", true)
+        .orderBy("computed_at", "desc")
+        .limit(1)
+        .get();
+      return snapshot.empty ? null : (snapshot.docs[0].data() as PriorityScore);
+    },
+    async setEmergencyOverride(issueId, enabled) {
+      const ref = db.collection("issues").doc(issueId);
+      return db.runTransaction(async (tx) => {
+        const doc = await tx.get(ref);
+        if (!doc.exists) throw new Error(`setEmergencyOverride: issue ${issueId} not found`);
+        const updated = { ...(doc.data() as Issue), emergency_override: enabled };
+        tx.set(ref, updated);
+        return updated;
+      });
+    },
+    async putAuditLogEntry(entry) {
+      await db
+        .collection("auditLog")
+        .doc(entry.audit_id || randomUUID())
+        .set(entry);
     },
   };
 }

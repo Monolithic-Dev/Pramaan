@@ -192,6 +192,8 @@ async function dedupe(
     emergency_override: false,
     fraud_flags: [],
     status: "open",
+    composite_score: null,
+    latest_score_id: null,
   };
   await deps.store.createIssue(newIssue);
   log.info(

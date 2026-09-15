@@ -4,7 +4,8 @@ import type { Publisher } from "../lib/pubsub.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 import type { Deps } from "../deps.js";
 
-export interface FakeDeps extends Deps {
+export interface FakeDeps extends Omit<Deps, "store"> {
+  store: ReturnType<typeof createInMemoryStore>;
   publishedMessages: unknown[];
   /** Maps a fake token string to the decoded identity it should resolve to. */
   tokens: Map<string, DecodedAuth>;

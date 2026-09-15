@@ -1,9 +1,10 @@
-import type { Issue, Submission } from "@jansetu/shared-types";
+import type { Issue, PriorityScore, Submission } from "@jansetu/shared-types";
 import type { CandidateQuery, Store } from "./types.js";
 
 export function createInMemoryStore(): Store {
   const submissions = new Map<string, Submission>();
   const issues = new Map<string, Issue>();
+  const priorityScores = new Map<string, PriorityScore>();
 
   return {
     async getSubmission(submissionId) {
@@ -50,6 +51,43 @@ export function createInMemoryStore(): Store {
       const updated = merge(current);
       issues.set(issueId, updated);
       return updated;
+    },
+    async getEligibleIssuesForScoring(countryCode) {
+      return [...issues.values()].filter(
+        (issue) =>
+          issue.country_code === countryCode &&
+          !["resolved", "tombstoned"].includes(issue.status) &&
+          (issue.distinct_reporter_count >= 3 || issue.emergency_override),
+      );
+    },
+    async getAllDistinctReporterCounts(countryCode) {
+      return [...issues.values()]
+        .filter((issue) => issue.country_code === countryCode && issue.status !== "tombstoned")
+        .map((issue) => issue.distinct_reporter_count);
+    },
+    async putPriorityScore(score) {
+      priorityScores.set(score.score_id, score);
+    },
+    async updateIssueScore(issueId, score) {
+      const issue = issues.get(issueId);
+      if (!issue) throw new Error(`updateIssueScore: issue ${issueId} not found`);
+      issues.set(issueId, {
+        ...issue,
+        composite_score: score.composite_score,
+        latest_score_id: score.latest_score_id,
+      });
+    },
+    async getImpactEfficacy() {
+      // No ImpactRecord writer exists yet (Phase 8) — always "no history",
+      // which is the correct default (effFactor stays exactly 1.0).
+      return null;
+    },
+    async getCanonicalScore(issueId) {
+      const candidates = [...priorityScores.values()].filter(
+        (s) => s.issue_id === issueId && s.is_canonical,
+      );
+      if (candidates.length === 0) return null;
+      return candidates.sort((a, b) => (a.computed_at < b.computed_at ? 1 : -1))[0];
     },
   };
 }

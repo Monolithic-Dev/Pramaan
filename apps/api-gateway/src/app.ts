@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerIssueRoutes } from "./routes/issues.js";
 import { registerSubmissionRoutes } from "./routes/submissions.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 
@@ -23,6 +24,7 @@ export function buildApp(deps: Deps) {
       registerAuthRoutes(v1, deps);
       registerSubmissionRoutes(v1, deps);
       registerWebhookRoutes(v1, deps);
+      registerIssueRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );
