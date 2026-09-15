@@ -1,4 +1,6 @@
 import type { AuthVerifier, DecodedAuth } from "../lib/authVerifier.js";
+import type { AncestryStep, AvailableData, BigQueryAgentClient, InvestmentSummary } from "../lib/bigquery.js";
+import type { AgentTurnResponse, GeminiAgentClient } from "../lib/geminiAgent.js";
 import type { IdentityToolkit } from "../lib/identityToolkit.js";
 import type { Publisher } from "../lib/pubsub.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
@@ -11,12 +13,22 @@ export interface FakeDeps extends Omit<Deps, "store"> {
   tokens: Map<string, DecodedAuth>;
   /** Maps a fake sessionInfo/OTP pair to the phone number and verified UID. */
   otpSessions: Map<string, { phone: string; code: string; uid: string }>;
+  /** Test-configurable BigQuery data, keyed by regionId (and regionId+category). */
+  ancestryByRegion: Map<string, AncestryStep[]>;
+  investmentByRegionCategory: Map<string, InvestmentSummary[]>;
+  availableDataByRegion: Map<string, AvailableData>;
+  /** Queue consumed front-to-back by geminiAgent.generateTurn(). */
+  nextAgentResponses: AgentTurnResponse[];
 }
 
 export function createFakeDeps(): FakeDeps {
   const publishedMessages: unknown[] = [];
   const tokens = new Map<string, DecodedAuth>();
   const otpSessions = new Map<string, { phone: string; code: string; uid: string }>();
+  const ancestryByRegion = new Map<string, AncestryStep[]>();
+  const investmentByRegionCategory = new Map<string, InvestmentSummary[]>();
+  const availableDataByRegion = new Map<string, AvailableData>();
+  const nextAgentResponses: AgentTurnResponse[] = [];
 
   const authVerifier: AuthVerifier = {
     async verifyIdToken(token) {
@@ -45,13 +57,40 @@ export function createFakeDeps(): FakeDeps {
     },
   };
 
+  const bigqueryAgent: BigQueryAgentClient = {
+    async getAncestryChain(regionId) {
+      return ancestryByRegion.get(regionId) ?? [{ regionId, level: "ward" }];
+    },
+    async getInvestmentRecords(regionId, category) {
+      return investmentByRegionCategory.get(`${regionId}|${category}`) ?? [];
+    },
+    async getAvailableData(regionId) {
+      return availableDataByRegion.get(regionId) ?? { infraIndexTypes: [], investmentFiscalYears: [] };
+    },
+  };
+
+  const geminiAgent: GeminiAgentClient = {
+    async generateTurn() {
+      if (nextAgentResponses.length === 0) {
+        throw new Error("createFakeDeps: no queued agent response — configure nextAgentResponses");
+      }
+      return nextAgentResponses.shift()!;
+    },
+  };
+
   return {
     store: createInMemoryStore(),
     publisher,
     identityToolkit,
     authVerifier,
+    bigqueryAgent,
+    geminiAgent,
     publishedMessages,
     tokens,
     otpSessions,
+    ancestryByRegion,
+    investmentByRegionCategory,
+    availableDataByRegion,
+    nextAgentResponses,
   };
 }

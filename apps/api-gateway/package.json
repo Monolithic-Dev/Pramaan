@@ -17,6 +17,8 @@
     "@jansetu/shared-utils": "workspace:*",
     "firebase-admin": "^12.7.0",
     "@google-cloud/pubsub": "^4.10.0",
+    "@google-cloud/bigquery": "^7.9.0",
+    "@google/genai": "^0.15.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

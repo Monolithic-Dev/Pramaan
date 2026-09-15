@@ -82,11 +82,27 @@
       ]
     },
     {
-      "collectionGroup": "agent_turns",
+      "collectionGroup": "agentTurns",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "session_id", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "agentTurns",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "refused", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "issues",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "admin_region_id", "order": "ASCENDING" },
+        { "fieldPath": "category", "order": "ASCENDING" }
       ]
     }
   ],

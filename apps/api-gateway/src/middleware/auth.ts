@@ -9,7 +9,11 @@ async function tryAttachAuth(request: FastifyRequest, authVerifier: AuthVerifier
   const decoded = await authVerifier.verifyIdToken(token);
   request.citizenId = decoded.uid;
   if (typeof decoded.claims.role === "string") {
-    request.officer = { role: decoded.claims.role, jurisdiction: decoded.claims.jurisdiction };
+    request.officer = {
+      role: decoded.claims.role,
+      regionId: typeof decoded.claims.region_id === "string" ? decoded.claims.region_id : null,
+      countryCode: typeof decoded.claims.country_code === "string" ? decoded.claims.country_code : null,
+    };
   }
 }
 
