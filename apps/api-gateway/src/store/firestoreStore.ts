@@ -1,5 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
-import type { Citizen, Submission } from "@jansetu/shared-types";
+import type { Citizen, ConsentRecord, Submission } from "@jansetu/shared-types";
 import type { IdempotencyRecord, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
@@ -44,6 +44,9 @@ export function createFirestoreStore(db: Firestore): Store {
         .collection("idempotencyKeys")
         .doc(key)
         .set({ ...record, createdAt: Date.now() });
+    },
+    async putConsentRecord(record) {
+      await db.collection("consentRecords").doc(record.consent_id).set(record);
     },
   };
 }

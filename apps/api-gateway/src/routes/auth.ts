@@ -1,12 +1,8 @@
-import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import type { Citizen } from "@jansetu/shared-types";
+import { hashPhone } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 import { otpRequestSchema, otpVerifySchema } from "../schemas/auth.js";
-
-function hashPhone(phone: string): string {
-  return `sha256:${createHash("sha256").update(phone).digest("hex")}`;
-}
 
 export function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
   app.post("/auth/otp/request", async (request, reply) => {
@@ -17,6 +13,9 @@ export function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
       });
     }
 
+    // country_code is accepted for API_SPEC.md forward-compatibility with
+    // docs/CROSS_BORDER_AND_DPG.md's multi-country model; the MVP is India-only,
+    // so it isn't threaded through to Citizen creation yet (hardcoded "IN" below).
     const { sessionInfo } = await deps.identityToolkit.sendVerificationCode(
       parsed.data.phone,
     );

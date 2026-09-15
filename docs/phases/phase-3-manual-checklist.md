@@ -1,7 +1,8 @@
 # Phase 3 — manual steps (run these yourself)
 
-All routes, middleware, validation, and unit tests (13 passing, no live GCP needed —
-see `apps/api-gateway/src/testUtils/fakeDeps.ts`) are done. These need real credentials:
+All routes, middleware, validation, and unit tests (23 passing, no live GCP needed —
+see `apps/api-gateway/src/testUtils/fakeDeps.ts`) are done. See `apps/api-gateway/.env.example`
+for the full list of environment variables. These steps need real credentials/accounts:
 
 1. **Enable phone auth** on your Firebase/Identity Platform project (console → Authentication → Sign-in method → Phone), and add test phone numbers for development so OTP delivery isn't flaky during rehearsal.
 2. **Get the Web API key** for `FIREBASE_WEB_API_KEY` (console → Project settings → General → Web API Key). This is what `apps/api-gateway/src/lib/identityToolkit.ts` uses to call the Identity Toolkit REST API server-side.
@@ -22,17 +23,33 @@ see `apps/api-gateway/src/testUtils/fakeDeps.ts`) are done. These need real cred
      -d '{"request_id":"...","otp":"..."}'
    # verify the resulting citizen_id doc in Firestore has a hashed, not raw, phone_hash
    curl -X POST localhost:8080/v1/submissions -H 'content-type: application/json' \
-     -d '{"channel":"web","text":"test pothole","lat":28.6139,"lng":77.2090}'
+     -H 'idempotency-key: <uuid v4>' \
+     -d '{"channel":"web","text":"test pothole","lat":28.6139,"lng":77.2090,"consent_version":"dpdp-notice-v1-en"}'
    # confirm the submission doc appears in Firestore and a message lands on raw-submissions
    ```
+5. **WhatsApp/SMS provider account** (Gupshup or Twilio): apply for WhatsApp Business API sandbox access on Day 1 — approval can take a day. Once approved:
+   - Point the provider's inbound webhook at `POST /v1/webhooks/whatsapp` and `POST /v1/webhooks/sms`.
+   - Replace the placeholder `X-Webhook-Secret` check in `apps/api-gateway/src/routes/webhooks.ts` with the provider's real HMAC signature verification.
+   - Map the provider's actual payload shape to the normalized `{from, message_id, text, photo_url, lat, lng, location_text}` shape in `apps/api-gateway/src/schemas/webhooks.ts` — the current shape is a stand-in since no sandbox account exists yet.
+   - A publicly reachable URL is required (use the deployed Cloud Run service, not ngrok, so the prod path is exercised).
 
 ## Deferred (documented, not built)
-- **Firestore/Pub/Sub emulator integration test** (Phase 3 task 9): unit tests already cover the same logic against `createInMemoryStore()`/fake Pub/Sub without needing the emulator suite; wiring up `firebase emulators:start` for a true integration test is a reasonable follow-up but wasn't worth the setup time this pass.
-- **In-memory fallback**: if `FIREBASE_PROJECT_ID` isn't set, there is currently no automatic fallback to `createInMemoryStore()` in `deps.ts` — `createRealDeps()` always talks to real Firebase/GCP. Local dev without credentials should use the emulator suite or `pnpm --filter @jansetu/api-gateway test`.
+- **Real-time voice/STT channel**: `channel: "voice"` is accepted by the schema, but Cloud Speech-to-Text transcription (`raw_audio_url` → `raw_text`) isn't wired yet — needs a GCS upload path and a Speech-to-Text call behind a seam like `identityToolkit.ts`'s pattern.
+- **Point-in-polygon `admin_region_id`/`geohash` resolution**: `Submission.geohash`/`resolved_region_id` stay `null` at ingestion; full resolution against the `admin_regions` BigQuery table via `ST_CONTAINS` is explicitly Phase 4.6's job (`docs/phases/phase-4-extraction-dedup.md`).
+- **Gemini-based PII pass**: only the regex-based scrub (phone/email/PAN/Aadhaar patterns) runs inline; the Gemini pass that catches names/addresses a regex can't, plus `contains_personal_emergency` routing, is Phase 4 worker territory.
+- **Offline PWA queue**: IndexedDB-backed retry-on-reconnect is frontend work (Phase 7).
+- **Mock server for the frontend track** (`apps/api-gateway/mocks/`): not built this round — the frontend track can build against the real endpoints implemented so far instead.
+- **Firestore/Pub/Sub emulator integration test**: unit tests already cover the same logic against fakes; a true emulator-based integration test remains a nice-to-have.
+- **Demo-day rate-limit allowlist**: the CIDR exemption mentioned in `API_SPEC.md` §2 isn't implemented — needed before demo day so judges on one WiFi network don't rate-limit each other.
 
-## Definition of done (from `phase-3-core-backend-ingestion.md`)
-- [x] `POST /submissions` with a valid payload returns `202` with a real `submission_id` — verified via unit test; live Firestore verification is step 4 above.
-- [x] `POST /submissions` missing required content returns `400 VALIDATION_ERROR`.
-- [x] The 11th submission from the same citizen within an hour returns `429`.
-- [ ] `POST /auth/otp/verify` with a valid OTP returns a usable JWT, hashed phone in the `Citizen` doc — logic verified via unit test with a fake OTP provider; live verification needs step 1-4 above.
-- [x] All tests in task 8 pass in CI (13/13).
+## Definition of done (from `phase-3-ingestion.md`)
+- [x] Idempotency: same key ×N → exactly 1 Firestore doc, N identical `202` responses — unit tested.
+- [x] Same key, different body → `409 IDEMPOTENCY_CONFLICT` — unit tested.
+- [x] Pub/Sub failure → submission still returns `202`, `status: "deferred"` — implemented in `services/ingestSubmission.ts`, needs a live-Pub/Sub-outage manual check to fully confirm.
+- [x] No-GPS submission stores `location_text` with `location_confidence: "low"` — unit tested.
+- [x] A submission containing a phone number has it removed from `pii_scrubbed_text`, retained in `raw_text` — unit tested.
+- [x] WhatsApp and SMS webhooks produce schema-identical `Submission` records via the same internal path — unit tested.
+- [ ] `POST /v1/submissions` p95 latency < 2s under a 100 req/min burst — needs a load test against a deployed instance.
+- [ ] Hindi voice note → correct `detected_language`/`translated_text`, raw audio deleted — deferred (see above).
+- [ ] Photo upload strips EXIF GPS — not yet implemented.
+- [ ] Offline → submit → online produces exactly one record — deferred to Phase 7 (frontend).

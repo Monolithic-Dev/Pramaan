@@ -8,6 +8,7 @@ const validPayload = {
   text: "sadak me bahut bada gaddha hai",
   lat: 28.6139,
   lng: 77.209,
+  consent_version: "dpdp-notice-v1-en",
 };
 
 function idempotencyHeaders(extra: Record<string, string> = {}) {
@@ -47,12 +48,61 @@ describe("POST /submissions", () => {
     const response = await app.inject({
       method: "POST",
       url: "/v1/submissions",
-      payload: { channel: "web", lat: 28.6139, lng: 77.209 },
+      payload: { channel: "web", lat: 28.6139, lng: 77.209, consent_version: "dpdp-notice-v1-en" },
       headers: idempotencyHeaders(),
     });
 
     expect(response.statusCode).toBe(400);
     expect(response.json().error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("with neither lat/lng nor location_text returns 400 VALIDATION_ERROR", async () => {
+    const app = buildApp(createFakeDeps());
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: { channel: "web", text: "test", consent_version: "dpdp-notice-v1-en" },
+      headers: idempotencyHeaders(),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("with no coordinates but a location_text is accepted with location_confidence low", async () => {
+    const deps = createFakeDeps();
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: {
+        channel: "web",
+        text: "test",
+        location_text: "near the Ward 14 market",
+        consent_version: "dpdp-notice-v1-en",
+      },
+      headers: idempotencyHeaders(),
+    });
+
+    expect(response.statusCode).toBe(202);
+    const stored = await deps.store.getSubmission(response.json().submission_id);
+    expect(stored?.location_confidence).toBe("low");
+    expect(stored?.location_text).toBe("near the Ward 14 market");
+  });
+
+  it("scrubs a phone number out of pii_scrubbed_text while keeping raw_text intact", async () => {
+    const deps = createFakeDeps();
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: { ...validPayload, text: "call me on 9812345678 about the pothole" },
+      headers: idempotencyHeaders(),
+    });
+
+    const stored = await deps.store.getSubmission(response.json().submission_id);
+    expect(stored?.raw_text).toContain("9812345678");
+    expect(stored?.pii_scrubbed_text).not.toContain("9812345678");
   });
 
   it("replaying the same Idempotency-Key with the same body returns the original submission_id", async () => {
@@ -119,7 +169,13 @@ describe("POST /submissions", () => {
     const response = await app.inject({
       method: "POST",
       url: "/v1/submissions",
-      payload: { channel: "web", text: "test", lat: 51.5074, lng: -0.1278 },
+      payload: {
+        channel: "web",
+        text: "test",
+        lat: 51.5074,
+        lng: -0.1278,
+        consent_version: "dpdp-notice-v1-en",
+      },
       headers: idempotencyHeaders(),
     });
 

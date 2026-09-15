@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerSubmissionRoutes } from "./routes/submissions.js";
+import { registerWebhookRoutes } from "./routes/webhooks.js";
 
 export function buildApp(deps: Deps) {
   const app = Fastify({ logger: true });
@@ -21,6 +22,7 @@ export function buildApp(deps: Deps) {
     async (v1) => {
       registerAuthRoutes(v1, deps);
       registerSubmissionRoutes(v1, deps);
+      registerWebhookRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

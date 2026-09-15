@@ -1,4 +1,4 @@
-import type { Citizen, Submission } from "@jansetu/shared-types";
+import type { Citizen, ConsentRecord, Submission } from "@jansetu/shared-types";
 
 export interface IdempotencyRecord {
   submissionId: string;
@@ -19,4 +19,5 @@ export interface Store {
   getIdempotencyRecord(key: string): Promise<IdempotencyRecord | null>;
   /** Stores an Idempotency-Key -> submission mapping with a 24h TTL. */
   putIdempotencyRecord(key: string, record: IdempotencyRecord): Promise<void>;
+  putConsentRecord(record: ConsentRecord): Promise<void>;
 }
