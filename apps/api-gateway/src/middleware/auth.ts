@@ -39,3 +39,20 @@ export function requireAuth(authVerifier: AuthVerifier) {
     }
   };
 }
+
+/** Endpoints restricted to officers. Role-hierarchy ("role >= collector") and
+ *  jurisdiction/region scoping are stubbed here, completed in Phase 7. */
+export function requireOfficer(authVerifier: AuthVerifier) {
+  return async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await tryAttachAuth(request, authVerifier);
+    } catch {
+      // fall through to the missing-officer check below
+    }
+    if (!request.officer) {
+      return reply.code(401).send({
+        error: { code: "UNAUTHORIZED", message: "A valid officer Bearer token is required." },
+      });
+    }
+  };
+}

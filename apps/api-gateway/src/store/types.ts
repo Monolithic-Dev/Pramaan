@@ -1,8 +1,20 @@
-import type { Citizen, ConsentRecord, Submission } from "@jansetu/shared-types";
+import type { Citizen, ConsentRecord, Issue, PriorityScore, Submission } from "@jansetu/shared-types";
 
 export interface IdempotencyRecord {
   submissionId: string;
   requestHash: string;
+}
+
+/** Lightweight placeholder pending a proper AuditLog entity in shared-types
+ *  (docs/SECURITY_PRIVACY.md §6) — every officer action writes one of these. */
+export interface AuditLogEntry {
+  audit_id: string;
+  actor_id: string;
+  action: string;
+  before: unknown;
+  after: unknown;
+  justification: string | null;
+  timestamp: string;
 }
 
 // Narrow seam over Firestore so routes/middleware never import the admin SDK
@@ -20,4 +32,10 @@ export interface Store {
   /** Stores an Idempotency-Key -> submission mapping with a 24h TTL. */
   putIdempotencyRecord(key: string, record: IdempotencyRecord): Promise<void>;
   putConsentRecord(record: ConsentRecord): Promise<void>;
+
+  getIssue(issueId: string): Promise<Issue | null>;
+  /** Latest canonical (is_canonical: true) PriorityScore for an issue, or null if never scored. */
+  getCanonicalScore(issueId: string): Promise<PriorityScore | null>;
+  setEmergencyOverride(issueId: string, enabled: boolean): Promise<Issue>;
+  putAuditLogEntry(entry: AuditLogEntry): Promise<void>;
 }

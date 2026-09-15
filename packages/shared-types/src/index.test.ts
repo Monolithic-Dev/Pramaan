@@ -89,6 +89,8 @@ const expectedKeys: Record<string, string[]> = {
     "emergency_override",
     "fraud_flags",
     "status",
+    "composite_score",
+    "latest_score_id",
   ],
   geoClusterFixture: [
     "cluster_id",

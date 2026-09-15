@@ -156,6 +156,11 @@ export interface Issue {
   emergency_override: boolean;
   fraud_flags: string[];
   status: IssueStatus;
+  /** Denormalized from the latest canonical PriorityScore for fast reads
+   *  (docs/phases/phase-5-scoring.md §5.4); null until first scored. The full
+   *  breakdown lives in the PriorityScore record itself. */
+  composite_score: number | null;
+  latest_score_id: string | null;
 }
 
 export interface GeoCluster {

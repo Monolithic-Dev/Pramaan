@@ -13,6 +13,7 @@
   "dependencies": {
     "fastify": "^5.1.0",
     "dotenv": "^16.4.5",
+    "@google-cloud/bigquery": "^7.9.0",
     "@jansetu/shared-types": "workspace:*",
     "@jansetu/shared-utils": "workspace:*",
     "@jansetu/ai-prompts": "workspace:*",

@@ -1,4 +1,4 @@
-import type { Issue, Submission } from "@jansetu/shared-types";
+import type { Issue, PriorityScore, Submission } from "@jansetu/shared-types";
 
 export interface CandidateQuery {
   stateId: string;
@@ -35,4 +35,24 @@ export interface Store {
    * cluster (docs/phases/phase-4-extraction-dedup.md "Traps").
    */
   mergeIssue(issueId: string, merge: (issue: Issue) => Issue): Promise<Issue>;
+
+  // --- Phase 5: scoring ---
+
+  /** distinct_reporter_count >= 3, OR emergency_override, excluding resolved/tombstoned
+   *  (docs/EDGE_CASES.md #16, #11). */
+  getEligibleIssuesForScoring(countryCode: string): Promise<Issue[]>;
+
+  /** Every non-tombstoned issue's distinct_reporter_count, for the batch's P95_country. */
+  getAllDistinctReporterCounts(countryCode: string): Promise<number[]>;
+
+  putPriorityScore(score: PriorityScore): Promise<void>;
+
+  /** Denormalizes the canonical score onto the Issue for fast reads (§5.4). */
+  updateIssueScore(issueId: string, score: { composite_score: number; latest_score_id: string }): Promise<void>;
+
+  /** Mean ImpactRecord.efficacy for (category, any region in the ancestry chain); null if no history. */
+  getImpactEfficacy(category: string, regionAncestry: string[]): Promise<number | null>;
+
+  /** Latest canonical PriorityScore for an issue, or null if never scored. */
+  getCanonicalScore(issueId: string): Promise<PriorityScore | null>;
 }

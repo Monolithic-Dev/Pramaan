@@ -2,6 +2,7 @@ import type { CategorizationResult } from "@jansetu/ai-prompts";
 import type { Deps } from "../deps.js";
 import type { CategorizationClient } from "../lib/gemini.js";
 import type { EmbeddingClient } from "../lib/embeddings.js";
+import type { AncestryStep, LatestInvestment, ReferenceDataClient, RegionInfraData } from "../lib/bigquery.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 
 export interface FakeDeps extends Deps {
@@ -11,6 +12,10 @@ export interface FakeDeps extends Deps {
   /** Explicit embeddings by exact input text; falls back to a deterministic
    *  per-text vector (same text -> same vector) when not set. */
   embeddingsByText: Map<string, number[]>;
+  /** Test-configurable reference data, keyed by regionId (and regionId+category). */
+  ancestryByRegion: Map<string, AncestryStep[]>;
+  infraIndexByRegion: Map<string, RegionInfraData | null>;
+  latestInvestmentByRegionCategory: Map<string, LatestInvestment | null>;
 }
 
 function defaultEmbeddingFor(text: string): number[] {
@@ -25,6 +30,9 @@ function defaultEmbeddingFor(text: string): number[] {
 export function createFakeDeps(): FakeDeps {
   const nextCategorizations: (CategorizationResult | null)[] = [];
   const embeddingsByText = new Map<string, number[]>();
+  const ancestryByRegion = new Map<string, AncestryStep[]>();
+  const infraIndexByRegion = new Map<string, RegionInfraData | null>();
+  const latestInvestmentByRegionCategory = new Map<string, LatestInvestment | null>();
 
   const categorization: CategorizationClient = {
     async categorize() {
@@ -41,11 +49,30 @@ export function createFakeDeps(): FakeDeps {
     },
   };
 
+  const referenceData: ReferenceDataClient = {
+    async getAncestryChain(regionId) {
+      return ancestryByRegion.get(regionId) ?? [{ regionId, level: "ward" }];
+    },
+    async getInfraIndex(regionId) {
+      return infraIndexByRegion.has(regionId) ? infraIndexByRegion.get(regionId)! : null;
+    },
+    async getLatestInvestment(regionId, category) {
+      const key = `${regionId}|${category}`;
+      return latestInvestmentByRegionCategory.has(key)
+        ? latestInvestmentByRegionCategory.get(key)!
+        : null;
+    },
+  };
+
   return {
     store: createInMemoryStore(),
     categorization,
     embeddings,
+    referenceData,
     nextCategorizations,
     embeddingsByText,
+    ancestryByRegion,
+    infraIndexByRegion,
+    latestInvestmentByRegionCategory,
   };
 }

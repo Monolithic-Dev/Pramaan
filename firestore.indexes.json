@@ -49,6 +49,39 @@
       ]
     },
     {
+      "collectionGroup": "issues",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "country_code", "order": "ASCENDING" },
+        { "fieldPath": "distinct_reporter_count", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "issues",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "country_code", "order": "ASCENDING" },
+        { "fieldPath": "emergency_override", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "priorityScores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "issue_id", "order": "ASCENDING" },
+        { "fieldPath": "is_canonical", "order": "ASCENDING" },
+        { "fieldPath": "computed_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "impactRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "region_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "agent_turns",
       "queryScope": "COLLECTION",
       "fields": [

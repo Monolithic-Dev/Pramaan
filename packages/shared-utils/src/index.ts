@@ -6,3 +6,5 @@ export { hashPhone } from "./hashPhone.js";
 export { geohashEncode, geohashNeighbours, geohashDecodeCenter } from "./geohash.js";
 export { haversineMeters, cosine, densityClass, RADIUS_M } from "./dedupMath.js";
 export type { LatLng, DensityClass } from "./dedupMath.js";
+export { computeCompositeScore, demandScore, gapScore, percentile } from "./scoring.js";
+export type { ScoreWeights, ScoreComponents, CompositeScoreResult } from "./scoring.js";
