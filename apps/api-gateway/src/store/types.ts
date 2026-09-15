@@ -1,4 +1,12 @@
-import type { Citizen, ConsentRecord, Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type {
+  AgentSession,
+  AgentTurn,
+  Citizen,
+  ConsentRecord,
+  Issue,
+  PriorityScore,
+  Submission,
+} from "@jansetu/shared-types";
 
 export interface IdempotencyRecord {
   submissionId: string;
@@ -38,4 +46,19 @@ export interface Store {
   getCanonicalScore(issueId: string): Promise<PriorityScore | null>;
   setEmergencyOverride(issueId: string, enabled: boolean): Promise<Issue>;
   putAuditLogEntry(entry: AuditLogEntry): Promise<void>;
+
+  /** Exact admin_region_id match, optionally filtered by category (docs/AI_PIPELINE.md Stage 5). */
+  getIssuesByRegion(regionId: string, category?: string): Promise<Issue[]>;
+
+  putAgentSession(session: AgentSession): Promise<void>;
+  getAgentSession(sessionId: string): Promise<AgentSession | null>;
+  putAgentTurn(turn: AgentTurn): Promise<void>;
+  getAgentTurns(sessionId: string): Promise<AgentTurn[]>;
+  /** For GET /audit/agent-turns (state_admin only). */
+  queryAgentTurns(filter: {
+    officerId?: string;
+    from?: string;
+    to?: string;
+    refused?: boolean;
+  }): Promise<AgentTurn[]>;
 }

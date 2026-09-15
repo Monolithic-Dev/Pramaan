@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
-import type { Citizen, ConsentRecord, Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type {
+  AgentSession,
+  AgentTurn,
+  Citizen,
+  ConsentRecord,
+  Issue,
+  PriorityScore,
+  Submission,
+} from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
@@ -78,6 +86,50 @@ export function createFirestoreStore(db: Firestore): Store {
         .collection("auditLog")
         .doc(entry.audit_id || randomUUID())
         .set(entry);
+    },
+    async getIssuesByRegion(regionId, category) {
+      let ref = db.collection("issues").where("admin_region_id", "==", regionId);
+      if (category) ref = ref.where("category", "==", category);
+      const snapshot = await ref.get();
+      return snapshot.docs.map((doc) => doc.data() as Issue);
+    },
+    async putAgentSession(session) {
+      await db.collection("agentSessions").doc(session.session_id).set(session);
+    },
+    async getAgentSession(sessionId) {
+      const doc = await db.collection("agentSessions").doc(sessionId).get();
+      return doc.exists ? (doc.data() as AgentSession) : null;
+    },
+    async putAgentTurn(turn) {
+      await db.collection("agentTurns").doc(turn.turn_id).set(turn);
+    },
+    async getAgentTurns(sessionId) {
+      const snapshot = await db
+        .collection("agentTurns")
+        .where("session_id", "==", sessionId)
+        .orderBy("timestamp", "asc")
+        .get();
+      return snapshot.docs.map((doc) => doc.data() as AgentTurn);
+    },
+    async queryAgentTurns(filter) {
+      let sessionIds: Set<string> | null = null;
+      if (filter.officerId) {
+        const sessions = await db
+          .collection("agentSessions")
+          .where("officer_id", "==", filter.officerId)
+          .get();
+        sessionIds = new Set(sessions.docs.map((doc) => doc.id));
+        if (sessionIds.size === 0) return [];
+      }
+
+      let ref: FirebaseFirestore.Query = db.collection("agentTurns");
+      if (filter.from) ref = ref.where("timestamp", ">=", filter.from);
+      if (filter.to) ref = ref.where("timestamp", "<=", filter.to);
+      if (filter.refused !== undefined) ref = ref.where("refused", "==", filter.refused);
+      const snapshot = await ref.get();
+      return snapshot.docs
+        .map((doc) => doc.data() as AgentTurn)
+        .filter((turn) => !sessionIds || sessionIds.has(turn.session_id));
     },
   };
 }

@@ -3,7 +3,8 @@ import "fastify";
 declare module "fastify" {
   interface FastifyRequest {
     citizenId?: string;
-    // Role/jurisdiction claim handling is stubbed here; enforced in Phase 7.
-    officer?: { role: string; jurisdiction: unknown };
+    // Role-hierarchy enforcement ("role >= collector") is stubbed here,
+    // completed in Phase 7; regionId is used now to pin agent session scope (Phase 6).
+    officer?: { role: string; regionId: string | null; countryCode: string | null };
   }
 }

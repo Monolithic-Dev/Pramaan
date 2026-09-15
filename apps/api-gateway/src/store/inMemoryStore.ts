@@ -1,4 +1,12 @@
-import type { Citizen, ConsentRecord, Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type {
+  AgentSession,
+  AgentTurn,
+  Citizen,
+  ConsentRecord,
+  Issue,
+  PriorityScore,
+  Submission,
+} from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
 // Used by tests, and as a same-process fallback if no Firestore project is
@@ -9,6 +17,8 @@ export function createInMemoryStore(): Store & {
   issues: Map<string, Issue>;
   priorityScores: Map<string, PriorityScore>;
   auditLog: AuditLogEntry[];
+  agentSessions: Map<string, AgentSession>;
+  agentTurns: Map<string, AgentTurn>;
 } {
   const citizens = new Map<string, Citizen>();
   const submissions = new Map<string, Submission>();
@@ -18,6 +28,8 @@ export function createInMemoryStore(): Store & {
   const issues = new Map<string, Issue>();
   const priorityScores = new Map<string, PriorityScore>();
   const auditLog: AuditLogEntry[] = [];
+  const agentSessions = new Map<string, AgentSession>();
+  const agentTurns = new Map<string, AgentTurn>();
 
   return {
     async getCitizen(citizenId) {
@@ -71,8 +83,47 @@ export function createInMemoryStore(): Store & {
     async putAuditLogEntry(entry) {
       auditLog.push(entry);
     },
+    async getIssuesByRegion(regionId, category) {
+      return [...issues.values()].filter(
+        (issue) =>
+          issue.admin_region_id === regionId && (!category || issue.category === category),
+      );
+    },
+    async putAgentSession(session) {
+      agentSessions.set(session.session_id, session);
+    },
+    async getAgentSession(sessionId) {
+      return agentSessions.get(sessionId) ?? null;
+    },
+    async putAgentTurn(turn) {
+      agentTurns.set(turn.turn_id, turn);
+    },
+    async getAgentTurns(sessionId) {
+      return [...agentTurns.values()]
+        .filter((t) => t.session_id === sessionId)
+        .sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
+    },
+    async queryAgentTurns(filter) {
+      let sessionIds: Set<string> | null = null;
+      if (filter.officerId) {
+        sessionIds = new Set(
+          [...agentSessions.values()]
+            .filter((s) => s.officer_id === filter.officerId)
+            .map((s) => s.session_id),
+        );
+      }
+      return [...agentTurns.values()].filter((turn) => {
+        if (sessionIds && !sessionIds.has(turn.session_id)) return false;
+        if (filter.from && turn.timestamp < filter.from) return false;
+        if (filter.to && turn.timestamp > filter.to) return false;
+        if (filter.refused !== undefined && turn.refused !== filter.refused) return false;
+        return true;
+      });
+    },
     issues,
     priorityScores,
     auditLog,
+    agentSessions,
+    agentTurns,
   };
 }

@@ -17,9 +17,15 @@ importers:
 
   apps/api-gateway:
     dependencies:
+      '@google-cloud/bigquery':
+        specifier: ^7.9.0
+        version: 7.9.4
       '@google-cloud/pubsub':
         specifier: ^4.10.0
         version: 4.11.0
+      '@google/genai':
+        specifier: ^0.15.0
+        version: 0.15.0(@modelcontextprotocol/sdk@1.30.0(zod@3.25.76))
       '@jansetu/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
