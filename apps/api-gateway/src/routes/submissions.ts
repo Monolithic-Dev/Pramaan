@@ -41,6 +41,7 @@ export function registerSubmissionRoutes(app: FastifyInstance, deps: Deps) {
           consent_version: body.consent_version,
           citizenId: request.citizenId,
           idempotencyKey: idempotencyKey.data,
+          submitterIp: request.ip,
         },
         request.log,
       );

@@ -44,6 +44,14 @@
       "collectionGroup": "submissions",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "submitter_ip_hash", "order": "ASCENDING" },
+        { "fieldPath": "submitted_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "submissions",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "submitted_at", "order": "ASCENDING" }
       ]

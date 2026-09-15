@@ -3,6 +3,8 @@ import type { Deps } from "./deps.js";
 import { registerAgentRoutes } from "./routes/agent.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerIssueRoutes } from "./routes/issues.js";
+import { registerPrivacyRoutes } from "./routes/privacy.js";
+import { registerProjectRoutes } from "./routes/projects.js";
 import { registerSubmissionRoutes } from "./routes/submissions.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 
@@ -27,6 +29,8 @@ export function buildApp(deps: Deps) {
       registerWebhookRoutes(v1, deps);
       registerIssueRoutes(v1, deps);
       registerAgentRoutes(v1, deps);
+      registerProjectRoutes(v1, deps);
+      registerPrivacyRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

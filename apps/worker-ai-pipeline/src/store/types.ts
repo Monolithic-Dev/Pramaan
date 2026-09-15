@@ -55,4 +55,13 @@ export interface Store {
 
   /** Latest canonical PriorityScore for an issue, or null if never scored. */
   getCanonicalScore(issueId: string): Promise<PriorityScore | null>;
+
+  // --- Phase 8: anti-fraud ---
+
+  /** Count of submissions from this IP hash at or after `sinceIso` — burst-detection input
+   *  (docs/phases/phase-8-fraud-impact-crossborder.md §8.1). */
+  countRecentSubmissionsByIpHash(ipHash: string, sinceIso: string): Promise<number>;
+
+  /** Adds `flag` to the issue's fraud_flags if not already present (idempotent). */
+  addFraudFlag(issueId: string, flag: string): Promise<void>;
 }

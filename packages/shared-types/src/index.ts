@@ -130,6 +130,9 @@ export interface Submission {
   submitted_at: string;
   status: SubmissionStatus;
   processing_error: string | null;
+  /** SHA-256 of the submitting IP (never the raw address) — burst-detection input
+   *  only (docs/SECURITY_PRIVACY.md §4); null for channels with no IP (WhatsApp/SMS). */
+  submitter_ip_hash: string | null;
 }
 
 export interface Issue {
@@ -259,6 +262,11 @@ export interface Project {
   status: ProjectStatus;
   assigned_dept: string;
   budget_estimate_inr: number;
+  /** Set by POST /projects/{id}/mark-complete; null until an officer marks it. */
+  marked_complete_at: string | null;
+  /** Resolution needs confirmations_received >= confirmations_required *and*
+   *  this (docs/EDGE_CASES.md #13) — set by a separate officer sign-off action. */
+  officer_signed_off_at: string | null;
 }
 
 export interface ImpactRecord {

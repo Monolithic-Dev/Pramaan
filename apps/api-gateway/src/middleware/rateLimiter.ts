@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { Store } from "../store/types.js";
+import { isIpAllowlisted } from "../lib/cidr.js";
+import { env } from "../lib/env.js";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const CITIZEN_LIMIT = 10;
@@ -8,6 +10,8 @@ const ANONYMOUS_IP_LIMIT = 3;
 /** Firestore-backed rolling counter — fine at hackathon scale (single logical counter per key). */
 export function submissionRateLimiter(store: Store) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
+    if (isIpAllowlisted(request.ip, env.rateLimitAllowlistCidrs)) return;
+
     const isAuthenticated = Boolean(request.citizenId);
     const key = isAuthenticated ? `citizen:${request.citizenId}` : `ip:${request.ip}`;
     const limit = isAuthenticated ? CITIZEN_LIMIT : ANONYMOUS_IP_LIMIT;

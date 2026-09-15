@@ -18,6 +18,12 @@ import { env } from "../lib/env.js";
 const SAME_REPORTER_WINDOW_MS = 72 * 60 * 60 * 1000;
 const EMBEDDING_MODEL = "text-embedding-005";
 
+// docs/phases/phase-8-fraud-impact-crossborder.md §8.1: rule-based, not ML.
+// Flag for officer review, never auto-reject — a false positive silently
+// disenfranchises a legitimate citizen, a strictly worse failure.
+const BURST_WINDOW_MS = 20 * 60 * 1000;
+const BURST_THRESHOLD = 5;
+
 // Statuses this worker still has work to do on. Pub/Sub is at-least-once
 // delivery, not exactly-once — anything already past this stage is a no-op
 // replay (senior-backend's "every Pub/Sub handler must be idempotent").
@@ -86,6 +92,7 @@ export async function processSubmission(
     submission.issue_id = issueId;
     submission.state_id = stateId;
     submission.status = "processed";
+    await evaluateAntiFraud(deps, submission, issueId, log);
   } catch (err) {
     log.error({ err, submissionId }, "dedup pipeline failed");
     submission.status = "flagged";
@@ -201,4 +208,36 @@ async function dedupe(
     "created new issue",
   );
   return issueId;
+}
+
+// docs/ARCHITECTURE.md §3 data-flow step 3: "Anti-fraud evaluates the
+// new/updated issue, may set fraud_flags." Runs after dedup so it evaluates
+// the canonical issue, not a raw submission.
+async function evaluateAntiFraud(
+  deps: Deps,
+  submission: Submission,
+  issueId: string,
+  log: FastifyBaseLogger,
+): Promise<void> {
+  // Rule 2 — geofencing: coordinates were provided but fell outside a
+  // plausible bounding box for the country. Flag, never reject.
+  if (submission.lat !== null && submission.location_confidence === "low") {
+    await deps.store.addFraudFlag(issueId, "geofence_mismatch");
+    log.info({ issueId, submissionId: submission.submission_id }, "flagged geofence_mismatch");
+  }
+
+  // Rule 3 — burst detection: too many submissions from one IP hash in a
+  // short window. Flags the *cluster* (the issue), suppressing it from
+  // public scoring until an officer reviews — never deletes anything.
+  if (submission.submitter_ip_hash) {
+    const since = new Date(Date.now() - BURST_WINDOW_MS).toISOString();
+    const recentCount = await deps.store.countRecentSubmissionsByIpHash(
+      submission.submitter_ip_hash,
+      since,
+    );
+    if (recentCount > BURST_THRESHOLD) {
+      await deps.store.addFraudFlag(issueId, "burst_detected");
+      log.info({ issueId, recentCount }, "flagged burst_detected");
+    }
+  }
 }

@@ -88,6 +88,7 @@ export const submissionFixture: Submission = {
   submitted_at: "2026-09-12T10:02:11Z",
   status: "processed",
   processing_error: null,
+  submitter_ip_hash: "sha256:...",
 };
 
 export const issueFixture: Issue = {
@@ -192,6 +193,8 @@ export const projectFixture: Project = {
   status: "recommended",
   assigned_dept: "PWD",
   budget_estimate_inr: 500000,
+  marked_complete_at: null,
+  officer_signed_off_at: null,
 };
 
 export const impactRecordFixture: ImpactRecord = {

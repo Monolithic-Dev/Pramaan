@@ -33,6 +33,7 @@ function makeSubmission(overrides: Partial<Submission> = {}): Submission {
     submitted_at: new Date().toISOString(),
     status: "queued",
     processing_error: null,
+    submitter_ip_hash: null,
     ...overrides,
   };
 }
@@ -193,5 +194,72 @@ describe("processSubmission", () => {
     const afterSecond = await deps.store.getSubmission(sub.submission_id);
 
     expect(afterSecond).toEqual(afterFirst);
+  });
+
+  it("flags geofence_mismatch when coordinates are outside a plausible bounding box, but still processes the submission", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ lat: 51.5074, lng: -0.1278, location_confidence: "low" });
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored?.status).toBe("processed"); // flagged, never rejected
+    const issue = await deps.store.getIssue(stored!.issue_id!);
+    expect(issue?.fraud_flags).toContain("geofence_mismatch");
+  });
+
+  it("does not flag geofence_mismatch for a no-GPS landmark-text submission (low confidence for a different reason)", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ lat: null, lng: null, location_confidence: "low" });
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    const issue = await deps.store.getIssue(stored!.issue_id!);
+    expect(issue?.fraud_flags).not.toContain("geofence_mismatch");
+  });
+
+  it("flags burst_detected once an IP hash exceeds the threshold, and suppresses an otherwise-eligible issue from scoring", async () => {
+    const deps = createFakeDeps();
+    const ipHash = "sha256:shared-ip";
+    const sameEmbedding = [1, 0, 0, 0, 0, 0, 0, 0];
+    deps.embeddingsByText.set("large pothole near the market", sameEmbedding);
+
+    // Six submissions from six different citizens, all sharing one IP hash,
+    // all merging into the same issue — distinct_reporter_count reaches the
+    // scoring floor (3) *and* the burst threshold fires on the same IP hash.
+    let lastIssueId: string | null = null;
+    for (let i = 0; i < 6; i++) {
+      const sub = makeSubmission({ citizen_id: `cit_burst_${i}`, submitter_ip_hash: ipHash });
+      await deps.store.putSubmission(sub);
+      deps.nextCategorizations.push(goodCategorization);
+      await processSubmission(deps, sub.submission_id, log);
+      lastIssueId = (await deps.store.getSubmission(sub.submission_id))!.issue_id;
+    }
+
+    const issue = await deps.store.getIssue(lastIssueId!);
+    expect(issue?.distinct_reporter_count).toBeGreaterThanOrEqual(3);
+    expect(issue?.fraud_flags).toContain("burst_detected");
+
+    const eligible = await deps.store.getEligibleIssuesForScoring("IN");
+    expect(eligible.map((i) => i.issue_id)).not.toContain(issue?.issue_id);
+  });
+
+  it("does not flag burst_detected below the threshold", async () => {
+    const deps = createFakeDeps();
+    const ipHash = "sha256:shared-ip-2";
+    const sub = makeSubmission({ submitter_ip_hash: ipHash });
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    const issue = await deps.store.getIssue(stored!.issue_id!);
+    expect(issue?.fraud_flags).not.toContain("burst_detected");
   });
 });

@@ -17,6 +17,13 @@ export interface IngestSubmissionInput {
   idempotencyKey: string;
   /** Language the consent notice was shown in — defaults to English for channels that don't ask. */
   languageShown?: string;
+  /** Raw IP from the request — hashed before storage, never persisted as-is
+   *  (docs/SECURITY_PRIVACY.md §4). null for webhook channels with no citizen IP. */
+  submitterIp?: string | null;
+}
+
+function hashIp(ip: string): string {
+  return `sha256:${createHash("sha256").update(ip).digest("hex")}`;
 }
 
 export interface IngestSubmissionResult {
@@ -84,6 +91,7 @@ export async function ingestSubmission(
     submitted_at: new Date().toISOString(),
     status: "queued",
     processing_error: null,
+    submitter_ip_hash: input.submitterIp ? hashIp(input.submitterIp) : null,
   };
 
   const consent: ConsentRecord = {

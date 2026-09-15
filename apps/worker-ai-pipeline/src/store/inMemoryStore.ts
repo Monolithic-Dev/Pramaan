@@ -53,11 +53,17 @@ export function createInMemoryStore(): Store {
       return updated;
     },
     async getEligibleIssuesForScoring(countryCode) {
+      // A fraud-flagged issue is suppressed from scoring until an officer
+      // clears it — unless an officer has separately confirmed it's real via
+      // emergency_override, which bypasses both the report-count floor and
+      // fraud suppression (docs/phases/phase-8-fraud-impact-crossborder.md
+      // "Traps": "a real emergency looks exactly like a coordinated burst").
       return [...issues.values()].filter(
         (issue) =>
           issue.country_code === countryCode &&
           !["resolved", "tombstoned"].includes(issue.status) &&
-          (issue.distinct_reporter_count >= 3 || issue.emergency_override),
+          (issue.emergency_override ||
+            (issue.fraud_flags.length === 0 && issue.distinct_reporter_count >= 3)),
       );
     },
     async getAllDistinctReporterCounts(countryCode) {
@@ -88,6 +94,17 @@ export function createInMemoryStore(): Store {
       );
       if (candidates.length === 0) return null;
       return candidates.sort((a, b) => (a.computed_at < b.computed_at ? 1 : -1))[0];
+    },
+    async countRecentSubmissionsByIpHash(ipHash, sinceIso) {
+      return [...submissions.values()].filter(
+        (s) => s.submitter_ip_hash === ipHash && s.submitted_at >= sinceIso,
+      ).length;
+    },
+    async addFraudFlag(issueId, flag) {
+      const issue = issues.get(issueId);
+      if (!issue) throw new Error(`addFraudFlag: issue ${issueId} not found`);
+      if (issue.fraud_flags.includes(flag)) return;
+      issues.set(issueId, { ...issue, fraud_flags: [...issue.fraud_flags, flag] });
     },
   };
 }
