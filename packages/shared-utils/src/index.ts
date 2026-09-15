@@ -3,3 +3,6 @@ export type { WithRetryOptions } from "./withRetry.js";
 export { isWithinIndiaBoundingBox } from "./geo.js";
 export { scrubPii } from "./scrubPii.js";
 export { hashPhone } from "./hashPhone.js";
+export { geohashEncode, geohashNeighbours, geohashDecodeCenter } from "./geohash.js";
+export { haversineMeters, cosine, densityClass, RADIUS_M } from "./dedupMath.js";
+export type { LatLng, DensityClass } from "./dedupMath.js";

@@ -6,17 +6,20 @@
   "scripts": {
     "lint": "tsc --noEmit",
     "build": "echo \"scripts run via tsx, nothing to build\"",
-    "test": "echo \"no tests yet\"",
+    "test": "vitest run",
     "init-firestore-collections": "tsx init-firestore-collections.ts",
-    "generate-reference-data": "tsx seed-demo-data/generateReferenceData.ts"
+    "generate-reference-data": "tsx seed-demo-data/generateReferenceData.ts",
+    "tune-threshold": "tsx tune-threshold.ts"
   },
   "dependencies": {
     "@jansetu/shared-types": "workspace:*",
+    "@jansetu/shared-utils": "workspace:*",
     "firebase-admin": "^12.7.0",
     "@google-cloud/bigquery": "^7.9.0"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "vitest": "^2.1.0"
   }
 }
