@@ -1,3 +1,4 @@
+import "./loadEnv.js";
 import { buildApp } from "./app.js";
 import { createRealDeps } from "./deps.js";
 

@@ -25,6 +25,12 @@ pnpm turbo run dev
 - `apps/worker-ai-pipeline` → http://localhost:8081/healthz
 - `apps/web` → http://localhost:5173
 
+### Environment variables
+Create a `.env` at the repo root (gitignored) — both backend services load it
+automatically. See `apps/api-gateway/.env.example` and
+`apps/worker-ai-pipeline/.env.example` for the full list; nothing is required
+to run the test suites, only for hitting real Firebase/Vertex AI.
+
 ## Scripts
 - `pnpm turbo run build` — build every app/package
 - `pnpm turbo run lint` — typecheck every app/package
