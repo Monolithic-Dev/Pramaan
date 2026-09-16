@@ -48,6 +48,7 @@ function makeScore(overrides: Partial<PriorityScore> = {}): PriorityScore {
     model_version: "formula-v1",
     computed_at: "2026-09-15T02:00:00Z",
     is_canonical: true,
+    estimated_impact_population: 3200,
     ...overrides,
   };
 }

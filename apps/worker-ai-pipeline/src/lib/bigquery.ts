@@ -43,6 +43,8 @@ export interface ReferenceDataClient {
   /** Every seeded AdminRegion's centroid — small table (~tens of rows at
    *  hackathon scale), fetched whole and matched in-memory (see regionResolution.ts). */
   getAllRegionCentroids(): Promise<RegionCentroid[]>;
+  /** For docs/phases/phase-5-scoring.md §5.6's population-weighted impact estimate. */
+  getRegionPopulation(regionId: string): Promise<number | null>;
 }
 
 export function createBigQueryReferenceDataClient(): ReferenceDataClient {
@@ -116,6 +118,14 @@ export function createBigQueryReferenceDataClient(): ReferenceDataClient {
         lng: r.centroid_lng,
         population: r.population,
       }));
+    },
+
+    async getRegionPopulation(regionId) {
+      const rows = await query<{ population: number }>(
+        `SELECT population FROM \`${REFERENCE_DATASET}.admin_regions\` WHERE region_id = @regionId LIMIT 1`,
+        { regionId },
+      );
+      return rows[0]?.population ?? null;
     },
   };
 }

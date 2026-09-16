@@ -59,6 +59,7 @@
   "score.noHistory": "अभी तक कोई इतिहास नहीं",
   "score.fallbackTitle": "उपयोग किए गए वैकल्पिक डेटा:",
   "score.modelVersion": "मॉडल: {version}",
+  "score.estimatedImpact": "अनुमानित प्रभावित जनसंख्या: {count}",
   "officer.emergencyOverride": "आपातकाल के रूप में चिह्नित करें",
   "officer.mapPlaceholder": "मानचित्र जल्द आ रहा है",
   "common.loading": "लोड हो रहा है…",

@@ -174,6 +174,7 @@ export const priorityScoreFixture: PriorityScore = {
   model_version: "formula-v2",
   computed_at: "2026-09-15T02:00:00Z",
   is_canonical: true,
+  estimated_impact_population: 3200,
 };
 
 export const projectFixture: Project = {

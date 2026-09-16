@@ -59,6 +59,7 @@
   "score.noHistory": "இதுவரை வரலாறு இல்லை",
   "score.fallbackTitle": "பயன்படுத்தப்பட்ட மாற்று தரவு:",
   "score.modelVersion": "மாதிரி: {version}",
+  "score.estimatedImpact": "பாதிக்கப்பட்ட மதிப்பிடப்பட்ட மக்கள் தொகை: {count}",
   "officer.emergencyOverride": "அவசரமாகக் குறிக்கவும்",
   "officer.mapPlaceholder": "வரைபடம் விரைவில் வருகிறது",
   "common.loading": "ஏற்றுகிறது…",
