@@ -5,7 +5,8 @@ see `apps/api-gateway/src/testUtils/fakeDeps.ts`) are done. See `apps/api-gatewa
 for the full list of environment variables. These steps need real credentials/accounts:
 
 1. **Enable phone auth** on your Firebase/Identity Platform project (console → Authentication → Sign-in method → Phone), and add test phone numbers for development so OTP delivery isn't flaky during rehearsal.
-2. **Get the Web API key** for `FIREBASE_WEB_API_KEY` (console → Project settings → General → Web API Key). This is what `apps/api-gateway/src/lib/identityToolkit.ts` uses to call the Identity Toolkit REST API server-side.
+   **Verified against the real project in `.env`**: `FIREBASE_WEB_API_KEY` and `FIREBASE_PROJECT_ID` are both valid and reachable — `POST /v1/auth/otp/request` returned Identity Toolkit's own `CONFIGURATION_NOT_FOUND` error (not an API-key/auth error), which specifically means the Phone sign-in provider isn't enabled yet. This step is the only thing standing between the current setup and real OTP delivery.
+2. **Get the Web API key** for `FIREBASE_WEB_API_KEY` (console → Project settings → General → Web API Key). This is what `apps/api-gateway/src/lib/identityToolkit.ts` uses to call the Identity Toolkit REST API server-side. Already done — see the verification note above.
 3. **Run the service against a real project**:
    ```bash
    gcloud auth application-default login
