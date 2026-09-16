@@ -75,6 +75,9 @@ export function createFakeDeps(): FakeDeps {
     async getAllRegionCentroids() {
       return regionCentroids;
     },
+    async getRegionPopulation(regionId) {
+      return regionCentroids.find((r) => r.regionId === regionId)?.population ?? null;
+    },
   };
 
   return {

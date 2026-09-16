@@ -156,4 +156,40 @@ describe("runScoringBatch", () => {
 
     expect(second?.composite_score).toBe(first?.composite_score);
   });
+
+  it("computes estimated_impact_population from the resolved region's population and category coverage", async () => {
+    const deps = createFakeDeps();
+    const issue = makeIssue({
+      admin_region_id: "LGD:ward",
+      category: "health_infra",
+      distinct_reporter_count: 5,
+    });
+    await deps.store.createIssue(issue);
+    deps.infraIndexByRegion.set("LGD:ward", { normalisedValuesByType: { poverty_index: 0.3 } });
+    deps.regionCentroids.push({
+      regionId: "LGD:ward",
+      level: "ward",
+      parentRegionId: null,
+      lat: 28.6,
+      lng: 77.2,
+      population: 32000,
+    });
+
+    await runScoringBatch(deps, log);
+
+    const score = await deps.store.getCanonicalScore(issue.issue_id);
+    // health_infra coverage fraction is 0.1 -> 32000 * 0.1 = 3200
+    expect(score?.estimated_impact_population).toBe(3200);
+  });
+
+  it("leaves estimated_impact_population null when the issue has no resolved region", async () => {
+    const deps = createFakeDeps();
+    const issue = makeIssue({ admin_region_id: null, distinct_reporter_count: 5 });
+    await deps.store.createIssue(issue);
+
+    await runScoringBatch(deps, log);
+
+    const score = await deps.store.getCanonicalScore(issue.issue_id);
+    expect(score?.estimated_impact_population).toBeNull();
+  });
 });

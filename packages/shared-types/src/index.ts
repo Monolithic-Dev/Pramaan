@@ -240,6 +240,10 @@ export interface PriorityScore {
   /** true = scheduled batch score, the only kind any read path returns. Agent
    *  simulate_priority results are false and never reach the map or priorities list. */
   is_canonical: boolean;
+  /** docs/phases/phase-5-scoring.md §5.6 — the region's population scaled by a
+   *  per-category coverage heuristic (no sub-district population-density data
+   *  exists to do better); null when the region never resolved. */
+  estimated_impact_population: number | null;
 }
 
 export interface BriefCitation {

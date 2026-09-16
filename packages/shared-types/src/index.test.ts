@@ -147,6 +147,7 @@ const expectedKeys: Record<string, string[]> = {
     "model_version",
     "computed_at",
     "is_canonical",
+    "estimated_impact_population",
   ],
   projectFixture: [
     "project_id",

@@ -24,6 +24,14 @@ export function ScoreBreakdown({ score }: { score: PriorityScore }) {
 
       <p className="text-3xl font-bold text-gray-900">{score.composite_score.toFixed(2)}</p>
 
+      {score.estimated_impact_population !== null && (
+        <p className="rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+          {t("score.estimatedImpact", {
+            count: score.estimated_impact_population.toLocaleString(),
+          })}
+        </p>
+      )}
+
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-gray-500">

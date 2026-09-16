@@ -10,6 +10,24 @@ import type { Deps } from "../deps.js";
 const MODEL_VERSION = "formula-v1";
 const DUPLICATION_WINDOW_FISCAL_YEARS = 2;
 
+// docs/phases/phase-5-scoring.md §5.6: "population within the cluster radius,
+// scaled by the category's typical service radius." No sub-district
+// population-density data exists to compute a true radius-based catchment
+// (the seeded AdminRegion population is district-wide), so this is an
+// explicit coverage-fraction heuristic against the resolved region's total
+// population instead — documented, not hidden behind a precise-looking number.
+// Health/education facility gaps plausibly affect a wider catchment than a
+// single pothole; the fractions below encode that ordering, nothing more.
+const IMPACT_COVERAGE_FRACTION: Record<string, number> = {
+  roads: 0.02,
+  water: 0.05,
+  electricity: 0.03,
+  sanitation: 0.05,
+  health_infra: 0.1,
+  education_infra: 0.08,
+  other: 0.02,
+};
+
 // Higher value = better outcome for these index types, so vulnerability is
 // (1 - value); poverty_index runs the other way (higher = worse) and isn't inverted.
 const INVERT_INDEX_TYPE: Record<InfraIndexType, boolean> = {
@@ -85,6 +103,17 @@ async function resolveGapAndDuplication(
   return { gap: gapScore(yearsSince), duplicationPenalty, fallback: null };
 }
 
+async function estimateImpactPopulation(
+  deps: Deps,
+  regionId: string,
+  category: string,
+): Promise<number | null> {
+  const population = await deps.referenceData.getRegionPopulation(regionId);
+  if (population === null) return null;
+  const coverage = IMPACT_COVERAGE_FRACTION[category] ?? IMPACT_COVERAGE_FRACTION.other;
+  return Math.round(population * coverage);
+}
+
 async function scoreIssue(deps: Deps, issue: Issue, p95Country: number): Promise<PriorityScore> {
   const dataFallbacks: DataFallback[] = [];
   const demand = demandScore(issue.distinct_reporter_count, p95Country);
@@ -105,8 +134,10 @@ async function scoreIssue(deps: Deps, issue: Issue, p95Country: number): Promise
     duplicationPenalty = gapResult.duplicationPenalty;
     if (gapResult.fallback) dataFallbacks.push(gapResult.fallback);
   } else {
-    // Every submission currently lands in the "UNRESOLVED" bucket until Phase
-    // 4.6's point-in-polygon resolution lands — see docs/phases/phase-5-manual-checklist.md.
+    // A coordinate outside every seeded state's nearest-centroid match, or a
+    // no-GPS/landmark-text submission that was never geocoded (both still land
+    // here — see docs/phases/phase-4-manual-checklist.md and
+    // docs/phases/phase-5-manual-checklist.md).
     const reason = "issue has no resolved admin_region_id yet";
     dataFallbacks.push(
       { component: "vulnerability_score", used_level: "none", reason },
@@ -122,6 +153,10 @@ async function scoreIssue(deps: Deps, issue: Issue, p95Country: number): Promise
           ancestry.map((a) => a.regionId),
         )
       : null;
+
+  const estimatedImpactPopulation = issue.admin_region_id
+    ? await estimateImpactPopulation(deps, issue.admin_region_id, issue.category)
+    : null;
 
   const { base, composite } = computeCompositeScore(
     { demand, vulnerability, gap, duplicationPenalty, impactEfficacy },
@@ -145,6 +180,7 @@ async function scoreIssue(deps: Deps, issue: Issue, p95Country: number): Promise
     model_version: MODEL_VERSION,
     computed_at: new Date().toISOString(),
     is_canonical: true,
+    estimated_impact_population: estimatedImpactPopulation,
   };
 }
 

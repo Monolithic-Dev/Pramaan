@@ -59,6 +59,7 @@
   "score.noHistory": "No history yet",
   "score.fallbackTitle": "Data substitutions used:",
   "score.modelVersion": "Model: {version}",
+  "score.estimatedImpact": "Estimated population impacted: {count}",
   "officer.emergencyOverride": "Flag as emergency",
   "officer.mapPlaceholder": "Map view coming soon",
   "common.loading": "Loading…",
