@@ -1,5 +1,15 @@
 # Phase 5 — manual steps (run these yourself)
 
+**Bug fixed post-merge**: both `apps/worker-ai-pipeline/src/lib/bigquery.ts` and
+`apps/api-gateway/src/lib/bigquery.ts` were querying `admin_regions` from the
+`jansetu_analytics` dataset, but `infra/gcp/setup.sh` and
+`scripts/seed-demo-data/generateReferenceData.ts` both load it into
+`jansetu_reference` (a deliberate separate dataset for master/reference data
+vs. per-run analytics tables). Every `getAncestryChain` call — used by
+scoring's vulnerability fallback chain, the agent's scope guard, and region
+resolution — would have 404'd against a real project. Fixed by querying
+`admin_regions` from `jansetu_reference` in both clients; nothing else changes.
+
 The scoring formula, BigQuery reference-data joins, batch runner, and score-breakdown
 endpoint are implemented and unit-tested (19/19 worker tests, 29/29 api-gateway tests,
 including the golden-value test reproducing `AI_PIPELINE.md`'s worked example exactly).
@@ -16,7 +26,7 @@ See `apps/worker-ai-pipeline/.env.example`. These steps need real credentials/da
 4. **Screenshot the "we don't double-fund" demo moment** (acceptance criteria): score two equivalent issues, one in a ward with a recent matching `InvestmentRecord`, one without — confirm the funded one ranks measurably lower via `duplication_penalty`.
 
 ## Deferred (documented, not built)
-- **Real point-in-polygon `admin_region_id` resolution**: still blocked on the same gap as Phase 4 — every `Issue.admin_region_id` is `null` until that lands, so every score currently falls into the "no resolved region" fallback path (vulnerability/gap/duplication all disclosed as `unverified`/`none`). The formula, fallback-chain logic, and BigQuery client are all real and tested against fake ancestry data — only the resolver that fills in `admin_region_id` is missing.
+- **Real point-in-polygon `admin_region_id` resolution**: true polygon boundaries still aren't built (see the Phase 4 checklist's "Update"). **Since region resolution now does real nearest-centroid matching, issues in the 3 seeded states get a real `admin_region_id`/ancestry chain**, so scoring's vulnerability/gap/duplication fallback-chain logic now has real data to resolve against for those regions instead of always hitting the "no resolved region" path — verify this by running a batch score against seeded submissions inside e.g. `dl-central-delhi` and confirming `vulnerability_score` comes from a real `InfraIndex` row, not the neutral-midpoint fallback.
 - **`CountryProfile`-sourced weights**: `docs/phases/phase-5-scoring.md` §5.1 calls for weights on `CountryProfile`, but that entity (shared-types) has no weights field yet. Using env vars (`SCORE_WEIGHT_*`) instead gets most of the "two-line change, not a refactor" benefit without another schema migration. Add a `weights` field to `CountryProfile` and read from Firestore instead when a real second country profile is on the roadmap.
 - **`GET /priorities` and `estimated_impact_population` (§5.6)**: deferred to Phase 6, since ranking/listing is a dashboard concern tied to that phase's agent tools (`query_fused_data`, `get_priority_scores`) — building it now would duplicate work once the agent's read path exists.
 - **Full RBAC on `POST /issues/{id}/emergency-override`**: gated on "any officer role" today; the spec's "role >= collector" hierarchy and jurisdiction/region-scope enforcement are Phase 7 work, same as the rest of officer RBAC.

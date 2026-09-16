@@ -85,10 +85,25 @@ export async function processSubmission(
     return;
   }
 
-  const { geohash, adminRegionId, stateId } = resolveLocation(submission.lat, submission.lng);
+  const { geohash, adminRegionId, stateId, population } = await resolveLocation(
+    deps.referenceData,
+    submission.lat,
+    submission.lng,
+  );
+
+  submission.resolved_region_id = adminRegionId;
 
   try {
-    const issueId = await dedupe(deps, submission, categorization, geohash, stateId, log);
+    const issueId = await dedupe(
+      deps,
+      submission,
+      categorization,
+      geohash,
+      stateId,
+      adminRegionId,
+      population,
+      log,
+    );
     submission.issue_id = issueId;
     submission.state_id = stateId;
     submission.status = "processed";
@@ -100,7 +115,6 @@ export async function processSubmission(
   }
 
   await deps.store.putSubmission(submission);
-  void adminRegionId; // resolved once Phase 4.6 lands; unused until then
 }
 
 async function dedupe(
@@ -109,6 +123,8 @@ async function dedupe(
   categorization: CategorizationResult,
   geohash: string | null,
   stateId: string,
+  adminRegionId: string | null,
+  population: number | null,
   log: FastifyBaseLogger,
 ): Promise<string> {
   const category = categorization.category;
@@ -136,9 +152,7 @@ async function dedupe(
     const cells = geohashNeighbours(geohash);
     const candidates = await deps.store.queryCandidateIssues({ stateId, category, geohashCells: cells });
 
-    // Population-based density isn't resolvable until Phase 4.6 loads real
-    // AdminRegion boundaries — defaults to "peri" (800m radius).
-    const radius = RADIUS_M[densityClass(null)];
+    const radius = RADIUS_M[densityClass(population)];
     const submissionPoint = { lat: submission.lat as number, lng: submission.lng as number };
     const near = candidates.filter((issue) => {
       if (!issue.geohash) return false;
@@ -189,7 +203,7 @@ async function dedupe(
     embedding: updateRunningEmbedding(null, embedding, 0),
     embedding_model: EMBEDDING_MODEL,
     geo_cluster_id: `gc_${issueId}`,
-    admin_region_id: null,
+    admin_region_id: adminRegionId,
     geohash,
     submission_ids: [submission.submission_id],
     report_count: 1,

@@ -2,7 +2,13 @@ import type { CategorizationResult } from "@jansetu/ai-prompts";
 import type { Deps } from "../deps.js";
 import type { CategorizationClient } from "../lib/gemini.js";
 import type { EmbeddingClient } from "../lib/embeddings.js";
-import type { AncestryStep, LatestInvestment, ReferenceDataClient, RegionInfraData } from "../lib/bigquery.js";
+import type {
+  AncestryStep,
+  LatestInvestment,
+  ReferenceDataClient,
+  RegionCentroid,
+  RegionInfraData,
+} from "../lib/bigquery.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 
 export interface FakeDeps extends Deps {
@@ -16,6 +22,9 @@ export interface FakeDeps extends Deps {
   ancestryByRegion: Map<string, AncestryStep[]>;
   infraIndexByRegion: Map<string, RegionInfraData | null>;
   latestInvestmentByRegionCategory: Map<string, LatestInvestment | null>;
+  /** Empty by default -> resolveLocation() resolves nothing, same as before
+   *  region resolution existed. Populate to test real nearest-centroid matching. */
+  regionCentroids: RegionCentroid[];
 }
 
 function defaultEmbeddingFor(text: string): number[] {
@@ -33,6 +42,7 @@ export function createFakeDeps(): FakeDeps {
   const ancestryByRegion = new Map<string, AncestryStep[]>();
   const infraIndexByRegion = new Map<string, RegionInfraData | null>();
   const latestInvestmentByRegionCategory = new Map<string, LatestInvestment | null>();
+  const regionCentroids: RegionCentroid[] = [];
 
   const categorization: CategorizationClient = {
     async categorize() {
@@ -62,6 +72,9 @@ export function createFakeDeps(): FakeDeps {
         ? latestInvestmentByRegionCategory.get(key)!
         : null;
     },
+    async getAllRegionCentroids() {
+      return regionCentroids;
+    },
   };
 
   return {
@@ -74,5 +87,6 @@ export function createFakeDeps(): FakeDeps {
     ancestryByRegion,
     infraIndexByRegion,
     latestInvestmentByRegionCategory,
+    regionCentroids,
   };
 }

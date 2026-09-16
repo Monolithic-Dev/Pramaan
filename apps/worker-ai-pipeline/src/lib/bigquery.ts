@@ -3,6 +3,11 @@ import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
 
 const DATASET = "jansetu_analytics";
+// admin_regions lives in a separate dataset from infra_index/investment_record
+// (infra/gcp/setup.sh, scripts/seed-demo-data/generateReferenceData.ts) — it's
+// reference/master data, not a per-run analytics table. Querying it from
+// DATASET would 404 against a real project.
+const REFERENCE_DATASET = "jansetu_reference";
 const MAX_ANCESTRY_HOPS = 6; // ward -> block -> district -> state -> country, with headroom
 
 export interface RegionInfraData {
@@ -21,11 +26,23 @@ export interface AncestryStep {
   level: string;
 }
 
+export interface RegionCentroid {
+  regionId: string;
+  level: string;
+  parentRegionId: string | null;
+  lat: number;
+  lng: number;
+  population: number;
+}
+
 export interface ReferenceDataClient {
   /** [self, parent, grandparent, ...] up to the country level, each with its AdminRegion level. */
   getAncestryChain(regionId: string): Promise<AncestryStep[]>;
   getInfraIndex(regionId: string): Promise<RegionInfraData | null>;
   getLatestInvestment(regionId: string, category: string): Promise<LatestInvestment | null>;
+  /** Every seeded AdminRegion's centroid — small table (~tens of rows at
+   *  hackathon scale), fetched whole and matched in-memory (see regionResolution.ts). */
+  getAllRegionCentroids(): Promise<RegionCentroid[]>;
 }
 
 export function createBigQueryReferenceDataClient(): ReferenceDataClient {
@@ -45,7 +62,7 @@ export function createBigQueryReferenceDataClient(): ReferenceDataClient {
       for (let i = 0; i < MAX_ANCESTRY_HOPS && current; i++) {
         type AncestryRow = { level: string; parent_region_id: string | null };
         const rows: AncestryRow[] = await query<AncestryRow>(
-          `SELECT level, parent_region_id FROM \`${DATASET}.admin_regions\` WHERE region_id = @regionId LIMIT 1`,
+          `SELECT level, parent_region_id FROM \`${REFERENCE_DATASET}.admin_regions\` WHERE region_id = @regionId LIMIT 1`,
           { regionId: current },
         );
         const row: AncestryRow | undefined = rows[0];
@@ -77,6 +94,28 @@ export function createBigQueryReferenceDataClient(): ReferenceDataClient {
         { regionId, category },
       );
       return rows[0] ? { fiscalYear: rows[0].fiscal_year } : null;
+    },
+
+    async getAllRegionCentroids() {
+      const rows = await query<{
+        region_id: string;
+        level: string;
+        parent_region_id: string | null;
+        centroid_lat: number;
+        centroid_lng: number;
+        population: number;
+      }>(
+        `SELECT region_id, level, parent_region_id, centroid_lat, centroid_lng, population FROM \`${REFERENCE_DATASET}.admin_regions\``,
+        {},
+      );
+      return rows.map((r) => ({
+        regionId: r.region_id,
+        level: r.level,
+        parentRegionId: r.parent_region_id,
+        lat: r.centroid_lat,
+        lng: r.centroid_lng,
+        population: r.population,
+      }));
     },
   };
 }

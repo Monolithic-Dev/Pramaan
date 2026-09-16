@@ -262,4 +262,30 @@ describe("processSubmission", () => {
     const issue = await deps.store.getIssue(stored!.issue_id!);
     expect(issue?.fraud_flags).not.toContain("burst_detected");
   });
+
+  it("resolves a real admin_region_id and state_id end-to-end when AdminRegion data is seeded", async () => {
+    const deps = createFakeDeps();
+    deps.regionCentroids.push(
+      { regionId: "IN-DL", level: "state", parentRegionId: null, lat: 28.7041, lng: 77.1025, population: 16787941 },
+      {
+        regionId: "dl-central-delhi",
+        level: "district",
+        parentRegionId: "IN-DL",
+        lat: 28.6519,
+        lng: 77.2315,
+        population: 582320,
+      },
+    );
+    const sub = makeSubmission({ lat: 28.6139, lng: 77.209 }); // near Central Delhi's centroid
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored?.resolved_region_id).toBe("dl-central-delhi");
+    expect(stored?.state_id).toBe("IN-DL");
+    const issue = await deps.store.getIssue(stored!.issue_id!);
+    expect(issue?.admin_region_id).toBe("dl-central-delhi");
+  });
 });

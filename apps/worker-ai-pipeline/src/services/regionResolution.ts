@@ -1,21 +1,72 @@
-import { geohashEncode } from "@jansetu/shared-utils";
+import { geohashEncode, haversineMeters } from "@jansetu/shared-utils";
+import type { ReferenceDataClient, RegionCentroid } from "../lib/bigquery.js";
 
 export interface ResolvedLocation {
   geohash: string | null;
   adminRegionId: string | null;
   stateId: string;
+  /** Population of the resolved region — real density input for dedup radius
+   *  (docs/AI_PIPELINE.md Stage 3), null when nothing resolved. */
+  population: number | null;
 }
 
-// ponytail: point-in-polygon resolution against real AdminRegion boundary
-// geometries (BigQuery ST_CONTAINS, docs/phases/phase-4-extraction-dedup.md
-// §4.6) needs a real boundary dataset loaded, which doesn't exist yet — every
-// submission lands in one "UNRESOLVED" state_id bucket for now. Dedup still
-// works correctly within that bucket (geohash + haversine do the real
-// filtering); upgrade path is wiring this function to the BigQuery join once
-// infra/gcp/bigquery-schemas/admin_regions.json is populated with geometries.
-export function resolveLocation(lat: number | null, lng: number | null): ResolvedLocation {
-  if (lat === null || lng === null) {
-    return { geohash: null, adminRegionId: null, stateId: "UNRESOLVED" };
+// ponytail: nearest-centroid matching instead of true point-in-polygon
+// (BigQuery ST_CONTAINS against real boundary geometries,
+// docs/phases/phase-4-extraction-dedup.md §4.6) — no ward/district polygon
+// dataset has been sourced for this build. AdminRegion centroids *are* real
+// (scripts/seed-demo-data/source/admin_regions.csv), so this resolves to a
+// genuinely plausible district for coordinates inside a seeded state, at the
+// cost of accuracy right at a district boundary. Ceiling: wrong near a
+// boundary, or for any point outside the ~3 seeded states entirely (nearest
+// seeded district still "wins," however far away). Upgrade path: swap the
+// body of resolveLocation for a BigQuery ST_CONTAINS join once real boundary
+// geometries are loaded — callers don't change.
+function findNearestRegion(
+  point: { lat: number; lng: number },
+  candidates: RegionCentroid[],
+): RegionCentroid | null {
+  let best: RegionCentroid | null = null;
+  let bestDistance = Infinity;
+  for (const candidate of candidates) {
+    const distance = haversineMeters(point, { lat: candidate.lat, lng: candidate.lng });
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
   }
-  return { geohash: geohashEncode(lat, lng, 6), adminRegionId: null, stateId: "UNRESOLVED" };
+  return best;
+}
+
+function findStateAncestor(region: RegionCentroid, byId: Map<string, RegionCentroid>): string | null {
+  let current: RegionCentroid | null = region;
+  for (let i = 0; i < 6 && current; i++) {
+    if (current.level === "state") return current.regionId;
+    current = current.parentRegionId ? (byId.get(current.parentRegionId) ?? null) : null;
+  }
+  return null;
+}
+
+export async function resolveLocation(
+  referenceData: ReferenceDataClient,
+  lat: number | null,
+  lng: number | null,
+): Promise<ResolvedLocation> {
+  if (lat === null || lng === null) {
+    return { geohash: null, adminRegionId: null, stateId: "UNRESOLVED", population: null };
+  }
+  const geohash = geohashEncode(lat, lng, 6);
+
+  const regions = await referenceData.getAllRegionCentroids();
+  if (regions.length === 0) {
+    return { geohash, adminRegionId: null, stateId: "UNRESOLVED", population: null };
+  }
+
+  const districts = regions.filter((r) => r.level === "district");
+  const nearest = findNearestRegion({ lat, lng }, districts.length > 0 ? districts : regions);
+  if (!nearest) return { geohash, adminRegionId: null, stateId: "UNRESOLVED", population: null };
+
+  const byId = new Map(regions.map((r) => [r.regionId, r]));
+  const stateId = findStateAncestor(nearest, byId) ?? "UNRESOLVED";
+
+  return { geohash, adminRegionId: nearest.regionId, stateId, population: nearest.population };
 }

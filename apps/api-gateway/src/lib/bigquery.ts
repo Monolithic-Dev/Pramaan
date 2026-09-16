@@ -3,6 +3,11 @@ import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
 
 const DATASET = "jansetu_analytics";
+// admin_regions lives in a separate dataset from infra_index/investment_record
+// (infra/gcp/setup.sh, scripts/seed-demo-data/generateReferenceData.ts) — it's
+// reference/master data, not a per-run analytics table. Querying it from
+// DATASET would 404 against a real project.
+const REFERENCE_DATASET = "jansetu_reference";
 const MAX_ANCESTRY_HOPS = 6;
 
 export interface AncestryStep {
@@ -51,7 +56,7 @@ export function createBigQueryAgentClient(): BigQueryAgentClient {
       for (let i = 0; i < MAX_ANCESTRY_HOPS && current; i++) {
         type Row = { level: string; parent_region_id: string | null };
         const rows: Row[] = await query<Row>(
-          `SELECT level, parent_region_id FROM \`${DATASET}.admin_regions\` WHERE region_id = @regionId LIMIT 1`,
+          `SELECT level, parent_region_id FROM \`${REFERENCE_DATASET}.admin_regions\` WHERE region_id = @regionId LIMIT 1`,
           { regionId: current },
         );
         const row: Row | undefined = rows[0];
