@@ -7,6 +7,7 @@ import type {
   Issue,
   PriorityScore,
   Project,
+  StateRecord,
   Submission,
 } from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
@@ -35,6 +36,7 @@ export function createInMemoryStore(): Store & {
   const agentTurns = new Map<string, AgentTurn>();
   const projects = new Map<string, Project>();
   const impactRecords = new Map<string, ImpactRecord>(); // keyed by project_id
+  const states = new Map<string, StateRecord>();
 
   return {
     async getCitizen(citizenId) {
@@ -157,6 +159,23 @@ export function createInMemoryStore(): Store & {
       const issue = issues.get(issueId);
       if (!issue) return;
       issues.set(issueId, { ...issue, status: "tombstoned" });
+    },
+    async listIssues(stateId) {
+      return [...issues.values()].filter(
+        (i) => i.status !== "tombstoned" && (!stateId || i.state_id === stateId),
+      );
+    },
+    async getProjectByIssue(issueId) {
+      return [...projects.values()].find((p) => p.issue_id === issueId) ?? null;
+    },
+    async getImpactRecordByIssue(issueId) {
+      return [...impactRecords.values()].find((r) => r.issue_id === issueId) ?? null;
+    },
+    async putState(state) {
+      states.set(state.state_id, state);
+    },
+    async listStates() {
+      return [...states.values()];
     },
     issues,
     priorityScores,

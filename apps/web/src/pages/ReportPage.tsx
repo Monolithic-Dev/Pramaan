@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ApiClientError, submitReport, type CreateSubmissionInput } from "../api/client.js";
 import { ConsentNotice, CONSENT_VERSION } from "../components/ConsentNotice.js";
 import { LanguageSelector } from "../components/LanguageSelector.js";
@@ -107,6 +108,12 @@ export function ReportPage() {
         >
           {t("report.confirmationReplay")}
         </button>
+        <Link to="/status" className="text-base text-blue-700 underline">
+          {t("status.check")}
+        </Link>
+        <Link to="/transparency" className="text-sm text-gray-500 underline">
+          {t("transparency.title")}
+        </Link>
         <button
           type="button"
           onClick={() => {

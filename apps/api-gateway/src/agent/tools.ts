@@ -1,5 +1,6 @@
 import { computeCompositeScore, type ScoreWeights } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
+import { getEquityAudit, getForecasts } from "../insights/service.js";
 
 // docs/AI_PIPELINE.md Stage 5 refusal guardrail, layer 1: an explicit
 // no-data envelope, never an empty array — models narrate empty arrays away,
@@ -90,6 +91,26 @@ export const TOOL_DECLARATIONS = [
     parameters: {
       type: "object",
       properties: { region_id: { type: "string" } },
+      required: ["region_id"],
+    },
+  },
+  {
+    name: "get_risk_forecasts",
+    description:
+      "Predicted seasonal risk windows for a region (a forecast, not a citizen report). Categories with too little history are listed as insufficient_data.",
+    parameters: {
+      type: "object",
+      properties: { region_id: { type: "string" }, category: { type: "string" } },
+      required: ["region_id"],
+    },
+  },
+  {
+    name: "get_equity_audit",
+    description:
+      "Fairness audit for a state: funding and scores by vulnerability band, plus a plain-language verdict.",
+    parameters: {
+      type: "object",
+      properties: { region_id: { type: "string", description: "The state region id" } },
       required: ["region_id"],
     },
   },
@@ -236,6 +257,14 @@ export async function executeTool(
         args.region_id as string,
         (args.weight_overrides as Partial<ScoreWeights>) ?? {},
       );
+    case "get_risk_forecasts": {
+      const r = await getForecasts(deps, args.region_id as string, args.category as string | undefined);
+      return r.forecasts.length === 0 && r.not_forecast.length === 0
+        ? noData(`no issue history for region ${args.region_id as string}`, [])
+        : r;
+    }
+    case "get_equity_audit":
+      return getEquityAudit(deps, args.region_id as string);
     case "generate_brief":
       return generateBrief(deps, args.issue_id as string);
     case "list_available_data":
