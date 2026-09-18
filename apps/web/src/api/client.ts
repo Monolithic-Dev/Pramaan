@@ -124,3 +124,78 @@ export async function streamAgentMessage(
     }
   }
 }
+
+const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
+
+export interface ReportStatus {
+  submission_status: string;
+  issue_status: string | null;
+  other_reporters: number;
+  priority: "high" | "medium" | "low" | "pending";
+  explanation: string | null;
+  preferred_language: string | null;
+}
+
+export function getReportStatus(token: string, submissionId: string): Promise<ReportStatus> {
+  return request(`/my-reports/${encodeURIComponent(submissionId)}/status`, { headers: bearer(token) });
+}
+
+export type TransparencyStats =
+  | { state_id: string; status: "insufficient_data"; min_required: number }
+  | {
+      state_id: string;
+      status: "ok";
+      total_reported: number;
+      pct_verified: number;
+      pct_funded: number;
+      pct_resolved: number;
+      avg_days_to_resolved: number | null;
+    };
+
+export function getTransparency(stateId: string): Promise<TransparencyStats> {
+  return request(`/public/transparency?state=${encodeURIComponent(stateId)}`);
+}
+
+export interface RiskForecast {
+  forecast_id: string;
+  geo_cluster_id: string;
+  category: string;
+  risk_level: "low" | "medium" | "high";
+  predicted_window_start: string;
+  predicted_window_end: string;
+  contributing_factors: string[];
+}
+
+export function getForecasts(token: string, region: string) {
+  return request<{ forecasts: RiskForecast[]; not_forecast: { category: string; reason: string }[] }>(
+    `/forecasts?region=${encodeURIComponent(region)}`,
+    { headers: bearer(token) },
+  );
+}
+
+export interface EquityBand {
+  vulnerability_band: "low" | "medium" | "high";
+  avg_composite_score: number | null;
+  funded_ratio: number | null;
+  sample_size: number;
+  status: "ok" | "insufficient_data";
+}
+
+export function getEquityAudit(token: string, state: string) {
+  return request<{ bands: EquityBand[]; verdict: string }>(
+    `/equity-audit?state=${encodeURIComponent(state)}`,
+    { headers: bearer(token) },
+  );
+}
+
+export function listStates(token: string) {
+  return request<{ states: { state_id: string; name: string }[] }>("/states", { headers: bearer(token) });
+}
+
+export function addState(token: string, stateId: string, name: string) {
+  return request<{ state_id: string }>("/admin/states", {
+    method: "POST",
+    headers: bearer(token),
+    body: JSON.stringify({ state_id: stateId, name }),
+  });
+}

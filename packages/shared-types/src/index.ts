@@ -352,4 +352,47 @@ export interface AgentTurn {
   timestamp: string;
 }
 
+export type RiskLevel = "low" | "medium" | "high";
+
+/** A prediction, never a citizen report — must never feed demand_score or any
+ *  citizen-facing priority (docs/01-predictive-early-warning.md). geo_cluster_id
+ *  holds the AdminRegion.region_id the forecast is for (region-level, not a
+ *  literal GeoCluster, since GeoClusters only exist once something is reported). */
+export interface RiskForecast {
+  forecast_id: string;
+  geo_cluster_id: string;
+  category: string;
+  risk_level: RiskLevel;
+  predicted_window_start: string;
+  predicted_window_end: string;
+  contributing_factors: string[];
+  model_version: string;
+  computed_at: string;
+}
+
+export type VulnerabilityBand = "low" | "medium" | "high";
+
+export interface EquityAuditReport {
+  report_id: string;
+  state_id: string;
+  period_start: string;
+  period_end: string;
+  vulnerability_band: VulnerabilityBand;
+  avg_composite_score: number | null;
+  avg_days_to_resolved: number | null;
+  funded_ratio: number | null;
+  sample_size: number;
+  /** "insufficient_data" when sample_size is below the publication threshold. */
+  status: "ok" | "insufficient_data";
+  computed_at: string;
+}
+
+export interface StateRecord {
+  state_id: string;
+  name: string;
+  country_code: string;
+  created_at: string;
+  created_by: string;
+}
+
 export { COUNTRY_PROFILES, DEFAULT_COUNTRY_CODE, getCountryProfile } from "./countryProfiles.js";

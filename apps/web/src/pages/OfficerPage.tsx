@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ApiClientError, createAgentSession } from "../api/client.js";
 import { AgentChat } from "../components/AgentChat.js";
+import { InsightsPanel } from "../components/InsightsPanel.js";
 import { OfficerLogin } from "../components/OfficerLogin.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
 
@@ -38,8 +39,8 @@ export function OfficerPage() {
       <div className="w-full md:w-3/5">
         <AgentChat token={auth.token} sessionId={sessionId} />
       </div>
-      <div className="hidden w-2/5 border-l border-gray-200 p-4 text-sm text-gray-500 md:block">
-        {t("officer.mapPlaceholder")}
+      <div className="hidden w-2/5 overflow-y-auto border-l border-gray-200 p-4 md:block">
+        <InsightsPanel token={auth.token} regionScope={auth.regionScope} />
       </div>
     </div>
   );

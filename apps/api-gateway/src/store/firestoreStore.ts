@@ -9,6 +9,7 @@ import type {
   Issue,
   PriorityScore,
   Project,
+  StateRecord,
   Submission,
 } from "@jansetu/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
@@ -177,6 +178,32 @@ export function createFirestoreStore(db: Firestore): Store {
     },
     async tombstoneIssue(issueId) {
       await db.collection("issues").doc(issueId).update({ status: "tombstoned" });
+    },
+    async listIssues(stateId) {
+      const ref = stateId
+        ? db.collection("issues").where("state_id", "==", stateId)
+        : db.collection("issues");
+      const snapshot = await ref.get();
+      return snapshot.docs.map((d) => d.data() as Issue).filter((i) => i.status !== "tombstoned");
+    },
+    async getProjectByIssue(issueId) {
+      const snapshot = await db.collection("projects").where("issue_id", "==", issueId).limit(1).get();
+      return snapshot.empty ? null : (snapshot.docs[0].data() as Project);
+    },
+    async getImpactRecordByIssue(issueId) {
+      const snapshot = await db
+        .collection("impactRecords")
+        .where("issue_id", "==", issueId)
+        .limit(1)
+        .get();
+      return snapshot.empty ? null : (snapshot.docs[0].data() as ImpactRecord);
+    },
+    async putState(state) {
+      await db.collection("states").doc(state.state_id).set(state);
+    },
+    async listStates() {
+      const snapshot = await db.collection("states").get();
+      return snapshot.docs.map((d) => d.data() as StateRecord);
     },
   };
 }

@@ -7,6 +7,7 @@ import type {
   Issue,
   PriorityScore,
   Project,
+  StateRecord,
   Submission,
 } from "@jansetu/shared-types";
 
@@ -80,4 +81,13 @@ export interface Store {
   getSubmissionsByCitizen(citizenId: string): Promise<Submission[]>;
   getConsentRecordsByCitizen(citizenId: string): Promise<ConsentRecord[]>;
   tombstoneIssue(issueId: string): Promise<void>;
+
+  // --- Phases 10-14: insights ---
+
+  /** Every non-tombstoned Issue in a state (or all states when omitted). */
+  listIssues(stateId?: string): Promise<Issue[]>;
+  getProjectByIssue(issueId: string): Promise<Project | null>;
+  getImpactRecordByIssue(issueId: string): Promise<ImpactRecord | null>;
+  putState(state: StateRecord): Promise<void>;
+  listStates(): Promise<StateRecord[]>;
 }

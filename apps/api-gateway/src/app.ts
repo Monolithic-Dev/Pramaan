@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { registerAgentRoutes } from "./routes/agent.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerInsightRoutes } from "./routes/insights.js";
 import { registerIssueRoutes } from "./routes/issues.js";
 import { registerPrivacyRoutes } from "./routes/privacy.js";
 import { registerProjectRoutes } from "./routes/projects.js";
@@ -31,6 +32,7 @@ export function buildApp(deps: Deps) {
       registerAgentRoutes(v1, deps);
       registerProjectRoutes(v1, deps);
       registerPrivacyRoutes(v1, deps);
+      registerInsightRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );
