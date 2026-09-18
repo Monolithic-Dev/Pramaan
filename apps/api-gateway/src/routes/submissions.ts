@@ -42,6 +42,7 @@ export function registerSubmissionRoutes(app: FastifyInstance, deps: Deps) {
           citizenId: request.citizenId,
           idempotencyKey: idempotencyKey.data,
           submitterIp: request.ip,
+          countryCode: body.country_code,
         },
         request.log,
       );

@@ -3,8 +3,9 @@
 Rule-based anti-fraud (rate-limit allowlist, geofence flagging, burst detection with
 scoring suppression), the impact loop (mark-complete / officer-signoff / confirm-resolution,
 feeding `impact_efficacy` back into Phase 5's scoring), and the DPDP privacy endpoints
-(erasure, my-data) are implemented and unit-tested (23/23 worker + 75/75 api-gateway
-tests). See `apps/api-gateway/.env.example`. These steps need real infrastructure/data:
+(erasure, my-data) are implemented and unit-tested (31/31 worker + 76/76 api-gateway
+tests, post cross-border work). See `apps/api-gateway/.env.example`. These steps need
+real infrastructure/data:
 
 1. **Demo-day allowlist**: get the venue WiFi's public IP before the demo and set
    `RATE_LIMIT_ALLOWLIST_CIDRS=<venue-ip>/32` on the deployed `api-gateway`. Do this the
@@ -22,24 +23,45 @@ tests). See `apps/api-gateway/.env.example`. These steps need real infrastructur
 
 ## Deferred (documented, not built)
 
-### Cross-border (§8.3) — not attempted this round
-This needs, per the phase doc's own estimate, ~4.5 hours of *careful* work: grepping the
-entire codebase for hardcoded `"IN"`/`"INR"`/`"en"`/Indian admin-level labels and replacing
-each with a `CountryProfile` lookup, seeding a real `BR` profile with 3 synthetic
-municípios, ~30 **human-reviewed** Portuguese submissions (the phase doc explicitly warns
-against unreviewed machine-translated seed text — "checked by someone who reads it, or at
-minimum spot-checked"), and a country-switcher UI. Doing this superficially — swapping a
-few obvious constants without the systematic grep — would be worse than not attempting it:
-it would look done, fail the demo on stage, and nobody would have reason to re-check it.
-Concretely, before starting this:
-- `grep -rn '"IN"' apps/ packages/ --include='*.ts'` and the equivalent for `"INR"`, `"en"`
-  as a language default, and `AdminBoundary`'s `ward`/`district`/`state` field names.
-- Every hit needs a `CountryProfile` lookup keyed by the citizen/officer/session's
-  `country_code`, not a hardcoded string.
-- `CountryProfile` itself (shared-types) has no live Firestore/BigQuery store methods yet —
-  add `getCountryProfile(countryCode)` alongside the `DEFAULT_SCORE_WEIGHTS` env-var
-  workaround from `docs/phases/phase-5-manual-checklist.md`, and resolve that TODO at the
-  same time since both need the same lookup.
+### Cross-border (§8.3) — implemented
+`getCountryProfile()`/`COUNTRY_PROFILES` (`packages/shared-types/src/countryProfiles.ts`)
+now backs IN and BR for real, and every hardcoded `"IN"`/`isWithinIndiaBoundingBox` call
+this phase doc originally called out has been replaced with a lookup keyed by the
+citizen's/submission's actual `country_code`:
+- `regionResolution.ts`'s nearest-centroid matching now takes `countryCode` and filters
+  the candidate pool by it first — a Brazilian submission can no longer nearest-match an
+  Indian district just because it's the closest seeded centroid overall (unit tested:
+  `regionResolution.test.ts` "scopes nearest-centroid matching to the submission's country").
+- `ingestSubmission.ts` derives `Submission.country_code` from the citizen's own record
+  when one exists (so it can't be spoofed by an authenticated request body), or from an
+  optional `country_code` field on the request for anonymous web submissions, defaulting
+  to `"IN"`. `isWithinCountryBoundingBox(countryCode, ...)` replaces the India-only bounding
+  box check (`isWithinIndiaBoundingBox` kept as a thin deprecated wrapper for existing callers).
+- `POST /auth/otp/request` and `/verify` both accept `country_code`; a new citizen's
+  `preferred_language` is derived from `CountryProfile.canonical_working_language` instead
+  of being hardcoded `"en-IN"` (unit tested: auth.test.ts's BR case).
+- Seeded a real `BR` profile: 1 estado (São Paulo) + 3 municípios (São Paulo, Campinas,
+  Santos) in `scripts/seed-demo-data/source/admin_regions.csv`, with matching
+  `infra_index.csv`/`investment_record.csv` rows (`data_origin: synthetic_demo`, `BRL`).
+  Fixed a real bug this surfaced: `generateReferenceData.ts`'s `normalised_value` percentile
+  was computed across *all* countries' rows for a given `index_type` — a second country's
+  data would have silently shifted the first country's percentiles. Now grouped by
+  `(country_code, index_type)`, matching the documented "percentile within the country" contract.
+- Frontend: `apps/web/src/i18n/pt.json` added (completeness-tested against `en.json`'s key
+  set like the other three languages); the language picker doubles as the country switcher —
+  `SUPPORTED_LANGUAGES` now carries a `countryCode` per entry, and selecting Portuguese sets
+  the submission's `country_code` to `BR`. No separate country-switcher UI was built; this
+  is the one corner cut versus the phase doc's original 5-step list, and it's a reasonable
+  one — a citizen doesn't pick a country independently of the language they're reporting in.
+- **Not done**: `AdminRegionLevel`'s new `estado`/`município`/`distrito`/`bairro` values
+  have no dedicated i18n label lookup in the officer UI yet (there's no admin-level label
+  rendering anywhere in the UI today to retrofit — `officer.mapPlaceholder` is still a
+  placeholder string, see phase-7's checklist).
+- **Not done**: `getOrCreateCitizenByPhone` (WhatsApp/SMS webhook path, `apps/api-gateway/src/services/citizens.ts`) still hardcodes `country_code: "IN"` — left as-is since WhatsApp/SMS provider numbers and webhook payloads are inherently per-country integrations anyway (a real Brazilian deployment would register its own webhook), and the cross-border demo path is the web flow. Worth revisiting if a webhook-based BR demo is ever needed.
+- **Caution carried over from the phase doc**: the Portuguese seed strings in `pt.json`
+  were written directly, not machine-translated then reviewed, but they still haven't been
+  checked by a native pt-BR speaker — spot-check before an actual demo, per the phase doc's
+  original warning.
 
 ### Monitoring (§8.5) — needs a live deployment
 A Cloud Monitoring dashboard, by definition, can't be built against code that has never
@@ -82,6 +104,7 @@ anywhere in this build, so there are no real photo URLs to run a plausibility ch
       actually sent (step 3 above).
 - [ ] A region with poor historical efficacy scores measurably lower than one with good
       efficacy, captured as a screenshot — needs a real end-to-end run (step 2 above).
-- [ ] Country switch to `BR` — not attempted (see Deferred above).
+- [x] Country switch to `BR` — implemented via language selection (see Deferred above for
+      exact scope and the one corner cut: no standalone country-switcher UI).
 - [ ] Monitoring dashboard live with all seven metrics — needs a live deployment (see
       Deferred above).

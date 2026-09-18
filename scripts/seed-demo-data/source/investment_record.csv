@@ -7,3 +7,6 @@ inv-mh-pune-roads-2425,mh-pune,IN,MH,Sample Road Maintenance Scheme,PMGSY,650000
 inv-mh-pune-health-2324,mh-pune,IN,MH,Sample Primary Health Centre Scheme,NHM,400000,INR,health,2023-24,2023-07-18,synthetic_demo
 inv-ka-bengaluru-urban-roads-2425,ka-bengaluru-urban,IN,KA,Sample Road Maintenance Scheme,PMGSY,1100000,INR,roads,2024-25,2024-06-25,synthetic_demo
 inv-ka-mysuru-water-2324,ka-mysuru,IN,KA,Sample Rural Water Supply Scheme,JJM,300000,INR,water,2023-24,2023-10-05,synthetic_demo
+inv-br-sao-paulo-sanitation-2324,br-sao-paulo,BR,SP,Sample PAC Sanitation Upgrade,PAC,2500000,BRL,sanitation,2023-24,2023-08-12,synthetic_demo
+inv-br-campinas-roads-2425,br-campinas,BR,SP,Sample PAC Road Maintenance Scheme,PAC,900000,BRL,roads,2024-25,2024-03-20,synthetic_demo
+inv-br-santos-health-2324,br-santos,BR,SP,Sample Minha Casa Minha Vida Health Annex,MCMV,600000,BRL,health,2023-24,2023-11-02,synthetic_demo

@@ -56,6 +56,29 @@ describe("POST /auth/otp/verify", () => {
     expect(citizen?.phone_hash).not.toContain("+919812345678");
   });
 
+  it("creates a Brazilian citizen with pt-BR preferred_language when country_code=BR is passed", async () => {
+    const deps = createFakeDeps();
+    const app = buildApp(deps);
+
+    const requestResponse = await app.inject({
+      method: "POST",
+      url: "/v1/auth/otp/request",
+      payload: { phone: "+5511987654321", country_code: "BR" },
+    });
+    const { request_id } = requestResponse.json();
+
+    const verifyResponse = await app.inject({
+      method: "POST",
+      url: "/v1/auth/otp/verify",
+      payload: { request_id, otp: "111111", country_code: "BR" },
+    });
+
+    expect(verifyResponse.statusCode).toBe(200);
+    const citizen = await deps.store.getCitizen(verifyResponse.json().citizen_id);
+    expect(citizen?.country_code).toBe("BR");
+    expect(citizen?.preferred_language).toBe("pt-BR");
+  });
+
   it("with an incorrect OTP returns 500-level failure, never leaking a token", async () => {
     const deps = createFakeDeps();
     const app = buildApp(deps);

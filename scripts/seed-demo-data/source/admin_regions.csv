@@ -8,3 +8,7 @@ mh-mumbai-city,IN,district,Mumbai City,IN-MH,3145966,bq://jansetu.reference.in_a
 mh-pune,IN,district,Pune,IN-MH,9426959,bq://jansetu.reference.in_admin_boundaries/district/mh-pune,18.5204,73.8567
 ka-bengaluru-urban,IN,district,Bengaluru Urban,IN-KA,9621551,bq://jansetu.reference.in_admin_boundaries/district/ka-bengaluru-urban,12.9716,77.5946
 ka-mysuru,IN,district,Mysuru,IN-KA,3001127,bq://jansetu.reference.in_admin_boundaries/district/ka-mysuru,12.2958,76.6394
+BR-SP,BR,estado,São Paulo,,46024937,bq://jansetu.reference.br_admin_boundaries/estado/SP,-23.5505,-46.6333
+br-sao-paulo,BR,município,São Paulo,BR-SP,12325232,bq://jansetu.reference.br_admin_boundaries/municipio/sao-paulo,-23.5505,-46.6333
+br-campinas,BR,município,Campinas,BR-SP,1223237,bq://jansetu.reference.br_admin_boundaries/municipio/campinas,-22.9099,-47.0626
+br-santos,BR,município,Santos,BR-SP,433991,bq://jansetu.reference.br_admin_boundaries/municipio/santos,-23.9608,-46.3339

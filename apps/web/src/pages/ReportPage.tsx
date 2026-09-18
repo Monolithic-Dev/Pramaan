@@ -10,7 +10,7 @@ import { useLanguage } from "../i18n/LanguageProvider.js";
 type Step = "consent" | "form" | "confirmed";
 
 export function ReportPage() {
-  const { t, speechLang } = useLanguage();
+  const { t, speechLang, countryCode } = useLanguage();
   const { speak } = useSpeechSynthesis(speechLang);
   const { enqueue } = useOfflineQueue();
 
@@ -53,6 +53,7 @@ export function ReportPage() {
       channel: "web",
       text: text.trim(),
       consent_version: CONSENT_VERSION,
+      country_code: countryCode,
       ...(coords ? coords : { location_text: locationText.trim() }),
     };
 

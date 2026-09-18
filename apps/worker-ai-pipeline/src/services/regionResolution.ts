@@ -40,7 +40,7 @@ function findNearestRegion(
 function findStateAncestor(region: RegionCentroid, byId: Map<string, RegionCentroid>): string | null {
   let current: RegionCentroid | null = region;
   for (let i = 0; i < 6 && current; i++) {
-    if (current.level === "state") return current.regionId;
+    if (current.level === "state" || current.level === "estado") return current.regionId;
     current = current.parentRegionId ? (byId.get(current.parentRegionId) ?? null) : null;
   }
   return null;
@@ -50,18 +50,25 @@ export async function resolveLocation(
   referenceData: ReferenceDataClient,
   lat: number | null,
   lng: number | null,
+  /** Submission.country_code (docs/CROSS_BORDER_AND_DPG.md) — a Brazilian
+   *  submission must never nearest-match an Indian district just because it's
+   *  the closest seeded centroid overall. */
+  countryCode: string,
 ): Promise<ResolvedLocation> {
   if (lat === null || lng === null) {
     return { geohash: null, adminRegionId: null, stateId: "UNRESOLVED", population: null };
   }
   const geohash = geohashEncode(lat, lng, 6);
 
-  const regions = await referenceData.getAllRegionCentroids();
+  const allRegions = await referenceData.getAllRegionCentroids();
+  // A candidate with no countryCode (older/test fixtures) is treated as
+  // matching any country — real BigQuery rows always set it.
+  const regions = allRegions.filter((r) => (r.countryCode ?? countryCode) === countryCode);
   if (regions.length === 0) {
     return { geohash, adminRegionId: null, stateId: "UNRESOLVED", population: null };
   }
 
-  const districts = regions.filter((r) => r.level === "district");
+  const districts = regions.filter((r) => r.level === "district" || r.level === "município");
   const nearest = findNearestRegion({ lat, lng }, districts.length > 0 ? districts : regions);
   if (!nearest) return { geohash, adminRegionId: null, stateId: "UNRESOLVED", population: null };
 

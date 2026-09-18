@@ -17,3 +17,10 @@ ka-bengaluru-urban,IN,KA,health_facility_ratio,0.58,Sample derived from public i
 ka-mysuru,IN,KA,road_density,0.4,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
 ka-mysuru,IN,KA,water_access,0.68,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
 ka-mysuru,IN,KA,poverty_index,0.34,Sample derived from public infra survey data,https://censusindia.gov.in/,Government Open Data Licence - India,2025
+br-sao-paulo,BR,SP,road_density,0.72,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-sao-paulo,BR,SP,water_access,0.91,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-sao-paulo,BR,SP,health_facility_ratio,0.68,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-campinas,BR,SP,road_density,0.6,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-campinas,BR,SP,water_access,0.83,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-santos,BR,SP,road_density,0.65,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
+br-santos,BR,SP,poverty_index,0.29,Sample derived from IBGE municipal indicators,https://www.ibge.gov.br/,Government Open Data Licence - Brazil,2025
