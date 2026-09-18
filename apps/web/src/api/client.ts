@@ -43,6 +43,7 @@ export interface CreateSubmissionInput {
   lng?: number;
   location_text?: string;
   consent_version: string;
+  country_code?: string;
 }
 
 export interface CreateSubmissionResult {

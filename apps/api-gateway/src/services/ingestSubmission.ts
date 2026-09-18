@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
 import type { ConsentRecord, Submission, SubmissionChannel } from "@jansetu/shared-types";
-import { isWithinIndiaBoundingBox, scrubPii } from "@jansetu/shared-utils";
+import { isWithinCountryBoundingBox, scrubPii } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 
 export interface IngestSubmissionInput {
@@ -20,6 +20,11 @@ export interface IngestSubmissionInput {
   /** Raw IP from the request — hashed before storage, never persisted as-is
    *  (docs/SECURITY_PRIVACY.md §4). null for webhook channels with no citizen IP. */
   submitterIp?: string | null;
+  /** Client-declared country for anonymous submissions (docs/CROSS_BORDER_AND_DPG.md)
+   *  — the frontend derives this from the selected language. Ignored (overridden by
+   *  the citizen's own record) whenever citizenId resolves to a known Citizen, so an
+   *  authenticated request can't spoof its country by lying in the body. */
+  countryCode?: string;
 }
 
 function hashIp(ip: string): string {
@@ -62,11 +67,14 @@ export async function ingestSubmission(
   const hasCoords = input.lat !== undefined && input.lng !== undefined;
   const rawText = input.text ?? null;
 
+  const citizen = input.citizenId ? await deps.store.getCitizen(input.citizenId) : null;
+  const countryCode = citizen?.country_code ?? input.countryCode ?? "IN";
+
   const submission: Submission = {
     submission_id: submissionId,
     idempotency_key: input.idempotencyKey,
     citizen_id: input.citizenId ?? "anonymous",
-    country_code: "IN",
+    country_code: countryCode,
     channel: input.channel,
     raw_text: rawText,
     raw_audio_url: input.audio_url ?? null,
@@ -80,7 +88,7 @@ export async function ingestSubmission(
     lng: hasCoords ? (input.lng as number) : null,
     location_text: hasCoords ? null : (input.location_text ?? null),
     location_confidence: hasCoords
-      ? isWithinIndiaBoundingBox(input.lat as number, input.lng as number)
+      ? isWithinCountryBoundingBox(countryCode, input.lat as number, input.lng as number)
         ? "high"
         : "low"
       : "low",

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { Citizen } from "@jansetu/shared-types";
+import { getCountryProfile } from "@jansetu/shared-types";
 import { hashPhone } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 import { otpRequestSchema, otpVerifySchema } from "../schemas/auth.js";
@@ -13,9 +14,6 @@ export function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
       });
     }
 
-    // country_code is accepted for API_SPEC.md forward-compatibility with
-    // docs/CROSS_BORDER_AND_DPG.md's multi-country model; the MVP is India-only,
-    // so it isn't threaded through to Citizen creation yet (hardcoded "IN" below).
     const { sessionInfo } = await deps.identityToolkit.sendVerificationCode(
       parsed.data.phone,
     );
@@ -38,11 +36,13 @@ export function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     const citizenId = localId;
     let citizen = await deps.store.getCitizen(citizenId);
     if (!citizen) {
+      const countryCode = parsed.data.country_code ?? "IN";
+      const profile = getCountryProfile(countryCode);
       citizen = {
         citizen_id: citizenId,
         phone_hash: hashPhone(phoneNumber),
-        preferred_language: "en-IN",
-        country_code: "IN",
+        preferred_language: `${profile.canonical_working_language}-${countryCode}`,
+        country_code: countryCode,
         created_at: new Date().toISOString(),
         erasure_requested_at: null,
       } satisfies Citizen;

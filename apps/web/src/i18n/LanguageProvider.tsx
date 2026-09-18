@@ -2,16 +2,22 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 import en from "./en.json";
 import hi from "./hi.json";
 import ta from "./ta.json";
+import pt from "./pt.json";
 
+// Each language doubles as the country signal for a submission
+// (docs/CROSS_BORDER_AND_DPG.md) — there's no separate country switcher UI;
+// picking Portuguese is how a citizen tells JanSetu they're reporting in
+// Brazil. countryCode must be a COUNTRY_PROFILES key (@jansetu/shared-types).
 export const SUPPORTED_LANGUAGES = [
-  { code: "en", label: "English", speechLang: "en-IN" },
-  { code: "hi", label: "हिन्दी", speechLang: "hi-IN" },
-  { code: "ta", label: "தமிழ்", speechLang: "ta-IN" },
+  { code: "en", label: "English", speechLang: "en-IN", countryCode: "IN" },
+  { code: "hi", label: "हिन्दी", speechLang: "hi-IN", countryCode: "IN" },
+  { code: "ta", label: "தமிழ்", speechLang: "ta-IN", countryCode: "IN" },
+  { code: "pt", label: "Português", speechLang: "pt-BR", countryCode: "BR" },
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
 
-const DICTIONARIES: Record<LanguageCode, Record<string, string>> = { en, hi, ta };
+const DICTIONARIES: Record<LanguageCode, Record<string, string>> = { en, hi, ta, pt };
 const STORAGE_KEY = "jansetu.language";
 
 interface LanguageContextValue {
@@ -20,6 +26,7 @@ interface LanguageContextValue {
   /** Looks up `key` and substitutes any `{placeholder}` tokens from `vars`. */
   t: (key: string, vars?: Record<string, string | number>) => string;
   speechLang: string;
+  countryCode: string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -48,12 +55,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<LanguageContextValue>(() => {
     const dictionary = DICTIONARIES[language];
-    const speechLang =
-      SUPPORTED_LANGUAGES.find((l) => l.code === language)?.speechLang ?? "en-IN";
+    const languageEntry = SUPPORTED_LANGUAGES.find((l) => l.code === language);
+    const speechLang = languageEntry?.speechLang ?? "en-IN";
+    const countryCode = languageEntry?.countryCode ?? "IN";
     return {
       language,
       setLanguage,
       speechLang,
+      countryCode,
       t: (key, vars) => {
         let value = dictionary[key] ?? key;
         if (vars) {

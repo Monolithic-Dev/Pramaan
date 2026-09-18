@@ -89,6 +89,7 @@ export async function processSubmission(
     deps.referenceData,
     submission.lat,
     submission.lng,
+    submission.country_code,
   );
 
   submission.resolved_region_id = adminRegionId;

@@ -27,25 +27,27 @@ function parseCsv(path: string): Record<string, string>[] {
   });
 }
 
-// normalised_value is a 0-1 percentile within the country, computed once here at
-// load time — never at query time, or scores stop reproducing as the dataset grows
-// (docs/DATA_MODEL.md, InfraIndex entity).
+// normalised_value is a 0-1 percentile *within the country* (docs/DATA_MODEL.md,
+// InfraIndex entity — cross-country comparison is meaningless by design, see
+// docs/CROSS_BORDER_AND_DPG.md §1), computed once here at load time — never at
+// query time, or scores stop reproducing as the dataset grows. Grouping key
+// includes country_code so a second country's rows never shift the first
+// country's percentiles (or vice versa).
 function withNormalisedValue(
   rows: Record<string, unknown>[],
 ): (Record<string, unknown> & { normalised_value: number })[] {
-  const byType = new Map<string, number[]>();
+  const groupKey = (row: Record<string, unknown>) => `${row.country_code}|${row.index_type}`;
+  const byGroup = new Map<string, number[]>();
   for (const row of rows) {
-    const type = row.index_type as string;
-    const values = byType.get(type) ?? [];
+    const values = byGroup.get(groupKey(row)) ?? [];
     values.push(row.value as number);
-    byType.set(type, values);
+    byGroup.set(groupKey(row), values);
   }
-  for (const values of byType.values()) values.sort((a, b) => a - b);
+  for (const values of byGroup.values()) values.sort((a, b) => a - b);
 
   return rows.map((row) => {
-    const type = row.index_type as string;
     const value = row.value as number;
-    const sorted = byType.get(type)!;
+    const sorted = byGroup.get(groupKey(row))!;
     const rank = sorted.filter((v) => v <= value).length;
     const normalised_value = sorted.length > 1 ? rank / sorted.length : 1;
     return { ...row, normalised_value: Number(normalised_value.toFixed(4)) };

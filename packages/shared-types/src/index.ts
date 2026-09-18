@@ -36,7 +36,16 @@ export type InfraIndexType =
 export type InvestmentDataOrigin = "public_dataset" | "synthetic_demo" | "partner_feed";
 export type ProjectStatus = "recommended" | "funded" | "in_progress" | "completed";
 export type OfficerRole = "field_officer" | "district_collector" | "state_admin";
-export type AdminRegionLevel = "country" | "state" | "district" | "block" | "ward";
+export type AdminRegionLevel =
+  | "country"
+  | "state"
+  | "district"
+  | "block"
+  | "ward"
+  | "estado"
+  | "município"
+  | "distrito"
+  | "bairro";
 
 /** @deprecated Superseded by AdminRegion. Kept only for reading pre-migration fixtures/data. */
 export interface AdminBoundary {
@@ -342,3 +351,5 @@ export interface AgentTurn {
   total_latency_ms: number;
   timestamp: string;
 }
+
+export { COUNTRY_PROFILES, DEFAULT_COUNTRY_CODE, getCountryProfile } from "./countryProfiles.js";

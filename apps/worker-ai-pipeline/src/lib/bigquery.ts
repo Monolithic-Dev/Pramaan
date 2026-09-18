@@ -28,6 +28,9 @@ export interface AncestryStep {
 
 export interface RegionCentroid {
   regionId: string;
+  /** Optional so existing single-country test fixtures don't need updating —
+   *  resolveLocation() treats a missing value as "matches any country". */
+  countryCode?: string;
   level: string;
   parentRegionId: string | null;
   lat: number;
@@ -101,17 +104,19 @@ export function createBigQueryReferenceDataClient(): ReferenceDataClient {
     async getAllRegionCentroids() {
       const rows = await query<{
         region_id: string;
+        country_code: string;
         level: string;
         parent_region_id: string | null;
         centroid_lat: number;
         centroid_lng: number;
         population: number;
       }>(
-        `SELECT region_id, level, parent_region_id, centroid_lat, centroid_lng, population FROM \`${REFERENCE_DATASET}.admin_regions\``,
+        `SELECT region_id, country_code, level, parent_region_id, centroid_lat, centroid_lng, population FROM \`${REFERENCE_DATASET}.admin_regions\``,
         {},
       );
       return rows.map((r) => ({
         regionId: r.region_id,
+        countryCode: r.country_code,
         level: r.level,
         parentRegionId: r.parent_region_id,
         lat: r.centroid_lat,
