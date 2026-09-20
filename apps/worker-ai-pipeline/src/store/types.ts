@@ -11,6 +11,8 @@ export interface CandidateQuery {
 export interface Store {
   getSubmission(submissionId: string): Promise<Submission | null>;
   putSubmission(submission: Submission): Promise<void>;
+  /** Submissions still queued/deferred (Pub/Sub-less deployments poll these). Oldest first. */
+  listPendingSubmissions(limit: number): Promise<Submission[]>;
 
   /** Same-reporter pre-check (docs/EDGE_CASES.md #4) — before embedding, before cost. */
   findOwnRecentIssue(

@@ -50,8 +50,22 @@ export async function processSubmission(
     }
   }
 
+  // Computer vision (Gemini multimodal): a photo can carry the whole report when there is
+  // no text, and a photo that shows no infrastructure problem is a soft fraud signal.
+  let photoAnalysis: Awaited<ReturnType<Deps["photoAnalyzer"]["analyze"]>> = null;
+  if (submission.photo_url) {
+    try {
+      photoAnalysis = await deps.photoAnalyzer.analyze(submission.photo_url);
+    } catch (err) {
+      log.warn({ err, submissionId }, "photo analysis failed; continuing without it");
+    }
+  }
+
   const textForExtraction =
-    submission.pii_scrubbed_text ?? submission.translated_text ?? submission.raw_text;
+    submission.pii_scrubbed_text ??
+    submission.translated_text ??
+    submission.raw_text ??
+    (photoAnalysis?.shows_infrastructure_issue ? photoAnalysis.description : null);
 
   if (!textForExtraction) {
     submission.status = "flagged";
@@ -119,6 +133,10 @@ export async function processSubmission(
     submission.state_id = stateId;
     submission.status = "processed";
     await evaluateAntiFraud(deps, submission, issueId, log);
+    // Soft signal only (docs/phases/phase-8 section 8.1.4): flag for review, never reject.
+    if (photoAnalysis && !photoAnalysis.shows_infrastructure_issue) {
+      await deps.store.addFraudFlag(issueId, "photo_implausible");
+    }
   } catch (err) {
     log.error({ err, submissionId }, "dedup pipeline failed");
     submission.status = "flagged";

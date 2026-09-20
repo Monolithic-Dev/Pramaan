@@ -1,0 +1,135 @@
+# Free Deployment Guide: no Google Cloud billing account needed
+
+Use this if you do not want to (or cannot) add a Google Cloud billing account. Everything here is free and
+needs **no card**. If you later get GCP credits, `docs/GCP_SETUP_GUIDE.md` is the Cloud Run alternative;
+the code supports both.
+
+## What runs where
+
+| Piece | Runs on | Cost |
+|---|---|---|
+| Database (all app data, uploaded photos/audio, reference data) | **Firebase Firestore**, Spark plan | Free |
+| Officer login (email/password) and citizen OTP | **Firebase Authentication**, Spark plan (test phone numbers) | Free |
+| AI: categorization, embeddings, transcription, photo analysis, translation, agent | **Gemini API** (Google AI Studio key) | Free tier, rate-limited |
+| API and AI worker | **Render** free web services | Free (sleeps when idle) |
+| Web app | **Render** free static site | Free |
+| Queue and scheduling | HTTP call + **GitHub Actions** cron (replaces Pub/Sub and Cloud Scheduler) | Free |
+| Map | OpenStreetMap + Leaflet | Free |
+
+Google AI in use: Gemini (generative + agent + function calling), Gemini multimodal (photo analysis and audio
+transcription), Gemini embeddings, Firebase (Auth + Firestore). This satisfies the "Google AI" requirement.
+Not used because they need GCP billing: Vertex AI, BigQuery, Cloud Run, Cloud Storage, Pub/Sub.
+
+## Honest limits of the free setup
+- **Cold starts:** Render free services sleep after ~15 minutes idle; the first request after that takes
+  30-60 seconds. **Open the site and the `/healthz` URLs 2 minutes before any demo.**
+- **Free instance hours** are shared across services (750/month). Two sleeping services are fine for a demo.
+- **Uploads are small:** photos are compressed in the browser and voice notes are capped at 60 seconds, to fit
+  Firestore's 1 MiB document limit. Fine for a prototype; move to Cloud Storage at scale.
+- **Phone OTP** works with **test phone numbers** only (no SMS cost). Real SMS needs Firebase Blaze billing.
+- **Gemini free tier** can return 429/503 under load; the app retries, and demos are usually fine.
+- Reference data is in Firestore instead of BigQuery (fine at this size; set `REFERENCE_BACKEND=bigquery` on
+  GCP for national scale).
+
+---
+
+## Step 1: Firebase project (you already have one)
+
+1. <https://console.firebase.google.com>, open your project. Stay on the **Spark (free)** plan.
+2. **Firestore Database, Create database:** Production mode, any location (pick `asia-south1` / nearest).
+3. **Authentication, Get started, Sign-in method:**
+   - Enable **Email/Password** (for officers).
+   - Enable **Phone**, then under **Phone numbers for testing** add e.g. `+91 98765 43210` = code `123456`
+     (and a Brazilian one such as `+55 11 91234 5678` = `123456` for the pt-BR demo).
+4. **Project settings (gear), General:** note the **Project ID** and the **Web API Key** (already in `.env`).
+5. **Project settings, Service accounts, Generate new private key.** A JSON file downloads. **Treat it like a
+   password; never commit it.** Convert it to one line for Render:
+
+```bash
+base64 -w0 path/to/downloaded-key.json      # Git Bash; copy the output
+```
+
+## Step 2: Load reference data into Firestore
+
+From the repo root (Git Bash), using that key file:
+
+```bash
+export FIREBASE_SERVICE_ACCOUNT_JSON=$(base64 -w0 path/to/downloaded-key.json)
+export FIREBASE_PROJECT_ID=<your-project-id>
+pnpm --filter @jansetu/scripts seed-firestore-reference
+```
+
+It writes 13 regions (India + Brazil), infrastructure indexes and investment records. Check in Firestore:
+collections `ref_admin_regions`, `ref_infra_index`, `ref_investment_record`.
+
+## Step 3: Create an officer login
+
+```bash
+pnpm --filter @jansetu/scripts create-officer officer@example.com 'ChooseAStrongPassword1' state_admin IN-DL IN
+```
+
+Roles: `state_admin` (all screens), `district_collector`, `field_officer`. The `region_id` is the officer
+jurisdiction, e.g. `IN-DL` (Delhi), `IN-MH`, `IN-KA`, `dl-central-delhi`, `BR-SP`. Create a second one with
+`BR-SP` and `BR` for the Brazil demo.
+
+## Step 4: Put the code on Render
+
+1. Push this repo to GitHub (it already is) and sign up at <https://render.com> with GitHub (no card).
+2. **New, Blueprint,** pick this repo. Render reads `render.yaml` and proposes three services:
+   `jansetu-api`, `jansetu-worker`, `jansetu-web`. Click **Apply**.
+3. Fill the environment variables it asks for (Dashboard, each service, **Environment**):
+
+| Variable | jansetu-api | jansetu-worker | jansetu-web |
+|---|---|---|---|
+| `FIREBASE_PROJECT_ID` | yes | yes | |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | base64 from Step 1 | same | |
+| `FIREBASE_WEB_API_KEY` | web API key | | |
+| `GEMINI_API_KEY` | your key | your key | |
+| `WORKER_SHARED_SECRET` | any long random string | **same string** | |
+| `WORKER_URL` | `https://jansetu-worker.onrender.com` (worker's URL) | | |
+| `VITE_API_BASE_URL` | | | `https://jansetu-api.onrender.com/v1` |
+| `VITE_FIREBASE_API_KEY` | | | web API key |
+
+   Generate the secret with: `openssl rand -hex 24`. The URLs are shown at the top of each Render service page;
+   if Render adds a suffix, use the exact URL.
+4. After the first deploy, redeploy `jansetu-web` once so it picks up the API URL.
+5. In Firebase, **Authentication, Settings, Authorized domains:** add the `jansetu-web` domain
+   (`something.onrender.com`).
+
+Check: open `https://<api>/healthz` and `https://<worker>/healthz`. Both return `{"status":"ok"}`.
+
+## Step 5: Scheduled jobs (replaces Pub/Sub + Cloud Scheduler)
+
+Reports are handed to the worker immediately; this cron catches anything missed and runs scoring.
+
+1. GitHub repo, **Settings, Secrets and variables, Actions:**
+   - Secrets: `WORKER_URL` (worker URL) and `WORKER_SHARED_SECRET` (same string as above).
+   - Variables: `SCHEDULED_JOBS_ENABLED` = `true`.
+2. **Actions, scheduled-jobs, Run workflow** once to test. It should go green.
+
+## Step 6: End-to-end test
+
+1. Open the web URL. Pick a language, agree, file a report with text + a photo + a manual location.
+2. Firestore: `submissions` gets a document that moves `queued` to `processed` (within a minute); `issues`
+   gets an issue. File the same problem twice: `report_count` goes up, no duplicate issue.
+3. Try a voice note (works in Chrome via browser speech, or as an uploaded recording elsewhere) and a photo-only report.
+4. Open `/officer`, sign in with the officer email/password, look at the map, forecasts, equity tabs and ask the agent a question.
+5. `/status`: enter a test phone number, code `123456`, and the tracking id.
+6. `/transparency`: works in a private window with no login.
+
+Scoring needs 3 distinct reporters on an issue (or emergency override). Use three test phones / different
+browsers, or run more submissions, before expecting scores.
+
+## Troubleshooting
+- **Site loads but calls fail:** `VITE_API_BASE_URL` wrong, or `jansetu-web` not redeployed after setting it.
+- **CORS error in browser console:** the api service is asleep or crashed; open its `/healthz` and check Render logs.
+- **Submission stays `queued`:** worker asleep or `WORKER_SHARED_SECRET` mismatch. The 15-minute cron will retry.
+- **"The query requires an index":** open the link in the error; it creates the Firestore index in one click.
+- **Officer login fails:** wrong email/password, or `VITE_FIREBASE_API_KEY` missing on the web service.
+- **403 on officer screens:** the officer claims do not cover that region; re-run `create-officer` with the right `region_id`.
+
+## What you still need to provide
+1. The Firebase service-account key (Step 1) and Firestore + Auth enabled.
+2. A Render account (GitHub sign-in) and a GitHub repo you control for the cron secrets.
+3. Test phone numbers configured in Firebase (Step 1).
+4. Optional: a `data.gov.in` API key if you want real government datasets loaded (tell me and I will build the loader).

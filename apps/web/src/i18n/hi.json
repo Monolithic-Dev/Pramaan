@@ -112,5 +112,13 @@
   "report.audioSaved": "आवाज़ संदेश सहेजा गया",
   "map.legendIssue": "दर्ज समस्या",
   "map.legendForecast": "पूर्वानुमानित जोखिम (बिंदीदार)",
-  "map.empty": "इस क्षेत्र में अभी कोई मानचित्र पर समस्या नहीं।"
+  "map.empty": "इस क्षेत्र में अभी कोई मानचित्र पर समस्या नहीं।",
+  "officer.email": "ईमेल",
+  "officer.password": "पासवर्ड",
+  "officer.loginFailed": "साइन-इन विफल। ईमेल और पासवर्ड जांचें।",
+  "status.phone": "फ़ोन नंबर (देश कोड सहित)",
+  "status.sendCode": "कोड भेजें",
+  "status.otp": "सत्यापन कोड",
+  "status.verify": "सत्यापित करें",
+  "status.otpFailed": "वह कोड काम नहीं आया।"
 }

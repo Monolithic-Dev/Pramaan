@@ -12,6 +12,18 @@ export function buildApp(deps: Deps) {
 
   app.get("/healthz", async () => ({ status: "ok" }));
 
+  // On hosts where the worker has a public URL and no Pub/Sub OIDC (e.g. Render), a
+  // shared secret keeps strangers from triggering processing or scoring.
+  const secret = process.env.WORKER_SHARED_SECRET;
+  if (secret) {
+    app.addHook("onRequest", async (request, reply) => {
+      if (request.url === "/healthz") return;
+      if (request.headers["x-worker-secret"] !== secret) {
+        return reply.code(401).send({ error: "unauthorized" });
+      }
+    });
+  }
+
   app.post("/pubsub-push", async (request, reply) => {
     const body = request.body as PubSubPushBody;
     const data = body.message?.data;
@@ -51,6 +63,22 @@ export function buildApp(deps: Deps) {
   app.post("/jobs/score", async (request, reply) => {
     const summary = await runScoringBatch(deps, request.log);
     return reply.code(200).send(summary);
+  });
+
+  // Pub/Sub-less deployments: the gateway pings /pubsub-push best-effort, and this sweep
+  // (called by the scheduler) picks up anything that was missed, oldest first.
+  app.post("/jobs/sweep", async (request, reply) => {
+    const pending = await deps.store.listPendingSubmissions(20);
+    let processed = 0;
+    for (const submission of pending) {
+      try {
+        await processSubmission(deps, submission.submission_id, request.log);
+        processed += 1;
+      } catch (err) {
+        request.log.error({ err, submissionId: submission.submission_id }, "sweep: processing failed");
+      }
+    }
+    return reply.code(200).send({ pending: pending.length, processed });
   });
 
   return app;

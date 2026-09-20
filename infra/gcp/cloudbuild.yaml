@@ -1,0 +1,8 @@
+# Builds one service image from the repo root (the Dockerfiles copy packages/ too).
+# Usage: gcloud builds submit --config infra/gcp/cloudbuild.yaml \
+#          --substitutions=_SERVICE=api-gateway,_IMAGE=REGION-docker.pkg.dev/PROJECT/jansetu/api-gateway .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "apps/${_SERVICE}/Dockerfile", "-t", "${_IMAGE}", "."]
+images:
+  - "${_IMAGE}"

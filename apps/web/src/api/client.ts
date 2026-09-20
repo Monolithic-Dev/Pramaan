@@ -219,3 +219,20 @@ export interface MapMarkers {
 export function getMapMarkers(token: string, region: string): Promise<MapMarkers> {
   return request(`/map/markers?region=${encodeURIComponent(region)}`, { headers: bearer(token) });
 }
+
+export { signInOfficer } from "./clientAuth.js";
+
+export function requestOtp(phone: string, countryCode: string): Promise<{ request_id: string }> {
+  return request("/auth/otp/request", { method: "POST", body: JSON.stringify({ phone, country_code: countryCode }) });
+}
+
+export function verifyOtp(
+  requestId: string,
+  otp: string,
+  countryCode: string,
+): Promise<{ citizen_token: string; citizen_id: string }> {
+  return request("/auth/otp/verify", {
+    method: "POST",
+    body: JSON.stringify({ request_id: requestId, otp, country_code: countryCode }),
+  });
+}

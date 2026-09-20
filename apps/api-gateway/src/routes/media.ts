@@ -4,8 +4,6 @@ import { ALLOWED_CONTENT_TYPES, type MediaKind } from "../lib/mediaStore.js";
 import { optionalAuth } from "../middleware/auth.js";
 import { submissionRateLimiter } from "../middleware/rateLimiter.js";
 
-const MAX_BYTES: Record<MediaKind, number> = { photo: 8 * 1024 * 1024, audio: 10 * 1024 * 1024 };
-
 // Extension/Content-Type headers are attacker-controlled, so image uploads are
 // also checked against real file signatures.
 function looksLikeImage(contentType: string, b: Buffer): boolean {
@@ -41,8 +39,8 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
         if (!ALLOWED_CONTENT_TYPES.includes(contentType) || !contentType.startsWith(kind === "photo" ? "image/" : "audio/")) {
           return reply.code(415).send({ error: { code: "UNSUPPORTED_MEDIA_TYPE", message: `Unsupported type for ${kind}.` } });
         }
-        if (!Buffer.isBuffer(body) || body.length === 0 || body.length > MAX_BYTES[kind]) {
-          return reply.code(413).send({ error: { code: "PAYLOAD_TOO_LARGE", message: `${kind} must be 1 byte to ${MAX_BYTES[kind] / 1024 / 1024} MB.` } });
+        if (!Buffer.isBuffer(body) || body.length === 0 || body.length > deps.mediaStore.maxBytes[kind]) {
+          return reply.code(413).send({ error: { code: "PAYLOAD_TOO_LARGE", message: `${kind} must be 1 byte to up to ${Math.round(deps.mediaStore.maxBytes[kind] / 1024)} KB.` } });
         }
         if (kind === "photo" && !looksLikeImage(contentType, body)) {
           return reply.code(415).send({ error: { code: "UNSUPPORTED_MEDIA_TYPE", message: "File contents do not match the declared image type." } });

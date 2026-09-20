@@ -112,5 +112,13 @@
   "report.audioSaved": "Voice message saved",
   "map.legendIssue": "Reported issue",
   "map.legendForecast": "Forecast risk (dashed)",
-  "map.empty": "No mapped issues in this region yet."
+  "map.empty": "No mapped issues in this region yet.",
+  "officer.email": "Email",
+  "officer.password": "Password",
+  "officer.loginFailed": "Sign-in failed. Check your email and password.",
+  "status.phone": "Phone number (with country code)",
+  "status.sendCode": "Send code",
+  "status.otp": "Verification code",
+  "status.verify": "Verify",
+  "status.otpFailed": "That code did not work."
 }

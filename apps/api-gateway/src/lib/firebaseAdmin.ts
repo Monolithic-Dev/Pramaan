@@ -1,9 +1,21 @@
-import { getApps, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+
+// Credentials, in order: FIREBASE_SERVICE_ACCOUNT_JSON (raw or base64 JSON, works on
+// any host with no GCP billing), then Application Default Credentials (Cloud Run / gcloud login).
+function loadCredential() {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!raw) return applicationDefault();
+  const json = raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
+  return cert(JSON.parse(json));
+}
 
 export function ensureFirebaseApp() {
   if (getApps().length === 0) {
-    initializeApp();
+    initializeApp({
+      credential: loadCredential(),
+      projectId: process.env.GCP_PROJECT_ID ?? process.env.FIREBASE_PROJECT_ID,
+    });
   }
 }
 
