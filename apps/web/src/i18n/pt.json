@@ -104,5 +104,13 @@
   "insights.forbidden": "Você não tem acesso a esta visão.",
   "level.low": "Baixa",
   "level.medium": "Média",
-  "level.high": "Alta"
+  "level.high": "Alta",
+  "report.photoAttached": "Foto anexada",
+  "report.uploadError": "Falha no envio. Tente novamente.",
+  "report.audioRecord": "Gravar mensagem de voz",
+  "report.audioStop": "Gravando… toque para parar",
+  "report.audioSaved": "Mensagem de voz salva",
+  "map.legendIssue": "Problema relatado",
+  "map.legendForecast": "Risco previsto (tracejado)",
+  "map.empty": "Nenhum problema mapeado nesta região ainda."
 }

@@ -3,6 +3,8 @@ import { createBigQueryAgentClient, type BigQueryAgentClient } from "./lib/bigqu
 import { getDb } from "./lib/firebaseAdmin.js";
 import { createGeminiAgentClient, type GeminiAgentClient } from "./lib/geminiAgent.js";
 import { createIdentityToolkit, type IdentityToolkit } from "./lib/identityToolkit.js";
+import { createGcsMediaStore, type MediaStore } from "./lib/mediaStore.js";
+import { createGeminiTranslator, type Translator } from "./lib/translator.js";
 import { createPubSubPublisher, type Publisher } from "./lib/pubsub.js";
 import { createFirestoreStore } from "./store/firestoreStore.js";
 import type { Store } from "./store/types.js";
@@ -14,6 +16,8 @@ export interface Deps {
   authVerifier: AuthVerifier;
   bigqueryAgent: BigQueryAgentClient;
   geminiAgent: GeminiAgentClient;
+  mediaStore: MediaStore;
+  translator: Translator;
 }
 
 export function createRealDeps(): Deps {
@@ -24,5 +28,7 @@ export function createRealDeps(): Deps {
     authVerifier: createFirebaseAuthVerifier(),
     bigqueryAgent: createBigQueryAgentClient(),
     geminiAgent: createGeminiAgentClient(),
+    mediaStore: createGcsMediaStore(),
+    translator: createGeminiTranslator(),
   };
 }

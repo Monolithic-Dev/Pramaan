@@ -289,3 +289,34 @@ describe("processSubmission", () => {
     expect(issue?.admin_region_id).toBe("dl-central-delhi");
   });
 });
+
+describe("processSubmission voice reports", () => {
+  it("transcribes an audio-only submission, PII-scrubs it, then categorizes it", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ raw_text: null, pii_scrubbed_text: null, raw_audio_url: "gs://b/audios/1.webm" });
+    await deps.store.putSubmission(sub);
+    deps.nextTranscripts.push({ text: "gaddha hai, call me on 9876543210", language: "hi" });
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored?.status).toBe("processed");
+    expect(stored?.detected_language).toBe("hi");
+    expect(stored?.raw_text).toContain("gaddha");
+    expect(stored?.pii_scrubbed_text).not.toContain("9876543210");
+  });
+
+  it("flags (never drops) audio with no intelligible speech", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ raw_text: null, pii_scrubbed_text: null, raw_audio_url: "gs://b/audios/2.webm" });
+    await deps.store.putSubmission(sub);
+    deps.nextTranscripts.push(null);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored?.status).toBe("flagged");
+    expect(stored?.processing_error).toBe("transcription_failed");
+  });
+});

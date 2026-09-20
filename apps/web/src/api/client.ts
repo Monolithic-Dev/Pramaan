@@ -43,6 +43,7 @@ export interface CreateSubmissionInput {
   lng?: number;
   location_text?: string;
   consent_version: string;
+  audio_url?: string | null;
   country_code?: string;
 }
 
@@ -198,4 +199,23 @@ export function addState(token: string, stateId: string, name: string) {
     headers: bearer(token),
     body: JSON.stringify({ state_id: stateId, name }),
   });
+}
+
+export async function uploadMedia(kind: "photo" | "audio", blob: Blob): Promise<string> {
+  const response = await fetch(`${BASE_URL}/media?kind=${kind}`, {
+    method: "POST",
+    headers: { "content-type": blob.type || (kind === "photo" ? "image/jpeg" : "audio/webm") },
+    body: blob,
+  });
+  if (!response.ok) throw new ApiClientError(response.status, "UPLOAD_ERROR", "Upload failed.");
+  return ((await response.json()) as { url: string }).url;
+}
+
+export interface MapMarkers {
+  issues: { issue_id: string; category: string; status: string; report_count: number; composite_score: number | null; lat: number; lng: number }[];
+  forecasts: { forecast_id: string; category: string; risk_level: string; window_start: string; window_end: string; lat: number; lng: number }[];
+}
+
+export function getMapMarkers(token: string, region: string): Promise<MapMarkers> {
+  return request(`/map/markers?region=${encodeURIComponent(region)}`, { headers: bearer(token) });
 }

@@ -104,5 +104,13 @@
   "insights.forbidden": "You don't have access to this view.",
   "level.low": "Low",
   "level.medium": "Medium",
-  "level.high": "High"
+  "level.high": "High",
+  "report.photoAttached": "Photo attached",
+  "report.uploadError": "Upload failed. Please try again.",
+  "report.audioRecord": "Record a voice message",
+  "report.audioStop": "Recording… tap to stop",
+  "report.audioSaved": "Voice message saved",
+  "map.legendIssue": "Reported issue",
+  "map.legendForecast": "Forecast risk (dashed)",
+  "map.empty": "No mapped issues in this region yet."
 }

@@ -7,6 +7,7 @@ import {
 } from "@jansetu/ai-prompts";
 import { z } from "zod";
 import { env } from "./env.js";
+import { buildGenAI } from "./genai.js";
 
 const categorizationResultSchema = z.object({
   category: z.enum(["water", "roads", "electricity", "sanitation", "health_infra", "education_infra", "other"]),
@@ -25,14 +26,6 @@ export interface CategorizationClient {
    * raw-text-only categorization — the submission is never silently dropped.
    */
   categorize(text: string): Promise<CategorizationResult | null>;
-}
-
-function buildClient() {
-  return new GoogleGenAI({
-    vertexai: true,
-    project: env.gcpProjectId,
-    location: env.vertexLocation,
-  });
 }
 
 async function requestCategorization(
@@ -65,7 +58,7 @@ async function requestCategorization(
 }
 
 export function createCategorizationClient(): CategorizationClient {
-  const ai = buildClient();
+  const ai = buildGenAI();
   return {
     async categorize(text) {
       const first = await requestCategorization(ai, text, false);
