@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ApiClientError, submitReport, type CreateSubmissionInput } from "../api/client.js";
+import { ApiClientError, submitReport, uploadMedia, type CreateSubmissionInput } from "../api/client.js";
 import { ConsentNotice, CONSENT_VERSION } from "../components/ConsentNotice.js";
 import { LanguageSelector } from "../components/LanguageSelector.js";
 import { VoiceRecorder } from "../components/VoiceRecorder.js";
@@ -22,6 +22,8 @@ export function ReportPage() {
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [trackingId, setTrackingId] = useState<string | null>(null);
 
   function detectLocation() {
@@ -42,9 +44,19 @@ export function ReportPage() {
     );
   }
 
+  async function handlePhoto(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    try {
+      setPhotoUrl(await uploadMedia("photo", file));
+    } catch {
+      setError(t("report.uploadError"));
+    }
+  }
+
   async function handleSubmit() {
     setError(null);
-    if (!text.trim() || (!coords && !locationText.trim())) {
+    if ((!text.trim() && !audioUrl) || (!coords && !locationText.trim())) {
       setError(t("report.errorValidation"));
       return;
     }
@@ -52,7 +64,9 @@ export function ReportPage() {
     const idempotencyKey = crypto.randomUUID();
     const input: CreateSubmissionInput = {
       channel: "web",
-      text: text.trim(),
+      ...(text.trim() ? { text: text.trim() } : {}),
+      ...(audioUrl ? { audio_url: audioUrl } : {}),
+      ...(photoUrl ? { photo_url: photoUrl } : {}),
       consent_version: CONSENT_VERSION,
       country_code: countryCode,
       ...(coords ? coords : { location_text: locationText.trim() }),
@@ -121,6 +135,8 @@ export function ReportPage() {
             setText("");
             setLocationText("");
             setCoords(null);
+            setPhotoUrl(null);
+            setAudioUrl(null);
             setTrackingId(null);
           }}
           className="text-base text-gray-500 underline"
@@ -135,7 +151,10 @@ export function ReportPage() {
     <div className="mx-auto flex max-w-md flex-col gap-5 p-4 pb-24">
       <h1 className="text-xl font-semibold text-gray-900">{t("app.title")}</h1>
 
-      <VoiceRecorder onTranscript={(t2) => setText((prev) => (prev ? `${prev} ${t2}` : t2))} />
+      <VoiceRecorder
+        onTranscript={(t2) => setText((prev) => (prev ? `${prev} ${t2}` : t2))}
+        onAudioUploaded={setAudioUrl}
+      />
 
       <div>
         <label htmlFor="report-text" className="mb-1 block text-base font-medium text-gray-900">
@@ -149,6 +168,21 @@ export function ReportPage() {
           rows={4}
           className="w-full rounded-lg border border-gray-300 p-3 text-base"
         />
+      </div>
+
+      <div>
+        <label htmlFor="report-photo" className="mb-1 block text-base font-medium text-gray-900">
+          {t("report.photoLabel")}
+        </label>
+        <input
+          id="report-photo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture="environment"
+          onChange={(e) => handlePhoto(e.target.files?.[0])}
+          className="w-full text-base"
+        />
+        {photoUrl && <p className="text-sm text-green-700">{t("report.photoAttached")}</p>}
       </div>
 
       <div className="flex flex-col gap-2">

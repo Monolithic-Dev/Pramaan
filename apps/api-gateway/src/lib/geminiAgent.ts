@@ -1,6 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
 import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
+import { buildGenAI } from "./genai.js";
 import { TOOL_DECLARATIONS } from "../agent/tools.js";
 
 export interface FunctionCall {
@@ -24,11 +24,7 @@ export interface GeminiAgentClient {
 }
 
 export function createGeminiAgentClient(): GeminiAgentClient {
-  const ai = new GoogleGenAI({
-    vertexai: true,
-    project: env.gcpProjectId,
-    location: env.vertexLocation,
-  });
+  const ai = buildGenAI();
 
   return {
     async generateTurn(systemInstruction, contents) {

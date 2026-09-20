@@ -2,6 +2,8 @@ import type { AuthVerifier, DecodedAuth } from "../lib/authVerifier.js";
 import type { AncestryStep, AvailableData, BigQueryAgentClient, InvestmentSummary } from "../lib/bigquery.js";
 import type { AgentTurnResponse, GeminiAgentClient } from "../lib/geminiAgent.js";
 import type { IdentityToolkit } from "../lib/identityToolkit.js";
+import type { MediaStore } from "../lib/mediaStore.js";
+import type { Translator } from "../lib/translator.js";
 import type { Publisher } from "../lib/pubsub.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 import type { Deps } from "../deps.js";
@@ -19,6 +21,7 @@ export interface FakeDeps extends Omit<Deps, "store"> {
   availableDataByRegion: Map<string, AvailableData>;
   /** Queue consumed front-to-back by geminiAgent.generateTurn(). */
   nextAgentResponses: AgentTurnResponse[];
+  storedMedia: { kind: string; contentType: string; bytes: number }[];
 }
 
 export function createFakeDeps(): FakeDeps {
@@ -29,6 +32,18 @@ export function createFakeDeps(): FakeDeps {
   const investmentByRegionCategory = new Map<string, InvestmentSummary[]>();
   const availableDataByRegion = new Map<string, AvailableData>();
   const nextAgentResponses: AgentTurnResponse[] = [];
+  const storedMedia: { kind: string; contentType: string; bytes: number }[] = [];
+  const mediaStore: MediaStore = {
+    async put(kind, contentType, data) {
+      storedMedia.push({ kind, contentType, bytes: data.length });
+      return `gs://test-bucket/${kind}s/${storedMedia.length}`;
+    },
+  };
+  const translator: Translator = {
+    async translate(text, lang) {
+      return `[${lang}] ${text}`;
+    },
+  };
 
   const authVerifier: AuthVerifier = {
     async verifyIdToken(token) {
@@ -85,6 +100,9 @@ export function createFakeDeps(): FakeDeps {
     authVerifier,
     bigqueryAgent,
     geminiAgent,
+    mediaStore,
+    translator,
+    storedMedia,
     publishedMessages,
     tokens,
     otpSessions,

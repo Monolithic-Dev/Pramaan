@@ -9,6 +9,7 @@ import {
   geohashNeighbours,
   haversineMeters,
   RADIUS_M,
+  scrubPii,
 } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 import { mergeSubmissionIntoIssue, updateRunningEmbedding } from "./issueMerge.js";
@@ -16,7 +17,6 @@ import { resolveLocation } from "./regionResolution.js";
 import { env } from "../lib/env.js";
 
 const SAME_REPORTER_WINDOW_MS = 72 * 60 * 60 * 1000;
-const EMBEDDING_MODEL = "text-embedding-005";
 
 // docs/phases/phase-8-fraud-impact-crossborder.md §8.1: rule-based, not ML.
 // Flag for officer review, never auto-reject — a false positive silently
@@ -40,14 +40,24 @@ export async function processSubmission(
   submission.status = "processing";
   await deps.store.putSubmission(submission);
 
+  // Voice reports arrive as audio only: transcribe first (docs/phases/phase-3-manual-checklist.md).
+  if (!submission.raw_text && submission.raw_audio_url) {
+    const transcript = await deps.transcriber.transcribe(submission.raw_audio_url);
+    if (transcript) {
+      submission.raw_text = transcript.text;
+      submission.pii_scrubbed_text = scrubPii(transcript.text);
+      submission.detected_language = transcript.language;
+    }
+  }
+
   const textForExtraction =
     submission.pii_scrubbed_text ?? submission.translated_text ?? submission.raw_text;
 
   if (!textForExtraction) {
-    // Voice channel not yet transcribed (STT isn't wired up — see
-    // docs/phases/phase-3-manual-checklist.md). Nothing to categorize yet.
     submission.status = "flagged";
-    submission.processing_error = "no_text_available_for_categorization";
+    submission.processing_error = submission.raw_audio_url
+      ? "transcription_failed"
+      : "no_text_available_for_categorization";
     await deps.store.putSubmission(submission);
     return;
   }
@@ -202,7 +212,7 @@ async function dedupe(
     subcategory: categorization.subcategory,
     canonical_description: categorization.summary,
     embedding: updateRunningEmbedding(null, embedding, 0),
-    embedding_model: EMBEDDING_MODEL,
+    embedding_model: env.embeddingModel,
     geo_cluster_id: `gc_${issueId}`,
     admin_region_id: adminRegionId,
     geohash,

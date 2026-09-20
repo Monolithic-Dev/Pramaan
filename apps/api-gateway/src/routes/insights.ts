@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getCountryProfile } from "@jansetu/shared-types";
+import { geohashDecodeCenter } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { getEquityAudit, getForecasts } from "../insights/service.js";
@@ -30,6 +31,48 @@ export function registerInsightRoutes(app: FastifyInstance, deps: Deps) {
       });
     }
     return reply.code(200).send(await getForecasts(deps, q.data.region, q.data.category));
+  });
+
+  // Officer map: real issues (solid) and forecasts (dashed) as separate layers.
+  // A forecast has no coordinates of its own, so it is placed at the centroid of
+  // the historical issues it was derived from.
+  app.get("/map/markers", { preHandler: [requireOfficer(deps.authVerifier)] }, async (request, reply) => {
+    const q = z.object({ region: z.string().min(1) }).safeParse(request.query);
+    if (!q.success) return reply.code(400).send(bad(q.error.issues[0]?.message));
+    const officer = request.officer!;
+    if (!officer.regionId || !(await isWithinScope(deps.bigqueryAgent, q.data.region, officer.regionId))) {
+      return reply.code(403).send({
+        error: { code: "JURISDICTION_MISMATCH", message: `${q.data.region} is outside your jurisdiction.` },
+      });
+    }
+    const issues = (await deps.store.getIssuesByRegion(q.data.region)).filter(
+      (i) => i.status !== "tombstoned" && i.geohash,
+    );
+    const centre = (i: (typeof issues)[number]) => geohashDecodeCenter(i.geohash as string);
+    const forecastResult = await getForecasts(deps, q.data.region, undefined);
+    return reply.code(200).send({
+      issues: issues.map((i) => ({
+        issue_id: i.issue_id,
+        category: i.category,
+        status: i.status,
+        report_count: i.report_count,
+        composite_score: i.composite_score,
+        ...centre(i),
+      })),
+      forecasts: forecastResult.forecasts.flatMap((f) => {
+        const pts = issues.filter((i) => i.category === f.category).map(centre);
+        if (pts.length === 0) return [];
+        return [{
+          forecast_id: f.forecast_id,
+          category: f.category,
+          risk_level: f.risk_level,
+          window_start: f.predicted_window_start,
+          window_end: f.predicted_window_end,
+          lat: pts.reduce((a, p) => a + p.lat, 0) / pts.length,
+          lng: pts.reduce((a, p) => a + p.lng, 0) / pts.length,
+        }];
+      }),
+    });
   });
 
   // Feature 2 — docs/02-equity-fairness-audit.md
@@ -75,13 +118,26 @@ export function registerInsightRoutes(app: FastifyInstance, deps: Deps) {
         });
       }
       const project = await deps.store.getProjectByIssue(issue.issue_id);
+      let explanation = project?.generated_brief ?? null;
+      const language = (citizen?.preferred_language ?? "en").split("-")[0];
+      let explanationLanguage = "en";
+      if (explanation && language !== "en") {
+        try {
+          explanation = await deps.translator.translate(explanation, language);
+          explanationLanguage = language;
+        } catch (err) {
+          // Translation is a nicety: fall back to the original text, never fail the page.
+          request.log.warn({ err }, "brief translation failed");
+        }
+      }
       return reply.code(200).send({
         submission_status: submission.status,
         issue_status: issue.status,
         other_reporters: Math.max(0, issue.distinct_reporter_count - 1),
         priority: priorityBand(issue.composite_score),
         // Existing grounded brief, reused verbatim: no new AI call, no new hallucination surface.
-        explanation: project?.generated_brief ?? null,
+        explanation,
+        explanation_language: explanationLanguage,
         preferred_language: citizen?.preferred_language ?? null,
       });
     },

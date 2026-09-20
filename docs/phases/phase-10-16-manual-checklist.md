@@ -16,3 +16,18 @@ All six differentiator features from `docs/README.md` are implemented in `api-ga
 1. Deploy + seed (see phase 3/5 checklists); forecasts/equity need real accumulated Issues.
 2. Native-speaker review of the new hi/ta/pt strings.
 3. Phase 16: rehearse `docs/DEMO_SCRIPT.md` against the deployed URL and record the video.
+
+## Update: media, voice, map, translation (branch feat/media-and-ai-features)
+Built: `POST /v1/media` (photo/audio to Cloud Storage via a MediaStore seam, type + magic-byte + size checks,
+rate-limited), worker speech-to-text (Gemini audio, then PII scrub and categorize; failures flag as
+`transcription_failed`, never drop), audio-recorder fallback for browsers without Web Speech, photo attach in
+the report form, `GET /v1/map/markers` + Leaflet/OpenStreetMap officer map (issues solid, forecasts dashed),
+Gemini translation of the citizen status brief. `GEMINI_API_KEY` switches all Gemini calls to the public API
+for local dev (Vertex + ADC otherwise); default models moved off retired `gemini-2.0-flash` to `gemini-3.6-flash`.
+Verified live with a real key: categorization in en/hi/pt, 768-d embeddings, hi/pt translation.
+
+Still not done: photo EXIF stripping (GPS metadata is kept in stored photos), Gemini Vision photo plausibility,
+WhatsApp/SMS sending (also blocked by design: only a phone *hash* is stored, so there is nothing to send to
+without a consented, encrypted phone field), BigQuery reference load on state onboarding, state filter wiring.
+Needs you: create the `MEDIA_BUCKET` bucket and grant the Cloud Run service account Storage Object Admin;
+audio transcription and uploads are untested against real GCS.

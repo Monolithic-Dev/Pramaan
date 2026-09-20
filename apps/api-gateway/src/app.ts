@@ -4,6 +4,7 @@ import { registerAgentRoutes } from "./routes/agent.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerInsightRoutes } from "./routes/insights.js";
 import { registerIssueRoutes } from "./routes/issues.js";
+import { registerMediaRoutes } from "./routes/media.js";
 import { registerPrivacyRoutes } from "./routes/privacy.js";
 import { registerProjectRoutes } from "./routes/projects.js";
 import { registerSubmissionRoutes } from "./routes/submissions.js";
@@ -33,6 +34,7 @@ export function buildApp(deps: Deps) {
       registerProjectRoutes(v1, deps);
       registerPrivacyRoutes(v1, deps);
       registerInsightRoutes(v1, deps);
+      registerMediaRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

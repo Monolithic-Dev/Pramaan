@@ -9,6 +9,7 @@ import type {
   RegionCentroid,
   RegionInfraData,
 } from "../lib/bigquery.js";
+import type { Transcriber, Transcript } from "../lib/transcription.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 
 export interface FakeDeps extends Deps {
@@ -25,6 +26,8 @@ export interface FakeDeps extends Deps {
   /** Empty by default -> resolveLocation() resolves nothing, same as before
    *  region resolution existed. Populate to test real nearest-centroid matching. */
   regionCentroids: RegionCentroid[];
+  /** Queue consumed by transcriber.transcribe(); a `null` entry = no intelligible speech. */
+  nextTranscripts: (Transcript | null)[];
 }
 
 function defaultEmbeddingFor(text: string): number[] {
@@ -43,6 +46,13 @@ export function createFakeDeps(): FakeDeps {
   const infraIndexByRegion = new Map<string, RegionInfraData | null>();
   const latestInvestmentByRegionCategory = new Map<string, LatestInvestment | null>();
   const regionCentroids: RegionCentroid[] = [];
+  const nextTranscripts: (Transcript | null)[] = [];
+  const transcriber: Transcriber = {
+    async transcribe() {
+      if (nextTranscripts.length === 0) throw new Error("createFakeDeps: no queued transcript");
+      return nextTranscripts.shift() ?? null;
+    },
+  };
 
   const categorization: CategorizationClient = {
     async categorize() {
@@ -85,6 +95,8 @@ export function createFakeDeps(): FakeDeps {
     categorization,
     embeddings,
     referenceData,
+    transcriber,
+    nextTranscripts,
     nextCategorizations,
     embeddingsByText,
     ancestryByRegion,

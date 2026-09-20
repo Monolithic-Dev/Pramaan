@@ -104,5 +104,13 @@
   "insights.forbidden": "आपको इस दृश्य की अनुमति नहीं है।",
   "level.low": "निम्न",
   "level.medium": "मध्यम",
-  "level.high": "उच्च"
+  "level.high": "उच्च",
+  "report.photoAttached": "फोटो जुड़ गई",
+  "report.uploadError": "अपलोड विफल रहा। कृपया फिर कोशिश करें।",
+  "report.audioRecord": "आवाज़ संदेश रिकॉर्ड करें",
+  "report.audioStop": "रिकॉर्डिंग… रोकने के लिए दबाएं",
+  "report.audioSaved": "आवाज़ संदेश सहेजा गया",
+  "map.legendIssue": "दर्ज समस्या",
+  "map.legendForecast": "पूर्वानुमानित जोखिम (बिंदीदार)",
+  "map.empty": "इस क्षेत्र में अभी कोई मानचित्र पर समस्या नहीं।"
 }
