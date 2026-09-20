@@ -320,3 +320,51 @@ describe("processSubmission voice reports", () => {
     expect(stored?.processing_error).toBe("transcription_failed");
   });
 });
+
+describe("pending sweep", () => {
+  it("lists queued and deferred submissions oldest first, never processed ones", async () => {
+    const deps = createFakeDeps();
+    await deps.store.putSubmission(makeSubmission({ submission_id: "a", status: "queued", submitted_at: "2026-09-02T00:00:00Z" }));
+    await deps.store.putSubmission(makeSubmission({ submission_id: "b", status: "deferred", submitted_at: "2026-09-01T00:00:00Z" }));
+    await deps.store.putSubmission(makeSubmission({ submission_id: "c", status: "processed" }));
+    const pending = await deps.store.listPendingSubmissions(10);
+    expect(pending.map((s) => s.submission_id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("processSubmission photo analysis", () => {
+  it("uses the photo description when a report has no text", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ raw_text: null, pii_scrubbed_text: null, photo_url: "fs://media/p1" });
+    await deps.store.putSubmission(sub);
+    deps.nextPhotoAnalyses.push({ shows_infrastructure_issue: true, description: "A large pothole on an asphalt road." });
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    expect((await deps.store.getSubmission(sub.submission_id))?.status).toBe("processed");
+  });
+
+  it("flags photo_implausible (never rejects) when the photo shows no infrastructure problem", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ photo_url: "fs://media/p2" });
+    await deps.store.putSubmission(sub);
+    deps.nextPhotoAnalyses.push({ shows_infrastructure_issue: false, description: "An indoor selfie." });
+    deps.nextCategorizations.push(goodCategorization);
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored?.status).toBe("processed");
+    expect((await deps.store.getIssue(stored!.issue_id!))?.fraud_flags).toContain("photo_implausible");
+  });
+
+  it("continues when photo analysis is unavailable", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ photo_url: "fs://media/p3" });
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push(goodCategorization);
+    await processSubmission(deps, sub.submission_id, log);
+    expect((await deps.store.getSubmission(sub.submission_id))?.status).toBe("processed");
+  });
+});

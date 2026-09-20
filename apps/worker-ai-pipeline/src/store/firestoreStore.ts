@@ -4,6 +4,16 @@ import type { CandidateQuery, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
   return {
+    async listPendingSubmissions(limit) {
+      const snap = await db
+        .collection("submissions")
+        .where("status", "in", ["queued", "deferred"])
+        .limit(limit)
+        .get();
+      return (snap.docs.map((d) => d.data() as Submission)).sort((a, b) =>
+        a.submitted_at < b.submitted_at ? -1 : 1,
+      );
+    },
     async getSubmission(submissionId) {
       const doc = await db.collection("submissions").doc(submissionId).get();
       return doc.exists ? (doc.data() as Submission) : null;

@@ -1,0 +1,44 @@
+# Render Blueprint: the whole stack on free tiers with NO Google Cloud billing account.
+# Data lives in Firebase (Spark plan: Firestore + Auth); AI uses the free Gemini API key.
+# See docs/FREE_DEPLOYMENT_GUIDE.md. Secrets marked sync:false are entered in the Render dashboard.
+services:
+  - type: web
+    name: jansetu-api
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm --filter @jansetu/api-gateway exec tsx src/index.ts
+    healthCheckPath: /healthz
+    envVars:
+      - { key: NODE_VERSION, value: "20" }
+      - { key: FIREBASE_PROJECT_ID, sync: false }
+      - { key: FIREBASE_WEB_API_KEY, sync: false }
+      - { key: FIREBASE_SERVICE_ACCOUNT_JSON, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: WORKER_URL, sync: false }
+      - { key: WORKER_SHARED_SECRET, sync: false }
+
+  - type: web
+    name: jansetu-worker
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm --filter @jansetu/worker-ai-pipeline exec tsx src/index.ts
+    healthCheckPath: /healthz
+    envVars:
+      - { key: NODE_VERSION, value: "20" }
+      - { key: FIREBASE_PROJECT_ID, sync: false }
+      - { key: FIREBASE_SERVICE_ACCOUNT_JSON, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: WORKER_SHARED_SECRET, sync: false }
+
+  - type: web
+    name: jansetu-web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @jansetu/web build
+    staticPublishPath: apps/web/dist
+    routes:
+      - { type: rewrite, source: /*, destination: /index.html }
+    envVars:
+      - { key: VITE_API_BASE_URL, sync: false }
+      - { key: VITE_FIREBASE_API_KEY, sync: false }

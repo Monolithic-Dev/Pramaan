@@ -1,0 +1,21 @@
+# Replaces Cloud Scheduler + Pub/Sub on the free (no GCP billing) deployment: every 15 minutes,
+# process any submissions the worker has not picked up yet, then re-score. Also keeps the free
+# Render worker warm-ish. Needs repo secrets WORKER_URL and WORKER_SHARED_SECRET.
+name: scheduled-jobs
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    if: ${{ vars.SCHEDULED_JOBS_ENABLED == 'true' }}
+    steps:
+      - name: Sweep pending submissions, then score
+        run: |
+          for job in sweep score; do
+            curl --fail --silent --show-error --max-time 180 --retry 2 --retry-delay 20 \
+              -X POST -H "x-worker-secret: ${{ secrets.WORKER_SHARED_SECRET }}" \
+              "${{ secrets.WORKER_URL }}/jobs/$job"
+            echo
+          done

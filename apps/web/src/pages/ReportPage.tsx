@@ -4,6 +4,7 @@ import { ApiClientError, submitReport, uploadMedia, type CreateSubmissionInput }
 import { ConsentNotice, CONSENT_VERSION } from "../components/ConsentNotice.js";
 import { LanguageSelector } from "../components/LanguageSelector.js";
 import { VoiceRecorder } from "../components/VoiceRecorder.js";
+import { compressImage } from "../utils/compressImage.js";
 import { useOfflineQueue } from "../hooks/useOfflineQueue.js";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
@@ -48,7 +49,7 @@ export function ReportPage() {
     if (!file) return;
     setError(null);
     try {
-      setPhotoUrl(await uploadMedia("photo", file));
+      setPhotoUrl(await uploadMedia("photo", await compressImage(file)));
     } catch {
       setError(t("report.uploadError"));
     }

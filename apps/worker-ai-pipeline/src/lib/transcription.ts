@@ -1,7 +1,9 @@
 import { Storage } from "@google-cloud/storage";
+import type { Firestore } from "firebase-admin/firestore";
 import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
 import { buildGenAI } from "./genai.js";
+import { readMedia } from "./media.js";
 
 export interface Transcript {
   text: string;
@@ -15,20 +17,12 @@ export interface Transcriber {
   transcribe(audioUrl: string): Promise<Transcript | null>;
 }
 
-const MIME_BY_EXT: Record<string, string> = {
-  webm: "audio/webm", ogg: "audio/ogg", m4a: "audio/mp4", mp3: "audio/mpeg", wav: "audio/wav",
-};
-
-export function createGeminiTranscriber(): Transcriber {
+export function createGeminiTranscriber(db?: Firestore): Transcriber {
   const ai = buildGenAI();
   const storage = new Storage({ projectId: env.gcpProjectId || undefined });
   return {
     async transcribe(audioUrl) {
-      const match = /^gs:\/\/([^/]+)\/(.+)$/.exec(audioUrl);
-      if (!match) throw new Error(`unsupported audio url: ${audioUrl}`);
-      const [data] = await storage.bucket(match[1]).file(match[2]).download();
-      const mimeType = MIME_BY_EXT[match[2].split(".").pop() ?? ""] ?? "audio/webm";
-
+      const { data, mimeType } = await readMedia(audioUrl, storage, db);
       const response = await withRetry(() =>
         ai.models.generateContent({
           model: env.geminiModel,
@@ -37,7 +31,7 @@ export function createGeminiTranscriber(): Transcriber {
               role: "user",
               parts: [
                 { inlineData: { mimeType, data: data.toString("base64") } },
-                { text: "Transcribe this citizen's spoken report verbatim in its original language. Do not translate or summarise." },
+                { text: "Transcribe this citizen spoken report verbatim in its original language. Do not translate or summarise." },
               ],
             },
           ],

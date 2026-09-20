@@ -20,7 +20,7 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
+      const rec = new MediaRecorder(stream, { audioBitsPerSecond: 24000 });
       chunks.current = [];
       rec.ondataavailable = (e) => chunks.current.push(e.data);
       rec.onstop = async () => {
@@ -34,6 +34,13 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
       };
       recorder.current = rec;
       rec.start();
+      // 24 kbps for at most 60 s is about 180 KB, inside the free-plan upload limit.
+      setTimeout(() => {
+        if (rec.state === "recording") {
+          rec.stop();
+          setRecording(false);
+        }
+      }, 60_000);
       setRecording(true);
       setState("idle");
     } catch {

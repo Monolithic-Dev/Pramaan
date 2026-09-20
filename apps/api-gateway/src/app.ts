@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { registerAgentRoutes } from "./routes/agent.js";
@@ -12,6 +13,11 @@ import { registerWebhookRoutes } from "./routes/webhooks.js";
 
 export function buildApp(deps: Deps) {
   const app = Fastify({ logger: true });
+
+  // The web app is served from a different origin than the API. Auth is by Bearer token
+  // (never cookies), so an open origin list is safe; set CORS_ORIGINS to lock it down.
+  const origins = (process.env.CORS_ORIGINS ?? "").split(",").map((o) => o.trim()).filter(Boolean);
+  void app.register(cors, { origin: origins.length > 0 ? origins : true });
 
   app.get("/healthz", async () => ({ status: "ok" }));
 

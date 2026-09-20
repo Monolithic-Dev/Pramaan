@@ -1,49 +1,70 @@
 import { useState } from "react";
+import { signInOfficer } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
 
-// Dev-only stand-in for Identity Platform SSO (docs/SECURITY_PRIVACY.md §1) —
-// pastes a real Bearer JWT issued elsewhere, so the chat panel can be
-// exercised against the real backend before OAuth wiring exists on the
-// frontend. See docs/phases/phase-7-manual-checklist.md.
+// Email/password against Firebase Auth. The officer role and region come from custom
+// claims set by an administrator (see docs/FREE_DEPLOYMENT_GUIDE.md); the region field is
+// pre-filled from them and can be narrowed, never widened (the server enforces jurisdiction).
 export function OfficerLogin({
   onLogin,
 }: {
   onLogin: (token: string, regionScope: string) => void;
 }) {
   const { t } = useLanguage();
-  const [token, setToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [regionScope, setRegionScope] = useState("");
+  const [session, setSession] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  async function signIn() {
+    setFailed(false);
+    try {
+      const { token, regionId } = await signInOfficer(email.trim(), password);
+      setSession(token);
+      setRegionScope(regionId);
+      if (regionId) onLogin(token, regionId);
+    } catch {
+      setFailed(true);
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-4 p-6">
       <h1 className="text-xl font-semibold text-gray-900">{t("officer.loginTitle")}</h1>
-      <div>
-        <label htmlFor="officer-token" className="mb-1 block text-sm font-medium text-gray-900">
-          {t("officer.loginTokenLabel")}
-        </label>
+      <label className="text-sm font-medium text-gray-900">
+        {t("officer.email")}
         <input
-          id="officer-token"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 w-full rounded-lg border border-gray-300 p-2"
         />
-      </div>
-      <div>
-        <label htmlFor="officer-region" className="mb-1 block text-sm font-medium text-gray-900">
+      </label>
+      <label className="text-sm font-medium text-gray-900">
+        {t("officer.password")}
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+        />
+      </label>
+      {session && (
+        <label className="text-sm font-medium text-gray-900">
           {t("officer.loginRegionLabel")}
+          <input
+            value={regionScope}
+            onChange={(e) => setRegionScope(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+          />
         </label>
-        <input
-          id="officer-region"
-          value={regionScope}
-          onChange={(e) => setRegionScope(e.target.value)}
-          placeholder="LGD:IN-07-091-0014"
-          className="w-full rounded-lg border border-gray-300 p-2 text-sm"
-        />
-      </div>
+      )}
+      {failed && <p className="text-sm text-red-600">{t("officer.loginFailed")}</p>}
       <button
         type="button"
-        disabled={!token || !regionScope}
-        onClick={() => onLogin(token, regionScope)}
+        disabled={!email || !password}
+        onClick={session ? () => onLogin(session, regionScope) : signIn}
         className="rounded-lg bg-blue-700 px-4 py-2.5 font-medium text-white disabled:opacity-50"
       >
         {t("officer.loginSubmit")}

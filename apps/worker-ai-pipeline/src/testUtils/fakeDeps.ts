@@ -10,6 +10,7 @@ import type {
   RegionInfraData,
 } from "../lib/bigquery.js";
 import type { Transcriber, Transcript } from "../lib/transcription.js";
+import type { PhotoAnalysis, PhotoAnalyzer } from "../lib/vision.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 
 export interface FakeDeps extends Deps {
@@ -28,6 +29,8 @@ export interface FakeDeps extends Deps {
   regionCentroids: RegionCentroid[];
   /** Queue consumed by transcriber.transcribe(); a `null` entry = no intelligible speech. */
   nextTranscripts: (Transcript | null)[];
+  /** Queue consumed by photoAnalyzer.analyze(); empty queue = analysis unavailable (null). */
+  nextPhotoAnalyses: (PhotoAnalysis | null)[];
 }
 
 function defaultEmbeddingFor(text: string): number[] {
@@ -47,6 +50,12 @@ export function createFakeDeps(): FakeDeps {
   const latestInvestmentByRegionCategory = new Map<string, LatestInvestment | null>();
   const regionCentroids: RegionCentroid[] = [];
   const nextTranscripts: (Transcript | null)[] = [];
+  const nextPhotoAnalyses: (PhotoAnalysis | null)[] = [];
+  const photoAnalyzer: PhotoAnalyzer = {
+    async analyze() {
+      return nextPhotoAnalyses.shift() ?? null;
+    },
+  };
   const transcriber: Transcriber = {
     async transcribe() {
       if (nextTranscripts.length === 0) throw new Error("createFakeDeps: no queued transcript");
@@ -96,7 +105,9 @@ export function createFakeDeps(): FakeDeps {
     embeddings,
     referenceData,
     transcriber,
+    photoAnalyzer,
     nextTranscripts,
+    nextPhotoAnalyses,
     nextCategorizations,
     embeddingsByText,
     ancestryByRegion,

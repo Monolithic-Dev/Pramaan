@@ -7,6 +7,12 @@ export function createInMemoryStore(): Store {
   const priorityScores = new Map<string, PriorityScore>();
 
   return {
+    async listPendingSubmissions(limit) {
+      return [...submissions.values()]
+        .filter((s) => s.status === "queued" || s.status === "deferred")
+        .sort((a, b) => (a.submitted_at < b.submitted_at ? -1 : 1))
+        .slice(0, limit);
+    },
     async getSubmission(submissionId) {
       return submissions.get(submissionId) ?? null;
     },

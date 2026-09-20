@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
     "@google-cloud/bigquery": "^7.9.0",
     "@google-cloud/pubsub": "^4.10.0",
     "@google-cloud/storage": "^8.2.0",

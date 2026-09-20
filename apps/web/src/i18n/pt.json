@@ -112,5 +112,13 @@
   "report.audioSaved": "Mensagem de voz salva",
   "map.legendIssue": "Problema relatado",
   "map.legendForecast": "Risco previsto (tracejado)",
-  "map.empty": "Nenhum problema mapeado nesta região ainda."
+  "map.empty": "Nenhum problema mapeado nesta região ainda.",
+  "officer.email": "E-mail",
+  "officer.password": "Senha",
+  "officer.loginFailed": "Falha no login. Verifique e-mail e senha.",
+  "status.phone": "Telefone (com código do país)",
+  "status.sendCode": "Enviar código",
+  "status.otp": "Código de verificação",
+  "status.verify": "Verificar",
+  "status.otpFailed": "Esse código não funcionou."
 }
