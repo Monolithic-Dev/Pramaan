@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-import { withRetry } from "@jansetu/shared-utils";
 import {
   CATEGORIZATION_RESPONSE_SCHEMA,
   CATEGORIZATION_SYSTEM_PROMPT,
@@ -7,7 +6,7 @@ import {
 } from "@jansetu/ai-prompts";
 import { z } from "zod";
 import { env } from "./env.js";
-import { buildGenAI } from "./genai.js";
+import { buildGenAI, generateWithFallback, parseModelList } from "./genai.js";
 
 const categorizationResultSchema = z.object({
   category: z.enum(["water", "roads", "electricity", "sanitation", "health_infra", "education_infra", "other"]),
@@ -33,9 +32,7 @@ async function requestCategorization(
   text: string,
   strict: boolean,
 ): Promise<CategorizationResult | null> {
-  const response = await withRetry(() =>
-    ai.models.generateContent({
-      model: env.geminiModel,
+  const response = await generateWithFallback(ai, parseModelList(env.geminiModel), {
       contents: [{ role: "user", parts: [{ text }] }],
       config: {
         systemInstruction: strict
@@ -44,8 +41,7 @@ async function requestCategorization(
         responseMimeType: "application/json",
         responseSchema: CATEGORIZATION_RESPONSE_SCHEMA,
       },
-    }),
-  );
+  });
 
   const raw = response.text;
   if (!raw) return null;

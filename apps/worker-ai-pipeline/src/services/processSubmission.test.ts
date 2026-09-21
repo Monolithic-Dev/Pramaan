@@ -368,3 +368,41 @@ describe("processSubmission photo analysis", () => {
     expect((await deps.store.getSubmission(sub.submission_id))?.status).toBe("processed");
   });
 });
+
+describe("stale processing recovery", () => {
+  it("lists only old processing submissions", async () => {
+    const deps = createFakeDeps();
+    await deps.store.putSubmission(makeSubmission({ submission_id: "old", status: "processing", submitted_at: "2026-01-01T00:00:00Z" }));
+    await deps.store.putSubmission(makeSubmission({ submission_id: "fresh", status: "processing", submitted_at: "2026-09-21T00:00:00Z" }));
+    const stale = await deps.store.listStaleProcessingSubmissions("2026-06-01T00:00:00Z", 10);
+    expect(stale.map((s) => s.submission_id)).toEqual(["old"]);
+  });
+});
+
+describe("concurrent duplicate reports", () => {
+  it("merges two near-simultaneous reports of the same problem when processed through the serial queue", async () => {
+    const { buildApp } = await import("../app.js");
+    const deps = createFakeDeps();
+    deps.regionCentroids.push(
+      { regionId: "IN-DL", level: "state", parentRegionId: null, lat: 28.7, lng: 77.1, population: 1000000 },
+      { regionId: "dl-c", level: "district", parentRegionId: "IN-DL", lat: 28.65, lng: 77.23, population: 500000 },
+    );
+    const app = buildApp(deps);
+    const a = makeSubmission({ submission_id: "conc_a", lat: 28.6519, lng: 77.2315, citizen_id: "u1" });
+    const b = makeSubmission({ submission_id: "conc_b", lat: 28.6521, lng: 77.2317, citizen_id: "u2" });
+    await deps.store.putSubmission(a);
+    await deps.store.putSubmission(b);
+    deps.nextCategorizations.push(goodCategorization, goodCategorization);
+    // identical summaries -> identical embeddings -> similarity 1
+    const push = (id: string) =>
+      app.inject({
+        method: "POST",
+        url: "/pubsub-push",
+        payload: { message: { data: Buffer.from(JSON.stringify({ submission_id: id })).toString("base64") } },
+      });
+    await Promise.all([push("conc_a"), push("conc_b")]);
+    const [sa, sb] = await Promise.all([deps.store.getSubmission("conc_a"), deps.store.getSubmission("conc_b")]);
+    expect(sa?.status).toBe("processed");
+    expect(sb?.issue_id).toBe(sa?.issue_id);
+  });
+});

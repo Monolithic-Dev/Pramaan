@@ -8,7 +8,10 @@ export const env = {
   gcpProjectId: process.env.GCP_PROJECT_ID ?? process.env.FIREBASE_PROJECT_ID ?? "",
   vertexLocation: process.env.VERTEX_LOCATION ?? "asia-south1",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiAgentModel: process.env.GEMINI_AGENT_MODEL ?? "gemini-3.6-flash",
+  // Comma-separated fallback chains (see generateWithFallback). The agent needs reliable
+  // function calling and answers within a demo-friendly time, so it starts with the fastest model that supports tools (measured 1.6s vs 3-17s) and falls back to slower ones.
+  geminiAgentModel: process.env.GEMINI_AGENT_MODEL ?? "gemini-3.5-flash-lite,gemini-3-flash-preview,gemini-3.8-flash,gemini-3.5-flash",
+  geminiTranslationModel: process.env.GEMINI_TRANSLATION_MODEL ?? "gemini-3.5-flash-lite,gemini-3.8-flash",
   mediaBucket: process.env.MEDIA_BUCKET ?? "",
   // Demo-day WiFi exemption (docs/phases/phase-8-fraud-impact-crossborder.md
   // §8.1) — a room of judges on one venue IP would otherwise rate-limit each

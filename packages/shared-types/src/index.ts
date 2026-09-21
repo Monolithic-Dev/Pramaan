@@ -159,6 +159,10 @@ export interface Issue {
   admin_region_id: string | null;
   /** Precision-6 geohash of the cluster centroid; null until Phase 4. */
   geohash: string | null;
+  /** Real location of the first report. Dedup measures distance to this, not to the centre of
+   *  the ~1 km geohash cell (which can be 600 m from the actual point). Absent on older issues. */
+  centroid_lat?: number | null;
+  centroid_lng?: number | null;
   submission_ids: string[];
   report_count: number;
   /** Distinct citizen_ids behind report_count — this, not report_count, feeds demand_score. */

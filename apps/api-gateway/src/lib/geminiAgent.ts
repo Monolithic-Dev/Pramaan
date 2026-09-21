@@ -1,6 +1,5 @@
-import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
-import { buildGenAI } from "./genai.js";
+import { buildGenAI, generateWithFallback, parseModelList } from "./genai.js";
 import { TOOL_DECLARATIONS } from "../agent/tools.js";
 
 export interface FunctionCall {
@@ -12,12 +11,14 @@ export interface AgentTurnResponse {
   functionCalls: FunctionCall[];
   /** null when the model made function calls instead of finishing with text. */
   text: string | null;
+  /** The model's raw response parts (incl. thought signatures), to be echoed back on the next round. */
+  rawParts?: unknown[];
 }
 
 // A minimal Gemini "content" shape — role + parts — good enough for the
 // function-calling loop in agent/orchestrator.ts without depending on
 // @google/genai's exact SDK types at the seam boundary.
-export type AgentContent = { role: "user" | "model" | "function"; parts: unknown[] };
+export type AgentContent = { role: "user" | "model"; parts: unknown[] };
 
 export interface GeminiAgentClient {
   generateTurn(systemInstruction: string, contents: AgentContent[]): Promise<AgentTurnResponse>;
@@ -28,16 +29,13 @@ export function createGeminiAgentClient(): GeminiAgentClient {
 
   return {
     async generateTurn(systemInstruction, contents) {
-      const response = await withRetry(() =>
-        ai.models.generateContent({
-          model: env.geminiAgentModel,
+      const response = await generateWithFallback(ai, parseModelList(env.geminiAgentModel), {
           contents: contents as never,
           config: {
             systemInstruction,
             tools: [{ functionDeclarations: TOOL_DECLARATIONS as never }],
           },
-        }),
-      );
+      });
 
       const parts = response.candidates?.[0]?.content?.parts ?? [];
       const functionCalls: FunctionCall[] = parts
@@ -46,7 +44,7 @@ export function createGeminiAgentClient(): GeminiAgentClient {
         )
         .map((p) => ({ name: p.functionCall.name, args: p.functionCall.args ?? {} }));
 
-      if (functionCalls.length > 0) return { functionCalls, text: null };
+      if (functionCalls.length > 0) return { functionCalls, text: null, rawParts: parts as unknown[] };
 
       const text = parts
         .filter((p): p is { text: string } => typeof (p as { text?: unknown }).text === "string")

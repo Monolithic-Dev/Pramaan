@@ -151,3 +151,35 @@ describe("runAgentTurn", () => {
     expect(persisted[0].turn_id).toBe(turn.turn_id);
   });
 });
+
+describe("tool results passed back to Gemini", () => {
+  it("wraps a list-shaped tool result in an object (Gemini rejects a bare array as functionResponse.response)", async () => {
+    const { createFakeDeps } = await import("../testUtils/fakeDeps.js");
+    const { runAgentTurn } = await import("./orchestrator.js");
+    const deps = createFakeDeps();
+    const seenContents: unknown[][] = [];
+    deps.geminiAgent.generateTurn = async (_sys, contents) => {
+      seenContents.push(JSON.parse(JSON.stringify(contents)));
+      return seenContents.length === 1
+        ? { functionCalls: [{ name: "query_fused_data", args: { region_id: "LGD:r1" } }], text: null }
+        : { functionCalls: [], text: "No verified data." };
+    };
+    await deps.store.putAgentSession({
+      session_id: "s1", officer_id: "o1", country_code: "IN", state_id: "X", region_scope: "LGD:r1",
+      started_at: "2026-01-01T00:00:00Z", turn_count: 0,
+    });
+    deps.store.issues.set("i1", {
+      issue_id: "i1", country_code: "IN", state_id: "X", category: "roads", subcategory: "p", canonical_description: "d",
+      embedding: null, embedding_model: null, geo_cluster_id: "g", admin_region_id: "LGD:r1", geohash: null,
+      submission_ids: [], report_count: 2, distinct_reporter_count: 2, first_reported_at: "2026-01-01T00:00:00Z",
+      last_reported_at: "2026-01-01T00:00:00Z", emergency_override: false, fraud_flags: [], status: "open",
+      composite_score: null, latest_score_id: null,
+    });
+    await runAgentTurn(deps, (await deps.store.getAgentSession("s1"))!, "what is here?", () => undefined);
+    const fnResponse = (seenContents[1] as { parts: { functionResponse?: { response: unknown } }[] }[])
+      .flatMap((c) => c.parts)
+      .find((p) => p.functionResponse)?.functionResponse?.response;
+    expect(Array.isArray(fnResponse)).toBe(false);
+    expect(fnResponse).toHaveProperty("result");
+  });
+});

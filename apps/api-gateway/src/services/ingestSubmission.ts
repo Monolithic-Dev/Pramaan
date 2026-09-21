@@ -36,8 +36,12 @@ export interface IngestSubmissionResult {
   status: Submission["status"];
 }
 
-function hashRequestBody(body: unknown): string {
-  return createHash("sha256").update(JSON.stringify(body)).digest("hex");
+function hashRequestBody(input: IngestSubmissionInput): string {
+  // The client IP is deliberately excluded: a retry after the phone switches from Wi-Fi to
+  // mobile data arrives from a different address but is still the same request, and must
+  // replay the original response rather than be rejected as an Idempotency-Key conflict.
+  const { submitterIp: _ip, ...payload } = input;
+  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 // Shared by POST /v1/submissions and the WhatsApp/SMS webhooks (API_SPEC.md §9:

@@ -43,9 +43,9 @@ describe("POST /media", () => {
     expect((await upload(buildApp(createFakeDeps()), "photo", "image/jpeg", big)).statusCode).toBe(413);
   });
 
-  it("rate-limits anonymous uploads like submissions", async () => {
+  it("rate-limits anonymous uploads on their own budget, separate from submissions", async () => {
     const app = buildApp(createFakeDeps());
-    for (let i = 0; i < 3; i++) expect((await upload(app, "photo", "image/jpeg", JPEG)).statusCode).toBe(201);
+    for (let i = 0; i < 12; i++) expect((await upload(app, "photo", "image/jpeg", JPEG)).statusCode).toBe(201);
     expect((await upload(app, "photo", "image/jpeg", JPEG)).statusCode).toBe(429);
   });
 });

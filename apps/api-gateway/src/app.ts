@@ -12,13 +12,14 @@ import { registerSubmissionRoutes } from "./routes/submissions.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 
 export function buildApp(deps: Deps) {
-  // Required behind any reverse proxy this runs behind — Render
-  // (docs/FREE_DEPLOYMENT_GUIDE.md) and Cloud Run (docs/DEPLOYMENT.md) both
-  // terminate the connection and forward it, so without this, request.ip
-  // resolves to the proxy's address for every caller, collapsing the
-  // anonymous rate limiter and the demo-day CIDR allowlist (lib/cidr.ts) onto
-  // a single shared bucket.
-  const app = Fastify({ logger: true, trustProxy: true });
+  // Behind a reverse proxy (Render, Cloud Run) request.ip must come from X-Forwarded-For or
+  // every caller shares the proxy address, collapsing the anonymous rate limiter and the
+  // demo-day CIDR allowlist (lib/cidr.ts) onto one bucket. Trust exactly ONE hop (the platform
+  // proxy, which appends the real client address): `true` would trust the whole chain and take
+  // the client-supplied leftmost entry, letting anyone dodge the rate limit by sending their
+  // own X-Forwarded-For. Set TRUST_PROXY_HOPS=0 when serving directly.
+  const trustedHops = Number(process.env.TRUST_PROXY_HOPS ?? 1);
+  const app = Fastify({ logger: true, trustProxy: (_address: string, hop: number) => hop < trustedHops });
 
   // The web app is served from a different origin than the API. Auth is by Bearer token
   // (never cookies), so an open origin list is safe; set CORS_ORIGINS to lock it down.

@@ -4,6 +4,13 @@ import type { CandidateQuery, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {
   return {
+    async listStaleProcessingSubmissions(cutoffIso, limit) {
+      const snap = await db.collection("submissions").where("status", "==", "processing").get();
+      return snap.docs
+        .map((d) => d.data() as Submission)
+        .filter((s) => s.submitted_at < cutoffIso)
+        .slice(0, limit);
+    },
     async listPendingSubmissions(limit) {
       const snap = await db
         .collection("submissions")
@@ -25,15 +32,13 @@ export function createFirestoreStore(db: Firestore): Store {
       // Firestore has no "array element belongs to citizen X" query — fetch the
       // small recent-by-category set and filter in memory. Fine at hackathon
       // scale (docs/EDGE_CASES.md #4 is a same-reporter check, not a broad scan).
-      const snapshot = await db
-        .collection("issues")
-        .where("category", "==", category)
-        .where("last_reported_at", ">=", sinceIso)
-        .limit(200)
-        .get();
+      // No range filter in the query: equality + range on different fields would need a
+      // composite index the deployer has to create by hand. Filter the recency in memory.
+      const snapshot = await db.collection("issues").where("category", "==", category).limit(500).get();
 
       for (const doc of snapshot.docs) {
         const issue = doc.data() as Issue;
+        if (issue.last_reported_at < sinceIso) continue;
         const ownSubmissions = await db
           .collection("submissions")
           .where("issue_id", "==", issue.issue_id)
@@ -52,10 +57,12 @@ export function createFirestoreStore(db: Firestore): Store {
         .where("state_id", "==", stateId)
         .where("category", "==", category)
         .where("geohash", "in", geohashCells)
-        .where("status", "not-in", ["resolved", "tombstoned"])
         .limit(200)
         .get();
-      return snapshot.docs.map((doc) => doc.data() as Issue);
+      // Firestore forbids not-in together with in; filter open issues in memory.
+      return snapshot.docs
+        .map((doc) => doc.data() as Issue)
+        .filter((i) => i.status !== "resolved" && i.status !== "tombstoned");
     },
     async createIssue(issue) {
       await db.collection("issues").doc(issue.issue_id).set(issue);
@@ -84,37 +91,26 @@ export function createFirestoreStore(db: Firestore): Store {
       });
     },
     async getEligibleIssuesForScoring(countryCode) {
-      // Two separate queries (Firestore can't OR across fields) merged and deduped.
-      const [byReporters, byOverride] = await Promise.all([
-        db
-          .collection("issues")
-          .where("country_code", "==", countryCode)
-          .where("distinct_reporter_count", ">=", 3)
-          .get(),
-        db
-          .collection("issues")
-          .where("country_code", "==", countryCode)
-          .where("emergency_override", "==", true)
-          .get(),
-      ]);
-      const byId = new Map<string, Issue>();
-      for (const doc of [...byReporters.docs, ...byOverride.docs]) {
-        const issue = doc.data() as Issue;
-        const statusOk = !["resolved", "tombstoned"].includes(issue.status);
-        // Fraud-flagged issues are suppressed unless emergency_override
-        // confirms them (docs/phases/phase-8-fraud-impact-crossborder.md "Traps").
-        const fraudOk = issue.emergency_override || issue.fraud_flags.length === 0;
-        if (statusOk && fraudOk) byId.set(issue.issue_id, issue);
-      }
-      return [...byId.values()];
+      // One equality query, filtered in memory: a range/OR filter alongside the country
+      // equality would need a hand-made composite index. Fine at prototype scale.
+      const snapshot = await db.collection("issues").where("country_code", "==", countryCode).get();
+      return snapshot.docs
+        .map((doc) => doc.data() as Issue)
+        .filter((issue) => {
+          const statusOk = !["resolved", "tombstoned"].includes(issue.status);
+          const eligible = issue.distinct_reporter_count >= 3 || issue.emergency_override;
+          // Fraud-flagged issues are suppressed unless emergency_override
+          // confirms them (docs/phases/phase-8-fraud-impact-crossborder.md "Traps").
+          const fraudOk = issue.emergency_override || issue.fraud_flags.length === 0;
+          return statusOk && eligible && fraudOk;
+        });
     },
     async getAllDistinctReporterCounts(countryCode) {
-      const snapshot = await db
-        .collection("issues")
-        .where("country_code", "==", countryCode)
-        .where("status", "!=", "tombstoned")
-        .get();
-      return snapshot.docs.map((doc) => (doc.data() as Issue).distinct_reporter_count);
+      const snapshot = await db.collection("issues").where("country_code", "==", countryCode).get();
+      return snapshot.docs
+        .map((doc) => doc.data() as Issue)
+        .filter((i) => i.status !== "tombstoned")
+        .map((i) => i.distinct_reporter_count);
     },
     async putPriorityScore(score) {
       await db.collection("priorityScores").doc(score.score_id).set(score);
@@ -142,19 +138,18 @@ export function createFirestoreStore(db: Firestore): Store {
         .collection("priorityScores")
         .where("issue_id", "==", issueId)
         .where("is_canonical", "==", true)
-        .orderBy("computed_at", "desc")
-        .limit(1)
         .get();
-      return snapshot.empty ? null : (snapshot.docs[0].data() as PriorityScore);
+      if (snapshot.empty) return null;
+      // Sorted in memory: equality + orderBy would need a hand-made composite index.
+      return (snapshot.docs.map((d) => d.data() as PriorityScore).sort((a, b) => (a.computed_at < b.computed_at ? 1 : -1)))[0];
     },
     async countRecentSubmissionsByIpHash(ipHash, sinceIso) {
       const snapshot = await db
         .collection("submissions")
         .where("submitter_ip_hash", "==", ipHash)
-        .where("submitted_at", ">=", sinceIso)
-        .count()
+        .select("submitted_at")
         .get();
-      return snapshot.data().count;
+      return snapshot.docs.filter((d) => (d.data().submitted_at as string) >= sinceIso).length;
     },
     async addFraudFlag(issueId, flag) {
       const ref = db.collection("issues").doc(issueId);

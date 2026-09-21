@@ -28,7 +28,16 @@ Not used because they need GCP billing: Vertex AI, BigQuery, Cloud Run, Cloud St
 - **Uploads are small:** photos are compressed in the browser and voice notes are capped at 60 seconds, to fit
   Firestore's 1 MiB document limit. Fine for a prototype; move to Cloud Storage at scale.
 - **Phone OTP** works with **test phone numbers** only (no SMS cost). Real SMS needs Firebase Blaze billing.
-- **Gemini free tier** can return 429/503 under load; the app retries, and demos are usually fine.
+- **Gemini free tier** can return 429/503 under load. Google's newest Flash models were observed returning
+  "high demand" errors that took 40-60 seconds to fail, so every Gemini call has a 25-second timeout and a
+  fallback chain (`GEMINI_CATEGORIZATION_MODEL`, `GEMINI_AGENT_MODEL`, `GEMINI_TRANSLATION_MODEL`, comma-separated,
+  fastest first). If a model is retired, change the list, not the code.
+- **Processing speed:** one report takes roughly 5-15 seconds (categorize, embed, dedup, store) and reports are
+  processed one at a time per worker instance (this is what prevents duplicate issues). A room of judges
+  submitting simultaneously will see a short queue.
+- **Rate limits:** anonymous reporters are limited to 3 submissions per hour per IP (signed-in: 10). On demo
+  day set `RATE_LIMIT_ALLOWLIST_CIDRS=<venue-ip>/32` on the API service so a room sharing one IP is exempt.
+  The API trusts one proxy hop (`TRUST_PROXY_HOPS`, default 1) to find the real client IP behind Render.
 - Reference data is in Firestore instead of BigQuery (fine at this size; set `REFERENCE_BACKEND=bigquery` on
   GCP for national scale).
 
@@ -42,6 +51,10 @@ Not used because they need GCP billing: Vertex AI, BigQuery, Cloud Run, Cloud St
    - Enable **Email/Password** (for officers).
    - Enable **Phone**, then under **Phone numbers for testing** add e.g. `+91 98765 43210` = code `123456`
      (and a Brazilian one such as `+55 11 91234 5678` = `123456` for the pt-BR demo).
+   - **Allow the SMS regions** (required even for test numbers): **Authentication, Settings tab, SMS region
+     policy** (sometimes shown as "SMS regions"), choose **Allow**, add **India** and **Brazil**, save. Without
+     this, requesting a code fails with `OPERATION_NOT_ALLOWED: SMS unable to be sent until this region
+     enabled by the app developer`.
 4. **Project settings (gear), General:** note the **Project ID** and the **Web API Key** (already in `.env`).
 5. **Project settings, Service accounts, Generate new private key.** A JSON file downloads. **Treat it like a
    password; never commit it.** Convert it to one line for Render:
@@ -120,6 +133,25 @@ Reports are handed to the worker immediately; this cron catches anything missed 
 
 Scoring needs 3 distinct reporters on an issue (or emergency override). Use three test phones / different
 browsers, or run more submissions, before expecting scores.
+
+## Automated end-to-end checks (run against your real Firestore, Auth and Gemini)
+
+With the API on :8080 and the worker on :8081 running locally (`pnpm --filter @jansetu/api-gateway dev` etc.,
+with `WORKER_URL=http://localhost:8081` and `WORKER_SHARED_SECRET` set on both):
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=<path-to-service-account.json>
+export E2E_OFFICER_PASSWORD=<password you gave create-officer>
+pnpm --filter @jansetu/scripts exec tsx e2e-local.ts <folder-with-pothole.jpg-and-report-en.wav>
+pnpm --filter @jansetu/scripts exec tsx e2e-agent.ts
+```
+
+`e2e-local.ts` runs about 75 checks (ingestion, idempotency, Hindi/English/Portuguese, dedup, burst detection,
+photo and voice, scoring, forecasts, equity, transparency, states, agent scope guard, status translation, impact
+loop, privacy erasure, sweep) and deletes the test data it created (reference data and officer logins stay). It
+expects the officers `admin.in@pramaan.test` (state_admin, IN-DL), `collector.in@pramaan.test` (district_collector,
+dl-central-delhi) and `admin.br@pramaan.test` (state_admin, BR-SP) from `create-officer`. Expect it to take
+20-30 minutes because reports are processed one at a time against the real Gemini API.
 
 ## Troubleshooting
 - **Site loads but calls fail:** `VITE_API_BASE_URL` wrong, or `jansetu-web` not redeployed after setting it.

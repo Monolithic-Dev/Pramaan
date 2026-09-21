@@ -87,7 +87,10 @@ export function registerAgentRoutes(app: FastifyInstance, deps: Deps) {
       }
 
       reply.hijack();
+      // reply.hijack() bypasses Fastify's header pipeline, so carry over what plugins
+      // (notably CORS) already set; otherwise the browser blocks the stream cross-origin.
       reply.raw.writeHead(200, {
+        ...(reply.getHeaders() as Record<string, string | string[]>),
         "content-type": "text/event-stream",
         "cache-control": "no-cache",
         connection: "keep-alive",
@@ -96,9 +99,16 @@ export function registerAgentRoutes(app: FastifyInstance, deps: Deps) {
       // Tool-call events land before any token event, by construction — the
       // orchestrator only emits "token" once the whole answer is ready
       // (docs/phases/phase-6-agent-rag.md acceptance criteria).
-      await runAgentTurn(deps, session, parsed.data.text, (e) => {
-        reply.raw.write(`event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`);
-      });
+      const sse = (event: string, data: unknown) =>
+        reply.raw.write(["event: " + event, "data: " + JSON.stringify(data), "", ""].join("\n"));
+      try {
+        await runAgentTurn(deps, session, parsed.data.text, (e) => sse(e.event, e.data));
+      } catch (err) {
+        // After hijack() nothing else will answer this request: without an explicit error event
+        // and end(), the browser waits forever on a stream that never closes.
+        request.log.error({ err }, "agent turn failed");
+        sse("error", { message: "The assistant could not complete this request. Please try again." });
+      }
 
       reply.raw.end();
       return reply;
