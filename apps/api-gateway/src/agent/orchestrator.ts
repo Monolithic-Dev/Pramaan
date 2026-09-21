@@ -4,7 +4,7 @@ import type { Deps } from "../deps.js";
 import type { AgentContent } from "../lib/geminiAgent.js";
 import { executeTool, extractScopeTarget, type ToolName } from "./tools.js";
 import { isWithinScope } from "./scopeGuard.js";
-import { extractNumerals, verifyGrounded } from "./groundedness.js";
+import { extractNumerals, stripUngroundedSentences, verifyGrounded } from "./groundedness.js";
 
 export const AGENT_PROMPT_VERSION = "agent-v1";
 const MAX_TOOL_ROUNDS = 5;
@@ -147,6 +147,20 @@ export async function runAgentTurn(
         refusalReason = "ungrounded_claims_after_regeneration";
         finalText = null;
       }
+    }
+  }
+
+  if (!refused && finalText) {
+    // Layer 3: a numeral passing layer 2 only proves it appears *somewhere* in
+    // the tool output, not that it's attached to the right claim — strip any
+    // sentence whose numeral doesn't appear in an individual tool result.
+    const stripped = stripUngroundedSentences(finalText, toolResultsForVerification);
+    if (!stripped.trim()) {
+      refused = true;
+      refusalReason = "ungrounded_claims_after_regeneration";
+      finalText = null;
+    } else {
+      finalText = stripped;
     }
   }
 

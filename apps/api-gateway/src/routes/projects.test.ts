@@ -91,12 +91,15 @@ function makeCitizen(overrides: Partial<Citizen> = {}): Citizen {
   };
 }
 
-function officerHeaders(deps: ReturnType<typeof createFakeDeps>) {
-  deps.tokens.set("officer-token", {
+// Matches makeIssue()/makeProject()'s default state_id — the jurisdiction check
+// resolves to admin_region_id ?? state_id, and these fixtures don't set
+// admin_region_id, so "UNRESOLVED" is what an in-jurisdiction officer needs.
+function officerHeaders(deps: ReturnType<typeof createFakeDeps>, regionId = "UNRESOLVED") {
+  deps.tokens.set(`officer-token-${regionId}`, {
     uid: "officer_1",
-    claims: { role: "collector", region_id: "LGD:ward-1", country_code: "IN" },
+    claims: { role: "district_collector", region_id: regionId, country_code: "IN" },
   });
-  return { authorization: "Bearer officer-token" };
+  return { authorization: `Bearer officer-token-${regionId}` };
 }
 
 function citizenHeaders(deps: ReturnType<typeof createFakeDeps>, uid = "cit_reporter") {
@@ -133,6 +136,42 @@ describe("POST /projects/:id/mark-complete", () => {
     expect(project?.marked_complete_at).toBeTruthy();
     const impact = await deps.store.getImpactRecord("proj_test");
     expect(impact?.confirmations_required).toBe(3);
+  });
+
+  it("returns 403 JURISDICTION_MISMATCH for an officer outside the project's region", async () => {
+    const deps = createFakeDeps();
+    deps.store.projects.set("proj_test", makeProject());
+    deps.store.issues.set("iss_test", makeIssue({ admin_region_id: "LGD:ward-1" }));
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/proj_test/mark-complete",
+      headers: officerHeaders(deps, "LGD:ward-99"),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("JURISDICTION_MISMATCH");
+    expect((await deps.store.getProject("proj_test"))?.marked_complete_at).toBeNull();
+  });
+});
+
+describe("POST /projects/:id/officer-signoff", () => {
+  it("returns 403 JURISDICTION_MISMATCH for an officer outside the project's region", async () => {
+    const deps = createFakeDeps();
+    deps.store.projects.set("proj_test", makeProject());
+    deps.store.issues.set("iss_test", makeIssue({ admin_region_id: "LGD:ward-1" }));
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/proj_test/officer-signoff",
+      headers: officerHeaders(deps, "LGD:ward-99"),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("JURISDICTION_MISMATCH");
+    expect((await deps.store.getProject("proj_test"))?.officer_signed_off_at).toBeNull();
   });
 });
 

@@ -12,7 +12,13 @@ import { registerSubmissionRoutes } from "./routes/submissions.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 
 export function buildApp(deps: Deps) {
-  const app = Fastify({ logger: true });
+  // Required behind any reverse proxy this runs behind — Render
+  // (docs/FREE_DEPLOYMENT_GUIDE.md) and Cloud Run (docs/DEPLOYMENT.md) both
+  // terminate the connection and forward it, so without this, request.ip
+  // resolves to the proxy's address for every caller, collapsing the
+  // anonymous rate limiter and the demo-day CIDR allowlist (lib/cidr.ts) onto
+  // a single shared bucket.
+  const app = Fastify({ logger: true, trustProxy: true });
 
   // The web app is served from a different origin than the API. Auth is by Bearer token
   // (never cookies), so an open origin list is safe; set CORS_ORIGINS to lock it down.
