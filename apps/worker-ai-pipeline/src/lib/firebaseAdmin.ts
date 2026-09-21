@@ -19,7 +19,16 @@ export function ensureFirebaseApp() {
   }
 }
 
+let configured = false;
+
 export function getDb() {
   ensureFirebaseApp();
-  return getFirestore();
+  const db = getFirestore();
+  if (!configured) {
+    // Optional fields that are absent (e.g. row_count on a non-list tool result) are undefined
+    // in JS; Firestore would otherwise reject the entire write.
+    db.settings({ ignoreUndefinedProperties: true });
+    configured = true;
+  }
+  return db;
 }

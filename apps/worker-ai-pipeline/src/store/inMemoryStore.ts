@@ -7,6 +7,11 @@ export function createInMemoryStore(): Store {
   const priorityScores = new Map<string, PriorityScore>();
 
   return {
+    async listStaleProcessingSubmissions(cutoffIso, limit) {
+      return [...submissions.values()]
+        .filter((s) => s.status === "processing" && s.submitted_at < cutoffIso)
+        .slice(0, limit);
+    },
     async listPendingSubmissions(limit) {
       return [...submissions.values()]
         .filter((s) => s.status === "queued" || s.status === "deferred")

@@ -69,10 +69,10 @@ export function createFirestoreStore(db: Firestore): Store {
         .collection("priorityScores")
         .where("issue_id", "==", issueId)
         .where("is_canonical", "==", true)
-        .orderBy("computed_at", "desc")
-        .limit(1)
         .get();
-      return snapshot.empty ? null : (snapshot.docs[0].data() as PriorityScore);
+      if (snapshot.empty) return null;
+      // Sorted in memory: equality + orderBy would need a hand-made composite index.
+      return (snapshot.docs.map((d) => d.data() as PriorityScore).sort((a, b) => (a.computed_at < b.computed_at ? 1 : -1)))[0];
     },
     async setEmergencyOverride(issueId, enabled) {
       const ref = db.collection("issues").doc(issueId);
@@ -110,9 +110,10 @@ export function createFirestoreStore(db: Firestore): Store {
       const snapshot = await db
         .collection("agentTurns")
         .where("session_id", "==", sessionId)
-        .orderBy("timestamp", "asc")
         .get();
-      return snapshot.docs.map((doc) => doc.data() as AgentTurn);
+      return snapshot.docs
+        .map((doc) => doc.data() as AgentTurn)
+        .sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
     },
     async queryAgentTurns(filter) {
       let sessionIds: Set<string> | null = null;
@@ -125,13 +126,14 @@ export function createFirestoreStore(db: Firestore): Store {
         if (sessionIds.size === 0) return [];
       }
 
+      // At most one range field in the query (no composite index needed); the rest in memory.
       let ref: FirebaseFirestore.Query = db.collection("agentTurns");
       if (filter.from) ref = ref.where("timestamp", ">=", filter.from);
-      if (filter.to) ref = ref.where("timestamp", "<=", filter.to);
-      if (filter.refused !== undefined) ref = ref.where("refused", "==", filter.refused);
-      const snapshot = await ref.get();
+      const snapshot = await ref.limit(1000).get();
       return snapshot.docs
         .map((doc) => doc.data() as AgentTurn)
+        .filter((turn) => !filter.to || turn.timestamp <= filter.to)
+        .filter((turn) => filter.refused === undefined || turn.refused === filter.refused)
         .filter((turn) => !sessionIds || sessionIds.has(turn.session_id));
     },
     async getProject(projectId) {

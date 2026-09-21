@@ -5,18 +5,26 @@ import { fileURLToPath } from "node:url";
 
 const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), "source");
 
+export function parseCsvText(text: string): Record<string, string>[] {
+  // Split on CRLF too: on Windows git checks the CSVs out with CRLF, and a stray carriage
+  // return would otherwise become part of the last column name (centroid_lng, year, data_origin).
+  const [headerLine, ...lines] = text.trim().split(/\r?\n/);
+  const headers = headerLine.split(",").map((h) => h.trim());
+  return lines
+    .filter((line) => line.trim() !== "")
+    .map((line) => {
+      const values = line.split(",");
+      return Object.fromEntries(headers.map((h, i) => [h, (values[i] ?? "").trim()]));
+    });
+}
+
 export function parseCsv(path: string): Record<string, string>[] {
-  const [headerLine, ...lines] = readFileSync(path, "utf8").trim().split("\n");
-  const headers = headerLine.split(",");
-  return lines.map((line) => {
-    const values = line.split(",");
-    return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-  });
+  return parseCsvText(readFileSync(path, "utf8"));
 }
 
 // normalised_value is a 0-1 percentile *within the country* (docs/DATA_MODEL.md,
-// InfraIndex entity — cross-country comparison is meaningless by design, see
-// docs/CROSS_BORDER_AND_DPG.md §1), computed once here at load time — never at
+// InfraIndex entity: cross-country comparison is meaningless by design, see
+// docs/CROSS_BORDER_AND_DPG.md section 1), computed once here at load time, never at
 // query time, or scores stop reproducing as the dataset grows. Grouping key
 // includes country_code so a second country's rows never shift the first
 // country's percentiles (or vice versa).
@@ -40,7 +48,6 @@ export function withNormalisedValue(
     return { ...row, normalised_value: Number(normalised_value.toFixed(4)) };
   });
 }
-
 
 export function loadReferenceRows() {
   const adminRegions = parseCsv(join(SOURCE_DIR, "admin_regions.csv")).map((r) => ({

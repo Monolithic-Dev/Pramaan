@@ -1,8 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import type { Firestore } from "firebase-admin/firestore";
-import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
-import { buildGenAI } from "./genai.js";
+import { buildGenAI, generateWithFallback, parseModelList } from "./genai.js";
 import { readMedia } from "./media.js";
 
 export interface Transcript {
@@ -23,9 +22,7 @@ export function createGeminiTranscriber(db?: Firestore): Transcriber {
   return {
     async transcribe(audioUrl) {
       const { data, mimeType } = await readMedia(audioUrl, storage, db);
-      const response = await withRetry(() =>
-        ai.models.generateContent({
-          model: env.geminiModel,
+      const response = await generateWithFallback(ai, parseModelList(env.geminiModel), {
           contents: [
             {
               role: "user",
@@ -43,8 +40,7 @@ export function createGeminiTranscriber(db?: Firestore): Transcriber {
               required: ["text", "language"],
             } as never,
           },
-        }),
-      );
+      });
       try {
         const parsed = JSON.parse(response.text ?? "") as Transcript;
         return parsed.text?.trim() ? { text: parsed.text.trim(), language: parsed.language } : null;

@@ -67,6 +67,13 @@ export async function runAgentTurn(
   const toolCallLog: AgentToolCall[] = [];
   const toolResultsForVerification: unknown[] = [];
   const toolCallsForCitations: { tool: string; result: unknown }[] = [];
+  // The model cannot see the session, so tell it the pinned scope: without this, "what data do
+  // we have here?" makes it ask which region instead of using the officer's own.
+  const systemInstruction =
+    `${SYSTEM_INSTRUCTION}
+
+This session is scoped to region_id "${session.region_scope}". ` +
+    `When the officer says "here", "this region", "my area" or names no region, use region_id "${session.region_scope}".`;
   const contents: AgentContent[] = [{ role: "user", parts: [{ text: queryText }] }];
 
   let finalText: string | null = null;
@@ -80,15 +87,17 @@ export async function runAgentTurn(
       break;
     }
 
-    const result = await deps.geminiAgent.generateTurn(SYSTEM_INSTRUCTION, contents);
+    const result = await deps.geminiAgent.generateTurn(systemInstruction, contents);
     if (result.functionCalls.length === 0) {
       finalText = result.text;
       break;
     }
 
+    // Echo the model's own parts back verbatim (Gemini 3 attaches thought signatures to
+    // function calls and rejects a follow-up that drops them).
     contents.push({
       role: "model",
-      parts: result.functionCalls.map((fc) => ({ functionCall: fc })),
+      parts: result.rawParts ?? result.functionCalls.map((fc) => ({ functionCall: fc })),
     });
 
     const functionResponseParts: unknown[] = [];
@@ -122,9 +131,16 @@ export async function runAgentTurn(
         row_count: rowCount,
       });
       onEvent({ event: "tool_result", data: { tool: call.name, row_count: rowCount, latency_ms: latencyMs } });
-      functionResponseParts.push({ functionResponse: { name: call.name, response: toolResult } });
+      // Gemini requires functionResponse.response to be a JSON *object*; a tool that returns
+      // a list (or a scalar) is wrapped, otherwise the API rejects the whole turn with a 400.
+      const responseObject =
+        toolResult !== null && typeof toolResult === "object" && !Array.isArray(toolResult)
+          ? toolResult
+          : { result: toolResult };
+      functionResponseParts.push({ functionResponse: { name: call.name, response: responseObject } });
     }
-    contents.push({ role: "function", parts: functionResponseParts });
+    // The Gemini API takes tool results as a "user" turn; the legacy "function" role is rejected.
+    contents.push({ role: "user", parts: functionResponseParts });
   }
 
   if (!refused && finalText === null) {
@@ -135,7 +151,7 @@ export async function runAgentTurn(
   if (!refused && finalText) {
     const verification = verifyGrounded(finalText, toolResultsForVerification);
     if (!verification.passed) {
-      const retryInstruction = `${SYSTEM_INSTRUCTION}\n\nYour previous answer contained numbers that don't appear in the tool results: ${verification.unverifiedClaims.join(", ")}. Regenerate using ONLY numbers present in the tool results above, or say you don't have enough data.`;
+      const retryInstruction = `${systemInstruction}\n\nYour previous answer contained numbers that don't appear in the tool results: ${verification.unverifiedClaims.join(", ")}. Regenerate using ONLY numbers present in the tool results above, or say you don't have enough data.`;
       const retry = await deps.geminiAgent.generateTurn(retryInstruction, contents);
       const reverified = retry.text ? verifyGrounded(retry.text, toolResultsForVerification) : null;
       // Never retry a refusal into an answer (docs/phases/phase-6-agent-rag.md "Traps") —

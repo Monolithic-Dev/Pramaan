@@ -185,7 +185,11 @@ async function dedupe(
     const submissionPoint = { lat: submission.lat as number, lng: submission.lng as number };
     const near = candidates.filter((issue) => {
       if (!issue.geohash) return false;
-      return haversineMeters(submissionPoint, geohashDecodeCenter(issue.geohash)) <= radius;
+      const center =
+        issue.centroid_lat != null && issue.centroid_lng != null
+          ? { lat: issue.centroid_lat, lng: issue.centroid_lng }
+          : geohashDecodeCenter(issue.geohash); // older issues without a stored location
+      return haversineMeters(submissionPoint, center) <= radius;
     });
 
     if (near.length > 0) {
@@ -234,6 +238,8 @@ async function dedupe(
     geo_cluster_id: `gc_${issueId}`,
     admin_region_id: adminRegionId,
     geohash,
+    centroid_lat: submission.lat,
+    centroid_lng: submission.lng,
     submission_ids: [submission.submission_id],
     report_count: 1,
     distinct_reporter_count: submission.citizen_id === "anonymous" ? 0 : 1,

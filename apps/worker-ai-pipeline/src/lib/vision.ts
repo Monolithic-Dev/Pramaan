@@ -1,8 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import type { Firestore } from "firebase-admin/firestore";
-import { withRetry } from "@jansetu/shared-utils";
 import { env } from "./env.js";
-import { buildGenAI } from "./genai.js";
+import { buildGenAI, generateWithFallback, parseModelList } from "./genai.js";
 import { readMedia } from "./media.js";
 
 export interface PhotoAnalysis {
@@ -26,9 +25,7 @@ export function createGeminiPhotoAnalyzer(db?: Firestore): PhotoAnalyzer {
   return {
     async analyze(photoUrl) {
       const { data, mimeType } = await readMedia(photoUrl, storage, db);
-      const response = await withRetry(() =>
-        ai.models.generateContent({
-          model: env.geminiModel,
+      const response = await generateWithFallback(ai, parseModelList(env.geminiModel), {
           contents: [
             {
               role: "user",
@@ -46,8 +43,7 @@ export function createGeminiPhotoAnalyzer(db?: Firestore): PhotoAnalyzer {
               required: ["shows_infrastructure_issue", "description"],
             } as never,
           },
-        }),
-      );
+      });
       try {
         return JSON.parse(response.text ?? "") as PhotoAnalysis;
       } catch {

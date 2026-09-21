@@ -28,7 +28,7 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
 
     scope.post(
       "/media",
-      { preHandler: [optionalAuth(deps.authVerifier), submissionRateLimiter(deps.store)] },
+      { preHandler: [optionalAuth(deps.authVerifier), submissionRateLimiter(deps.store, { scope: "media", citizenLimit: 40, anonymousLimit: 12 })] },
       async (request, reply) => {
         const kind = (request.query as { kind?: string }).kind as MediaKind | undefined;
         if (kind !== "photo" && kind !== "audio") {

@@ -13,6 +13,8 @@ export interface Store {
   putSubmission(submission: Submission): Promise<void>;
   /** Submissions still queued/deferred (Pub/Sub-less deployments poll these). Oldest first. */
   listPendingSubmissions(limit: number): Promise<Submission[]>;
+  /** Submissions stuck in "processing" since before `cutoffIso` (worker crashed or was killed mid-run). */
+  listStaleProcessingSubmissions(cutoffIso: string, limit: number): Promise<Submission[]>;
 
   /** Same-reporter pre-check (docs/EDGE_CASES.md #4) — before embedding, before cost. */
   findOwnRecentIssue(
