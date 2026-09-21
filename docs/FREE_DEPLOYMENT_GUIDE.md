@@ -21,6 +21,7 @@ transcription), Gemini embeddings, Firebase (Auth + Firestore). This satisfies t
 Not used because they need GCP billing: Vertex AI, BigQuery, Cloud Run, Cloud Storage, Pub/Sub.
 
 ## Honest limits of the free setup
+- **No data-residency guarantee.** `SECURITY_PRIVACY.md` §3 claims India-region (`asia-south1`) data residency, but that's true only on the Vertex-AI path. Here, `GEMINI_API_KEY` routes every Gemini call through the public Gemini API with no region pinning — Firestore's location picked in Step 1 is the *only* piece of this deployment with a residency guarantee. Don't represent this path as DPDP-compliant.
 - **Cold starts:** Render free services sleep after ~15 minutes idle; the first request after that takes
   30-60 seconds. **Open the site and the `/healthz` URLs 2 minutes before any demo.**
 - **Free instance hours** are shared across services (750/month). Two sleeping services are fine for a demo.

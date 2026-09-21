@@ -7,8 +7,9 @@
 - **Preconditions:** Phases 10-15, whichever were actually completed — this phase adapts to
   what got built, per the tiering system in `docs/advanced-features/README.md`.
 - **Specs implemented:** `docs/advanced-features/DEMO_SCRIPT.md`, `docs/TESTING.md` §6,
-  `docs/ROADMAP.md` (the original submission-package step, redone with the enhanced feature
-  set).
+  `docs/phases/phase-9b-submission-package.md` (the original submission-package step, redone
+  with the enhanced feature set — `docs/ROADMAP.md` no longer exists, superseded by
+  `docs/BUILD_PLAN.md`).
 
 ## Task breakdown
 1. Re-run the authorization audit pattern from Phase 9 task 1, extended to cover every new

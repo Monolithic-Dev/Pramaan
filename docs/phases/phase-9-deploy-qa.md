@@ -117,4 +117,4 @@ You could hand the URL to a stranger with no explanation and they would understa
 - Venue WiFi will be worse than you expect. If the app needs good connectivity to demo, it fails on stage.
 
 ## Handoff
-Submission-ready system, live and rehearsed. Tag `phase-9-done`. Phase 10 assembles the actual submission package.
+Submission-ready system, live and rehearsed. Tag `phase-9-done`. Phase 9b assembles the actual submission package — or, if the advanced-feature phases (`docs/advanced-features/`, phases 10-16) are being built, continue there and let Phase 16 finalize submission instead.

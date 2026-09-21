@@ -1,12 +1,14 @@
-# Phase 10 of 10: Submission Package
+# Phase 9b: Submission Package (core-plan baseline)
 
-**Days 15-16 · Track C leads, all hands · 30 Sep is buffer only**
+**Days 15-16 of the core 16-day plan · Track C leads, all hands · 30 Sep is buffer only**
+
+> **Renumbered 21 Sep 2026.** This was originally "Phase 10 of 10" in the core build plan. Once the team decided to build the six advanced-feature phases in `docs/advanced-features/`, those claimed numbers 10-16, and **`docs/phases/phase-16-integration-demo-rehearsal.md` is now the actual final phase** that assembles the submission package — its task 8 explicitly redoes this checklist with the expanded feature set. This document is kept as detailed reference material (the video cut-by-criterion table, the slide-by-slide deck structure, the Rule-compliance table) for whichever phase actually ships the submission, whether that's here (if the advanced-feature phases don't happen) or via Phase 16 (if they do).
 
 ## Objective
 The five required artifacts, assembled and submitted. Nothing here is optional and each one is independently scored by someone who has never seen your project.
 
 ## Prerequisites
-Phase 9 complete. Feature freeze held since end of Day 14.
+Phase 9 complete. Feature freeze held since end of Day 14 (or, if the advanced-feature phases ran, since Phase 16 starts — see the renumbering note above).
 
 ## Reference docs
 `About.pdf` (submission package requirements, evaluation parameters, Rules 01-06)

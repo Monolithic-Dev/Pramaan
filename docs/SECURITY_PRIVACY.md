@@ -22,7 +22,7 @@ Role-based access control (RBAC) is enforced server-side on every write endpoint
 ## 3. DPDP Act 2023 considerations (India's Digital Personal Data Protection Act)
 - Explicit consent notice shown at submission time, in the citizen's language, before any location/contact data is collected.
 - Right-to-erasure endpoint: a citizen can request deletion of their `Submission`; if it was the sole source for an `Issue`, the `Issue` is tombstoned rather than silently left orphaned.
-- Data localization: primary data residency in an India region (e.g. `asia-south1`).
+- Data localization: primary data residency in an India region (e.g. `asia-south1`) **on the GCP-native deployment path** (`DEPLOYMENT.md`, `GCP_SETUP_GUIDE.md`), where Vertex AI is pinned to that region. **This claim does not hold on the alternate no-GCP-billing path** (`FREE_DEPLOYMENT_GUIDE.md`): when `GEMINI_API_KEY` is set instead of using Vertex AI + ADC (`apps/api-gateway/src/lib/genai.ts`, `apps/worker-ai-pipeline/src/lib/genai.ts`), every Gemini call — categorization, embeddings, transcription, photo analysis, translation, the agent — routes through the public Gemini API with no region pinning. Don't run the free-deployment path for anything beyond a personal demo without disclosing this, and don't claim DPDP data-localization compliance for it as currently built.
 - Purpose limitation: data is used only for infrastructure prioritization — no secondary use (e.g. marketing, unrelated analytics) without fresh consent.
 - Documented breach notification process (who is notified, within what window) — even at hackathon stage, stating this shows production maturity.
 
