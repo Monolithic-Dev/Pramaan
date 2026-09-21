@@ -1,11 +1,33 @@
 import { randomUUID } from "node:crypto";
-import type { FastifyInstance } from "fastify";
-import type { ImpactRecord } from "@jansetu/shared-types";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { Issue, ImpactRecord, Project } from "@jansetu/shared-types";
 import type { Deps } from "../deps.js";
+import { isWithinScope } from "../agent/scopeGuard.js";
 import { requireAuth, requireOfficer } from "../middleware/auth.js";
 import { confirmResolutionSchema } from "../schemas/projects.js";
 
 const DEFAULT_CONFIRMATIONS_REQUIRED = 3;
+
+/** Officer-facing project actions are scoped to the underlying issue's region — an
+ *  officer from state A must not be able to mark-complete or sign off a project in
+ *  state B just because they hold a valid officer token (docs/SECURITY_PRIVACY.md §5). */
+async function assertProjectInJurisdiction(
+  deps: Deps,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  project: Project,
+): Promise<Issue | null> {
+  const officer = request.officer!;
+  const issue = await deps.store.getIssue(project.issue_id);
+  const target = issue?.admin_region_id ?? issue?.state_id ?? project.state_id;
+  if (!officer.regionId || !target || !(await isWithinScope(deps.bigqueryAgent, target, officer.regionId))) {
+    reply.code(403).send({
+      error: { code: "JURISDICTION_MISMATCH", message: "This project is outside your jurisdiction." },
+    });
+    return null;
+  }
+  return issue;
+}
 
 export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
   // docs/API_SPEC.md §6, docs/phases/phase-8-fraud-impact-crossborder.md §8.2.
@@ -23,7 +45,8 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Project not found." } });
       }
 
-      const issue = await deps.store.getIssue(project.issue_id);
+      const issue = await assertProjectInJurisdiction(deps, request, reply, project);
+      if (reply.sent) return;
       const submissions = issue ? await deps.store.getSubmissionsByIssue(issue.issue_id) : [];
       const reporterIds = [...new Set(submissions.map((s) => s.citizen_id))].filter(
         (id) => id !== "anonymous",
@@ -92,6 +115,9 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
       if (!project) {
         return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Project not found." } });
       }
+
+      await assertProjectInJurisdiction(deps, request, reply, project);
+      if (reply.sent) return;
 
       const updated = await deps.store.updateProject(projectId, {
         officer_signed_off_at: new Date().toISOString(),

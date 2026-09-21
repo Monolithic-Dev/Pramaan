@@ -5,7 +5,7 @@ import { createFakeDeps } from "../testUtils/fakeDeps.js";
 function officerHeaders(deps: ReturnType<typeof createFakeDeps>, regionId = "LGD:ward-1") {
   deps.tokens.set("officer-token", {
     uid: "officer_1",
-    claims: { role: "collector", region_id: regionId, country_code: "IN" },
+    claims: { role: "district_collector", region_id: regionId, country_code: "IN" },
   });
   return { authorization: "Bearer officer-token" };
 }
@@ -112,7 +112,7 @@ describe("GET /audit/agent-turns", () => {
   it("requires the state_admin role", async () => {
     const deps = createFakeDeps();
     const app = buildApp(deps);
-    const headers = officerHeaders(deps); // role: "collector"
+    const headers = officerHeaders(deps); // role: "district_collector", not state_admin
 
     const response = await app.inject({ method: "GET", url: "/v1/audit/agent-turns", headers });
     expect(response.statusCode).toBe(401);

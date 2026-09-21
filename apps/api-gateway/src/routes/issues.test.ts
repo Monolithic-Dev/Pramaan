@@ -3,6 +3,9 @@ import type { Issue, PriorityScore } from "@jansetu/shared-types";
 import { buildApp } from "../app.js";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 
+const IN_JURISDICTION_REGION = "LGD:ward-1";
+const OUT_OF_JURISDICTION_REGION = "LGD:ward-99";
+
 function makeIssue(overrides: Partial<Issue> = {}): Issue {
   return {
     issue_id: "iss_test",
@@ -14,7 +17,7 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
     embedding: null,
     embedding_model: null,
     geo_cluster_id: "gc_test",
-    admin_region_id: null,
+    admin_region_id: IN_JURISDICTION_REGION,
     geohash: null,
     submission_ids: [],
     report_count: 14,
@@ -53,13 +56,39 @@ function makeScore(overrides: Partial<PriorityScore> = {}): PriorityScore {
   };
 }
 
+function officerHeaders(
+  deps: ReturnType<typeof createFakeDeps>,
+  role: string,
+  regionId: string,
+  token = "officer-token",
+) {
+  deps.tokens.set(token, { uid: "officer_1", claims: { role, region_id: regionId, country_code: "IN" } });
+  return { authorization: `Bearer ${token}` };
+}
+
 describe("GET /issues/:issueId/score", () => {
-  it("returns every component and the weights used", async () => {
+  it("requires an officer token", async () => {
     const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
     deps.store.priorityScores.set("score_1", makeScore());
 
     const app = buildApp(deps);
     const response = await app.inject({ method: "GET", url: "/v1/issues/iss_test/score" });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it("returns every component and the weights used, for an officer in jurisdiction", async () => {
+    const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
+    deps.store.priorityScores.set("score_1", makeScore());
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/issues/iss_test/score",
+      headers: officerHeaders(deps, "field_officer", IN_JURISDICTION_REGION),
+    });
 
     expect(response.statusCode).toBe(200);
     const body = response.json();
@@ -67,18 +96,56 @@ describe("GET /issues/:issueId/score", () => {
     expect(body.composite_score).toBeCloseTo(0.628, 3);
   });
 
+  it("returns 403 JURISDICTION_MISMATCH for an officer outside the issue's region", async () => {
+    const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
+    deps.store.priorityScores.set("score_1", makeScore());
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/issues/iss_test/score",
+      headers: officerHeaders(deps, "field_officer", OUT_OF_JURISDICTION_REGION),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("JURISDICTION_MISMATCH");
+  });
+
   it("returns 404 for an issue that hasn't been scored yet", async () => {
-    const app = buildApp(createFakeDeps());
-    const response = await app.inject({ method: "GET", url: "/v1/issues/never-scored/score" });
+    const deps = createFakeDeps();
+    deps.store.issues.set("never-scored", makeIssue({ issue_id: "never-scored" }));
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/issues/never-scored/score",
+      headers: officerHeaders(deps, "field_officer", IN_JURISDICTION_REGION),
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("returns 404 for an issue that doesn't exist", async () => {
+    const deps = createFakeDeps();
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/issues/does-not-exist/score",
+      headers: officerHeaders(deps, "field_officer", IN_JURISDICTION_REGION),
+    });
     expect(response.statusCode).toBe(404);
   });
 
   it("never returns a non-canonical (simulated) score", async () => {
     const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
     deps.store.priorityScores.set("sim_1", makeScore({ score_id: "sim_1", is_canonical: false }));
 
     const app = buildApp(deps);
-    const response = await app.inject({ method: "GET", url: "/v1/issues/iss_test/score" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/issues/iss_test/score",
+      headers: officerHeaders(deps, "field_officer", IN_JURISDICTION_REGION),
+    });
 
     expect(response.statusCode).toBe(404);
   });
@@ -99,17 +166,48 @@ describe("POST /issues/:issueId/emergency-override", () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it("returns 403 for a field_officer (below the required role >= district_collector)", async () => {
+    const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/issues/iss_test/emergency-override",
+      payload: { enabled: true, justification: "Bridge collapse reported" },
+      headers: officerHeaders(deps, "field_officer", IN_JURISDICTION_REGION),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("FORBIDDEN");
+  });
+
+  it("returns 403 JURISDICTION_MISMATCH for a district_collector outside the issue's region", async () => {
+    const deps = createFakeDeps();
+    deps.store.issues.set("iss_test", makeIssue());
+
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/issues/iss_test/emergency-override",
+      payload: { enabled: true, justification: "Bridge collapse reported" },
+      headers: officerHeaders(deps, "district_collector", OUT_OF_JURISDICTION_REGION),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("JURISDICTION_MISMATCH");
+  });
+
   it("sets emergency_override and writes an audit log entry", async () => {
     const deps = createFakeDeps();
     deps.store.issues.set("iss_test", makeIssue({ emergency_override: false }));
-    deps.tokens.set("officer-token", { uid: "officer_1", claims: { role: "collector" } });
 
     const app = buildApp(deps);
     const response = await app.inject({
       method: "POST",
       url: "/v1/issues/iss_test/emergency-override",
       payload: { enabled: true, justification: "Bridge collapse reported, 40+ submissions in 20 min" },
-      headers: { authorization: "Bearer officer-token" },
+      headers: officerHeaders(deps, "district_collector", IN_JURISDICTION_REGION),
     });
 
     expect(response.statusCode).toBe(200);
@@ -126,14 +224,13 @@ describe("POST /issues/:issueId/emergency-override", () => {
   it("returns 400 without a justification", async () => {
     const deps = createFakeDeps();
     deps.store.issues.set("iss_test", makeIssue());
-    deps.tokens.set("officer-token", { uid: "officer_1", claims: { role: "collector" } });
 
     const app = buildApp(deps);
     const response = await app.inject({
       method: "POST",
       url: "/v1/issues/iss_test/emergency-override",
       payload: { enabled: true },
-      headers: { authorization: "Bearer officer-token" },
+      headers: officerHeaders(deps, "district_collector", IN_JURISDICTION_REGION),
     });
 
     expect(response.statusCode).toBe(400);

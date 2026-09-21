@@ -44,8 +44,12 @@ export function requireAuth(authVerifier: AuthVerifier) {
   };
 }
 
-/** Endpoints restricted to officers. Role-hierarchy ("role >= collector") and
- *  jurisdiction/region scoping are stubbed here, completed in Phase 7. */
+/** Endpoints restricted to officers. This only checks that *some* officer-role
+ *  token is present — it does not check role hierarchy or jurisdiction. Every
+ *  route that needs "role >= collector" or region scoping must check
+ *  `request.officer` itself after this runs (see hasMinimumRole below and the
+ *  isWithinScope pattern used in routes/insights.ts) — do not assume this
+ *  preHandler alone makes a route jurisdiction-safe. */
 export function requireOfficer(authVerifier: AuthVerifier) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -59,4 +63,13 @@ export function requireOfficer(authVerifier: AuthVerifier) {
       });
     }
   };
+}
+
+const ROLE_RANK: Record<string, number> = { field_officer: 0, district_collector: 1, state_admin: 2 };
+
+/** Role-hierarchy check for "role >= X" access levels (e.g. API_SPEC.md's
+ *  "Officer (role ≥ collector)" on emergency-override). Unknown roles rank
+ *  below everything, so an unrecognized claim value fails closed. */
+export function hasMinimumRole(role: string, minimum: keyof typeof ROLE_RANK): boolean {
+  return (ROLE_RANK[role] ?? -1) >= ROLE_RANK[minimum];
 }
