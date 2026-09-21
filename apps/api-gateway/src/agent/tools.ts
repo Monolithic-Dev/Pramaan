@@ -1,5 +1,6 @@
 import { computeCompositeScore, type ScoreWeights } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
+import { verifyGrounded } from "./groundedness.js";
 import { getEquityAudit, getForecasts } from "../insights/service.js";
 
 // docs/AI_PIPELINE.md Stage 5 refusal guardrail, layer 1: an explicit
@@ -219,10 +220,19 @@ async function generateBrief(deps: Deps, issueId: string) {
       ? ` Note: ${score.data_fallbacks.map((f) => f.reason).join("; ")}.`
       : "");
 
+  // Run the real verifier rather than assuming "grounded by construction" — the
+  // template is expected to always pass today, but a hardcoded `true` couldn't
+  // catch a future interpolation bug, and this is the panel a judge asking "how
+  // do you know it didn't hallucinate" gets shown (docs/phases/phase-6-agent-rag.md §6.5).
+  const verification = verifyGrounded(brief, [issue, score]);
+
   return {
     generated_brief: brief,
     brief_citations: [{ claim: "composite_score", source: `PriorityScore:${score.score_id}` }],
-    groundedness_check: { passed: true, unverified_claims: [] },
+    groundedness_check: {
+      passed: verification.passed,
+      unverified_claims: verification.unverifiedClaims,
+    },
   };
 }
 
