@@ -64,7 +64,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       speechLang,
       countryCode,
       t: (key, vars) => {
-        let value = dictionary[key] ?? key;
+        // A key missing from the active language falls back to English, never to the raw key.
+        let value = dictionary[key] ?? DICTIONARIES.en[key] ?? key;
         if (vars) {
           for (const [k, v] of Object.entries(vars)) {
             value = value.replace(`{${k}}`, String(v));

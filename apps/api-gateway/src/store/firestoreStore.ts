@@ -207,5 +207,28 @@ export function createFirestoreStore(db: Firestore): Store {
       const snapshot = await db.collection("states").get();
       return snapshot.docs.map((d) => d.data() as StateRecord);
     },
+    async updateIssue(issueId, patch) {
+      const ref = db.collection("issues").doc(issueId);
+      return db.runTransaction(async (tx) => {
+        const doc = await tx.get(ref);
+        if (!doc.exists) throw new Error(`updateIssue: issue ${issueId} not found`);
+        const updated = { ...(doc.data() as Issue), ...patch };
+        tx.set(ref, updated);
+        return updated;
+      });
+    },
+    async listProjects() {
+      const snapshot = await db.collection("projects").get();
+      return snapshot.docs.map((d) => d.data() as Project);
+    },
+    async listAuditLog(limit) {
+      // One collection scan sorted in memory: ordering by timestamp would need an index the
+      // deployer creates by hand, and the audit log is small at prototype scale.
+      const snapshot = await db.collection("auditLog").get();
+      return snapshot.docs
+        .map((d) => d.data() as AuditLogEntry)
+        .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+        .slice(0, limit);
+    },
   };
 }

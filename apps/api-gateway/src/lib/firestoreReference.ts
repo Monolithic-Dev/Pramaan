@@ -20,6 +20,23 @@ export function createFirestoreAgentClient(db: Firestore): BigQueryAgentClient {
       return chain;
     },
 
+    async listRegions(filter = {}) {
+      const snap = await db.collection("ref_admin_regions").get();
+      return snap.docs
+        .map((d) => d.data() as Record<string, any>)
+        .filter((r) => (!filter.level || r.level === filter.level) && (!filter.parentId || r.parent_region_id === filter.parentId) && (!filter.countryCode || r.country_code === filter.countryCode))
+        .map((r) => ({
+          regionId: r.region_id as string,
+          name: r.name as string,
+          level: r.level as string,
+          parentRegionId: (r.parent_region_id ?? null) as string | null,
+          countryCode: r.country_code as string,
+          population: r.population as number,
+          lat: r.centroid_lat as number,
+          lng: r.centroid_lng as number,
+        }));
+    },
+
     async getInvestmentRecords(regionId, category) {
       const snap = await db
         .collection("ref_investment_record")

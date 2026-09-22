@@ -1,10 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { uploadMedia } from "../api/client.js";
+import { uploadMediaAuthed } from "../api/api.js";
 import { isSpeechRecognitionSupported, useSpeechRecognition } from "../hooks/useSpeechRecognition.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
+import { Icon } from "../ui/Icon.js";
+import { cx } from "../ui/kit.js";
 
-// Browsers without the Web Speech API (iOS Safari, Firefox) record audio with
-// MediaRecorder and upload it; the worker transcribes it server-side.
+function MicButton({ active, onClick, label, sub }: { active: boolean; onClick: () => void; label: string; sub?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        "group flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition",
+        active ? "border-rose-300 bg-rose-50" : "border-dashed border-brand-300 bg-brand-50/60 hover:border-brand-500 hover:bg-brand-50",
+      )}
+    >
+      <span className={cx("relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white", active ? "bg-rose-600" : "bg-brand-700")}>
+        {active && <span className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-60" />}
+        <Icon name="mic" size={26} className="relative" />
+      </span>
+      <span>
+        <span className="block font-semibold text-slate-900">{label}</span>
+        {sub && <span className="block text-sm text-slate-600">{sub}</span>}
+      </span>
+    </button>
+  );
+}
+
+// Browsers without the Web Speech API (iOS Safari, Firefox) record audio with MediaRecorder and
+// upload it; the worker transcribes it server-side with Gemini.
 function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: string) => void }) {
   const { t } = useLanguage();
   const [recording, setRecording] = useState(false);
@@ -26,7 +51,7 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
       rec.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
         try {
-          onAudioUploaded(await uploadMedia("audio", new Blob(chunks.current, { type: rec.mimeType })));
+          onAudioUploaded(await uploadMediaAuthed("audio", new Blob(chunks.current, { type: rec.mimeType })));
           setState("saved");
         } catch {
           setState("error");
@@ -50,16 +75,9 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-pressed={recording}
-        className={`w-full rounded-xl px-6 py-6 text-xl font-semibold text-white ${recording ? "animate-pulse bg-red-600" : "bg-blue-700"}`}
-      >
-        🎙️ {recording ? t("report.audioStop") : t("report.audioRecord")}
-      </button>
-      {state === "saved" && <p className="text-sm text-green-700">{t("report.audioSaved")}</p>}
-      {state === "error" && <p className="text-sm text-red-600">{t("report.uploadError")}</p>}
+      <MicButton active={recording} onClick={toggle} label={recording ? t("report.audioStop") : t("report.audioRecord")} sub={t("report.voiceSub")} />
+      {state === "saved" && <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><Icon name="checkCircle" size={16} />{t("report.audioSaved")}</p>}
+      {state === "error" && <p className="text-sm font-medium text-rose-600">{t("report.uploadError")}</p>}
     </div>
   );
 }
@@ -81,22 +99,17 @@ export function VoiceRecorder({
 
   if (!isSpeechRecognitionSupported()) {
     if (typeof MediaRecorder === "undefined") {
-      return <p className="text-sm text-gray-500">{t("report.voiceUnsupported")}</p>;
+      return <p className="rounded-xl bg-slate-100 p-3 text-sm text-slate-600">{t("report.voiceUnsupported")}</p>;
     }
     return <AudioUploadRecorder onAudioUploaded={onAudioUploaded} />;
   }
 
   return (
-    <button
-      type="button"
+    <MicButton
+      active={isListening}
       onClick={isListening ? stop : start}
-      aria-pressed={isListening}
-      className={`flex w-full items-center justify-center gap-3 rounded-xl px-6 py-6 text-xl font-semibold text-white ${
-        isListening ? "animate-pulse bg-red-600" : "bg-blue-700"
-      }`}
-    >
-      <span aria-hidden="true">🎙️</span>
-      {isListening ? t("report.voiceListening") : t("report.voiceButton")}
-    </button>
+      label={isListening ? t("report.voiceListening") : t("report.voiceButton")}
+      sub={t("report.voiceSub")}
+    />
   );
 }

@@ -163,6 +163,8 @@ export interface Issue {
    *  the ~1 km geohash cell (which can be 600 m from the actual point). Absent on older issues. */
   centroid_lat?: number | null;
   centroid_lng?: number | null;
+  /** true for illustrative sample data loaded by the demo seeder; the UI labels it (never present synthetic data as real). */
+  is_synthetic?: boolean;
   submission_ids: string[];
   report_count: number;
   /** Distinct citizen_ids behind report_count — this, not report_count, feeds demand_score. */

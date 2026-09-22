@@ -1,15 +1,99 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-/* docs/phases/phase-7-frontend.md §7.8: minimum 16px base font on the
-   citizen flow, government-tool aesthetic (high contrast, no decorative
-   motion), Noto fallbacks so Devanagari/Tamil never render as boxes. */
+/* JanSetu design tokens. Deep civic blue as the primary, saffron as the accent and India green for
+   "resolved" states: a nod to the tricolour without using the emblem. Noto fallbacks make sure
+   Devanagari and Tamil never render as boxes (docs/phases/phase-7-frontend.md "Traps"). */
+@theme {
+  --font-sans: "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", system-ui, sans-serif;
+
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dbe7ff;
+  --color-brand-200: #bdd2ff;
+  --color-brand-300: #8fb1ff;
+  --color-brand-400: #5b87f0;
+  --color-brand-500: #3766d8;
+  --color-brand-600: #244ebc;
+  --color-brand-700: #1d3f97;
+  --color-brand-800: #1b357a;
+  --color-brand-900: #16295c;
+  --color-brand-950: #0b1a3c;
+
+  --color-saffron-100: #ffeed6;
+  --color-saffron-400: #ffab4d;
+  --color-saffron-500: #ff9933;
+  --color-saffron-600: #e8800f;
+
+  --color-india-500: #1b9a10;
+  --color-india-600: #138808;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-lift: 0 10px 30px -12px rgb(15 23 42 / 0.25);
+}
+
 html {
   font-size: 16px;
-  font-family:
-    "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", system-ui, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background-color: #f9fafb;
+  background: #f6f8fc;
+  color: #0f172a;
 }
+
+::selection {
+  background: var(--color-brand-200);
+}
+
+/* Keyboard users always get a visible focus ring (accessibility criterion for a public service). */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.tricolour {
+  height: 4px;
+  background: linear-gradient(90deg, #ff9933 0 33.3%, #ffffff 33.3% 66.6%, #138808 66.6% 100%);
+  box-shadow: inset 0 -1px 0 rgb(15 23 42 / 0.08);
+}
+
+.hero-grid {
+  background-image:
+    radial-gradient(circle at 20% 10%, rgb(255 153 51 / 0.18), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgb(91 135 240 / 0.35), transparent 45%),
+    linear-gradient(135deg, var(--color-brand-950), var(--color-brand-800));
+}
+
+.dotted {
+  background-image: radial-gradient(rgb(148 163 184 / 0.35) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up { animation: fade-up 0.35s ease both; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e8edf6 25%, #f4f7fc 37%, #e8edf6 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .skeleton { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* Leaflet: match the app's rounded look and keep popups readable. */
+.leaflet-container { font-family: var(--font-sans); border-radius: inherit; }
+.leaflet-popup-content-wrapper { border-radius: 0.75rem; }

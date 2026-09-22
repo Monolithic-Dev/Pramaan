@@ -7,6 +7,9 @@ function fakeBigQuery(ancestryByRegion: Record<string, { regionId: string; level
     async getAncestryChain(regionId) {
       return ancestryByRegion[regionId] ?? [{ regionId, level: "ward" }];
     },
+    async listRegions() {
+      return [];
+    },
     async getInvestmentRecords() {
       return [];
     },

@@ -10,6 +10,7 @@
     "init-firestore-collections": "tsx init-firestore-collections.ts",
     "generate-reference-data": "tsx seed-demo-data/generateReferenceData.ts",
     "seed-firestore-reference": "tsx seed-demo-data/seedFirestoreReference.ts",
+    "seed-demo-issues": "tsx seed-demo-data/seedDemoIssues.ts",
     "create-officer": "tsx create-officer.ts",
     "tune-threshold": "tsx tune-threshold.ts"
   },

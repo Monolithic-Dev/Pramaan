@@ -81,6 +81,7 @@ export function registerIssueRoutes(app: FastifyInstance, deps: Deps) {
         audit_id: randomUUID(),
         actor_id: request.citizenId ?? "unknown-officer",
         action: "emergency_override",
+        target_id: issueId,
         before: { emergency_override: before.emergency_override },
         after: { emergency_override: after.emergency_override },
         justification: parsed.data.justification,
