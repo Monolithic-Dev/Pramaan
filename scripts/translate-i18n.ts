@@ -47,7 +47,7 @@ ${JSON.stringify(source, null, 2)}`;
         },
       );
       if (!res.ok) throw new Error(`Gemini ${res.status} (${model}): ${await res.text()}`);
-      const body = await res.json();
+      const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
       const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error(`No text in Gemini response: ${JSON.stringify(body)}`);
       return JSON.parse(text);
