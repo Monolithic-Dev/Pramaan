@@ -138,6 +138,11 @@ export function registerInsightRoutes(app: FastifyInstance, deps: Deps) {
         // Existing grounded brief, reused verbatim: no new AI call, no new hallucination surface.
         explanation,
         explanation_language: explanationLanguage,
+        // Lets the citizen app show "Was this fixed?" once an officer marks the work complete.
+        project_id: project?.project_id ?? null,
+        awaiting_confirmation: Boolean(project?.marked_complete_at) && project?.status !== "completed",
+        first_reported_at: issue.first_reported_at,
+        category: issue.category,
         preferred_language: citizen?.preferred_language ?? null,
       });
     },

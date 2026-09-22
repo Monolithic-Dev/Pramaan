@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import type { Deps } from "./deps.js";
 import { registerAgentRoutes } from "./routes/agent.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerConsoleRoutes } from "./routes/console.js";
 import { registerInsightRoutes } from "./routes/insights.js";
 import { registerIssueRoutes } from "./routes/issues.js";
 import { registerMediaRoutes } from "./routes/media.js";
@@ -48,6 +49,7 @@ export function buildApp(deps: Deps) {
       registerPrivacyRoutes(v1, deps);
       registerInsightRoutes(v1, deps);
       registerMediaRoutes(v1, deps);
+      registerConsoleRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

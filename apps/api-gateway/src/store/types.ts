@@ -26,6 +26,8 @@ export interface AuditLogEntry {
   after: unknown;
   justification: string | null;
   timestamp: string;
+  /** The issue/project/officer the action was about, so a detail page can show its own history. */
+  target_id?: string;
 }
 
 // Narrow seam over Firestore so routes/middleware never import the admin SDK
@@ -90,4 +92,11 @@ export interface Store {
   getImpactRecordByIssue(issueId: string): Promise<ImpactRecord | null>;
   putState(state: StateRecord): Promise<void>;
   listStates(): Promise<StateRecord[]>;
+
+  // --- Product console ---
+
+  updateIssue(issueId: string, patch: Partial<Issue>): Promise<Issue>;
+  listProjects(): Promise<Project[]>;
+  /** Newest first. */
+  listAuditLog(limit: number): Promise<AuditLogEntry[]>;
 }

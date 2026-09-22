@@ -177,6 +177,19 @@ export function createInMemoryStore(): Store & {
     async listStates() {
       return [...states.values()];
     },
+    async updateIssue(issueId, patch) {
+      const issue = issues.get(issueId);
+      if (!issue) throw new Error(`updateIssue: issue ${issueId} not found`);
+      const updated = { ...issue, ...patch };
+      issues.set(issueId, updated);
+      return updated;
+    },
+    async listProjects() {
+      return [...projects.values()];
+    },
+    async listAuditLog(limit) {
+      return [...auditLog].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)).slice(0, limit);
+    },
     issues,
     priorityScores,
     auditLog,

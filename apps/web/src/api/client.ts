@@ -1,7 +1,7 @@
 // Thin fetch wrapper over the real api-gateway (docs/API_SPEC.md). No
 // dashboard-side jurisdiction filtering here — the officer's JWT already
 // scopes every response server-side (senior-frontend skill).
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/v1";
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/v1";
 
 export interface ApiError {
   error: { code: string; message: string };

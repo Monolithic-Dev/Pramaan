@@ -202,7 +202,7 @@ async function simulatePriority(
   return results;
 }
 
-async function generateBrief(deps: Deps, issueId: string) {
+export async function generateBrief(deps: Deps, issueId: string) {
   const issue = await deps.store.getIssue(issueId);
   if (!issue) return noData(`issue ${issueId} not found`, []);
   const score = await deps.store.getCanonicalScore(issueId);
@@ -211,11 +211,14 @@ async function generateBrief(deps: Deps, issueId: string) {
   // Template-generated, not Vector Search RAG (cut-line applied,
   // docs/phases/phase-6-agent-rag.md "Cut-line") — every number below is
   // copied verbatim from real fetched data, so it is grounded by construction.
+  // Numbers are printed in their shortest form (0.7, not 0.700) so the substring-based
+  // groundedness verifier can find them in the source records.
+  const fmt = (n: number, digits: number) => String(Number(n.toFixed(digits)));
   const brief =
     `${issue.category}/${issue.subcategory} issue with ${issue.report_count} reports ` +
     `from ${issue.distinct_reporter_count} distinct reporters. Composite priority score: ` +
-    `${score.composite_score.toFixed(3)} (demand ${score.demand_score.toFixed(2)}, ` +
-    `vulnerability ${score.vulnerability_score.toFixed(2)}, gap ${score.gap_score.toFixed(2)}).` +
+    `${fmt(score.composite_score, 3)} (demand ${fmt(score.demand_score, 2)}, ` +
+    `vulnerability ${fmt(score.vulnerability_score, 2)}, gap ${fmt(score.gap_score, 2)}).` +
     (score.data_fallbacks.length > 0
       ? ` Note: ${score.data_fallbacks.map((f) => f.reason).join("; ")}.`
       : "");

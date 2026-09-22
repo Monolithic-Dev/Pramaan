@@ -33,8 +33,21 @@ export interface AvailableData {
 // 5). Same seam pattern as worker-ai-pipeline's lib/bigquery.ts — kept
 // separate per service rather than shared, since each service deploys
 // independently (docs/TECH_STACK_AND_REPO.md §2.4).
+export interface RegionInfo {
+  regionId: string;
+  name: string;
+  level: string;
+  parentRegionId: string | null;
+  countryCode: string;
+  population: number;
+  lat: number;
+  lng: number;
+}
+
 export interface BigQueryAgentClient {
   getAncestryChain(regionId: string): Promise<AncestryStep[]>;
+  /** Regions filtered by level (e.g. "state") and/or parent; used by pickers, filters and the map. */
+  listRegions(filter?: { level?: string; parentId?: string; countryCode?: string }): Promise<RegionInfo[]>;
   getInvestmentRecords(regionId: string, category: string): Promise<InvestmentSummary[]>;
   getAvailableData(regionId: string): Promise<AvailableData>;
 }
@@ -65,6 +78,16 @@ export function createBigQueryAgentClient(): BigQueryAgentClient {
         current = row.parent_region_id;
       }
       return chain;
+    },
+
+    async listRegions(filter = {}) {
+      const rows = await query<{
+        region_id: string; name: string; level: string; parent_region_id: string | null;
+        country_code: string; population: number; centroid_lat: number; centroid_lng: number;
+      }>(`SELECT region_id, name, level, parent_region_id, country_code, population, centroid_lat, centroid_lng FROM \`${REFERENCE_DATASET}.admin_regions\``, {});
+      return rows
+        .filter((r) => (!filter.level || r.level === filter.level) && (!filter.parentId || r.parent_region_id === filter.parentId) && (!filter.countryCode || r.country_code === filter.countryCode))
+        .map((r) => ({ regionId: r.region_id, name: r.name, level: r.level, parentRegionId: r.parent_region_id, countryCode: r.country_code, population: r.population, lat: r.centroid_lat, lng: r.centroid_lng }));
     },
 
     async getInvestmentRecords(regionId, category) {
