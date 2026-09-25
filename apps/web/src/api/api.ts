@@ -1,4 +1,4 @@
-import { http, httpBlobUrl } from "./http.js";
+import { http, httpBlob, httpBlobUrl } from "./http.js";
 import type { PriorityScore, Project, ImpactRecord } from "@jansetu/shared-types";
 
 // ---- Types (mirror the gateway's console routes) -------------------------------------------
@@ -49,6 +49,16 @@ export interface IssueSummary {
   fraud_flags: string[];
   is_synthetic: boolean;
   has_project?: boolean;
+  support_count: number;
+  assigned_to_uid: string | null;
+  assigned_to_label: string | null;
+  sla: Sla;
+}
+
+export interface Sla {
+  due_at: string;
+  state: "met" | "ok" | "due_soon" | "overdue";
+  days_left: number | null;
 }
 
 export interface IssueDetail {
@@ -62,6 +72,7 @@ export interface IssueDetail {
     submitted_at: string;
     language: string | null;
     text: string | null;
+    translated_text?: string | null;
     photo: string | null;
     has_audio: boolean;
     location_confidence: string;
@@ -195,6 +206,211 @@ export interface TransparencyStats {
   avg_days_to_resolved?: number | null;
 }
 
+export interface Scheme {
+  id: string;
+  name: string;
+  short: string;
+  ministry: string;
+  categories: string[];
+  settlement: "urban" | "rural" | "both";
+  centre_share: number;
+  summary: string;
+  keywords: string[];
+  priority: string;
+  requires_mp_recommendation?: boolean;
+  guideline_note: string;
+}
+
+export interface SchemeMatch {
+  scheme: Scheme;
+  fit: number;
+  reasons: string[];
+  funding: { budget_inr: number; centre_inr: number; state_inr: number };
+}
+
+export interface Alignment {
+  region: string;
+  open_issues: number;
+  total_cost_inr: number;
+  centre_inr: number;
+  state_inr: number;
+  centre_share: number;
+  by_scheme: { scheme_id: string; short: string; name: string; priority: string; issues: number; cost_inr: number; centre_inr: number }[];
+}
+
+export interface PlanItem {
+  issue_id: string;
+  cost_inr: number;
+  value: number;
+  composite_score: number;
+  vulnerability_score: number;
+  beneficiaries: number;
+  category: string;
+  region_id: string | null;
+  scheme_id: string | null;
+  description?: string;
+  subcategory?: string;
+  region_name?: string | null;
+  report_count?: number;
+}
+
+export interface PlanOutcome {
+  items: PlanItem[];
+  cost_inr: number;
+  beneficiaries: number;
+  vulnerable_share: number;
+  avg_score: number;
+}
+
+export interface OptimizeResult {
+  region: string;
+  params: { budget_inr: number; min_vulnerable_share: number };
+  candidates: number;
+  candidates_cost_inr: number;
+  plan: PlanOutcome;
+  remaining_inr: number;
+  equity_floor_met: boolean;
+  baseline: PlanOutcome;
+  left_out: PlanItem[];
+}
+
+export interface SavedPlan {
+  plan_id: string;
+  name: string;
+  region_id: string;
+  created_by: string;
+  created_at: string;
+  status: "draft" | "approved";
+  approved_at: string | null;
+  params: { budget_inr: number; min_vulnerable_share: number };
+  items: PlanItem[];
+  totals: { cost_inr: number; beneficiaries: number; vulnerable_share: number; issues: number };
+}
+
+export interface WeightRow {
+  issue_id: string;
+  category: string;
+  region_id: string | null;
+  region_name: string | null;
+  current: number;
+  simulated: number;
+  rank: number;
+  previous_rank: number | null;
+  moved: number;
+}
+
+export interface ImpactLedger {
+  region?: string;
+  region_name?: string;
+  status?: "ok" | "insufficient_data";
+  min_required?: number;
+  sample_data?: boolean;
+  issues: number;
+  resolved: number;
+  resolution_rate: number;
+  avg_days_to_resolve: number | null;
+  people_benefited: number;
+  funds_committed_inr: number;
+  funds_completed_inr: number;
+  cost_per_beneficiary_inr: number | null;
+  citizen_confirmations: number;
+  confirmation_rate: number | null;
+  by_category: { category: string; resolved: number; avg_days: number | null; efficacy: number | null }[];
+  monthly_resolved: { month: string; count: number }[];
+}
+
+export interface BriefingFacts {
+  region: { id: string; name: string };
+  generated_at: string;
+  totals: Overview["totals"];
+  last_7_days: { new_issues: number; actions_taken: number };
+  top_priorities: { issue_id: string; category: string; region_name: string | null; score: number | null; reports: number; status: string; has_project: boolean }[];
+  overdue: { count: number; oldest_days: number | null };
+  forecasts: { region_name: string; category: string; risk_level: string; month: string }[];
+  funding: { needed: string; central_drawable: string; central_share_pct: number };
+  recommended_actions: string[];
+}
+
+export interface Notification {
+  notification_id: string;
+  kind: string;
+  params: Record<string, string | number>;
+  link: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface ActivityEvent {
+  kind: "report" | "action";
+  at: string;
+  issue_id: string;
+  category: string;
+  region_name: string | null;
+  detail: string | null;
+  action: string | null;
+}
+
+export interface Comment {
+  comment_id: string;
+  author_label: string;
+  author_role: string;
+  body: string;
+  created_at: string;
+}
+
+export interface DirectoryOfficer {
+  uid: string;
+  email: string;
+  role: string;
+  region_id: string;
+}
+
+export type Grade = "A" | "B" | "C" | "D" | "E";
+export type Scorecard =
+  | { region_id: string; name: string; status: "insufficient_data"; min_required: number }
+  | {
+      region_id: string;
+      name: string;
+      state_id: string;
+      status: "ok";
+      issues: number;
+      resolved: number;
+      resolution_rate: number;
+      avg_days_to_resolve: number | null;
+      open_backlog: number;
+      overdue_share: number;
+      grade: Grade;
+      points: number;
+    };
+
+export interface PublicIssue {
+  issue_id: string;
+  category: string;
+  status: string;
+  priority: Priority;
+  report_count: number;
+  support_count: number;
+  region_name: string | null;
+  lat: number;
+  lng: number;
+  first_reported_at: string;
+  is_synthetic: boolean;
+}
+
+export interface Tracking {
+  tracking_code: string;
+  submitted_at: string;
+  channel: string;
+  processing: string;
+  stage: "received" | "understood" | "verified" | "funded" | "fixed";
+  stages: string[];
+  category: string | null;
+  issue_status: string | null;
+  priority: Priority;
+  other_reporters: number;
+  project_stage: string | null;
+}
+
 export interface IssueQuery {
   region?: string;
   category?: string;
@@ -202,6 +418,8 @@ export interface IssueQuery {
   q?: string;
   sort?: "score" | "reports" | "recent";
   flagged?: boolean;
+  assigned?: "me" | "unassigned";
+  overdue?: boolean;
 }
 
 const qs = (params: Record<string, string | number | boolean | undefined>) => {
@@ -230,7 +448,7 @@ export const api = {
   overview: (region?: string) => http<Overview>(`/analytics/overview${qs({ region })}`),
   issues: (q: IssueQuery = {}) =>
     http<{ total: number; region: string; issues: IssueSummary[] }>(
-      `/issues${qs({ region: q.region, category: q.category, status: q.status, q: q.q, sort: q.sort, flagged: q.flagged, limit: 500 })}`,
+      `/issues${qs({ region: q.region, category: q.category, status: q.status, q: q.q, sort: q.sort, flagged: q.flagged, assigned: q.assigned, overdue: q.overdue ? "true" : undefined, limit: 500 })}`,
     ),
   issue: (id: string) => http<IssueDetail>(`/issues/${id}`),
   setIssueStatus: (id: string, status: string, justification: string) =>
@@ -249,6 +467,34 @@ export const api = {
   regions: () => http<{ regions: RegionInfo[] }>("/regions"),
   photoUrl: (mediaUrl: string) => httpBlobUrl(`/media/${encodeURIComponent(mediaUrl)}`),
 
+  // workflow
+  directory: () => http<{ officers: DirectoryOfficer[] }>("/officers/directory"),
+  assign: (id: string, officer_uid: string | null, due_in_days?: number) =>
+    http<{ assigned_to_uid: string | null; assigned_to_label: string | null }>(`/issues/${id}/assign`, { method: "POST", json: { officer_uid, due_in_days } }),
+  comments: (id: string) => http<{ comments: Comment[] }>(`/issues/${id}/comments`),
+  addComment: (id: string, body: string) => http<Comment>(`/issues/${id}/comments`, { method: "POST", json: { body } }),
+  notifications: () => http<{ notifications: Notification[]; unread: number }>("/notifications"),
+  markRead: (ids?: string[]) => http<{ marked: number }>("/notifications/read", { method: "POST", json: { ids } }),
+  activity: (region?: string) => http<{ events: ActivityEvent[] }>(`/activity${qs({ region })}`),
+
+  // planning and funding
+  schemes: () => http<{ schemes: Scheme[] }>("/schemes"),
+  issueSchemes: (id: string, settlement?: "urban" | "rural") =>
+    http<{ settlement: string; settlement_basis: string; budget_inr: number | null; matches: SchemeMatch[] }>(`/issues/${id}/schemes${qs({ settlement })}`),
+  alignment: (region?: string) => http<Alignment>(`/schemes/alignment${qs({ region })}`),
+  optimize: (body: { region?: string; budget_inr: number; min_vulnerable_share: number }) => http<OptimizeResult>("/planner/optimize", { method: "POST", json: body }),
+  savePlan: (body: { region?: string; budget_inr: number; min_vulnerable_share: number; name: string }) => http<SavedPlan>("/planner/plans", { method: "POST", json: body }),
+  plans: () => http<{ plans: SavedPlan[] }>("/planner/plans"),
+  approvePlan: (id: string) => http<{ plan: SavedPlan; funded: number; skipped: { issue_id: string; reason: string }[] }>(`/planner/plans/${id}/approve`, { method: "POST", json: {} }),
+  simulateWeights: (body: { region?: string; demand: number; vulnerability: number; gap: number }) =>
+    http<{ weights: { demand: number; vulnerability: number; gap: number }; ranking: WeightRow[] }>("/planner/simulate-weights", { method: "POST", json: body }),
+
+  // reports
+  briefing: (region?: string, lang?: string) =>
+    http<{ facts: BriefingFacts; narrative: { text: string; source: "gemini" | "template" }; language: string }>(`/reports/briefing${qs({ region, lang })}`),
+  impact: (region?: string) => http<ImpactLedger>(`/analytics/impact${qs({ region })}`),
+  exportIssuesCsv: (region?: string) => httpBlob(`/export/issues.csv${qs({ region })}`),
+
   // admin
   officers: () => http<{ officers: OfficerAccount[] }>("/admin/officers"),
   createOfficer: (body: { email: string; password: string; role: string; region_id: string }) =>
@@ -263,6 +509,13 @@ export const api = {
   publicOverview: () => http<PublicOverview>("/public/overview", { auth: false }),
   publicRegions: (params: { level?: string; parent?: string; country?: string } = {}) =>
     http<{ regions: RegionInfo[] }>(`/public/regions${qs(params)}`, { auth: false }),
+  publicScorecards: (group: "district" | "state" = "district", country?: string) =>
+    http<{ group: string; min_public_count: number; formula: { resolution: number; responsiveness: number; speed: number; speed_days_zero_score: number }; sample_data: boolean; scorecards: Scorecard[] }>(`/public/scorecards${qs({ group, country })}`, { auth: false }),
+  publicImpact: () => http<ImpactLedger>("/public/impact", { auth: false }),
+  publicIssues: (params: { country?: string; category?: string } = {}) => http<{ issues: PublicIssue[] }>(`/public/issues${qs(params)}`, { auth: false }),
+  publicSchemes: () => http<{ schemes: Scheme[] }>("/public/schemes", { auth: false }),
+  track: (code: string) => http<Tracking>(`/public/track/${encodeURIComponent(code)}`, { auth: false }),
+  support: (issueId: string) => http<{ support_count: number; already_supported: boolean }>(`/issues/${issueId}/support`, { method: "POST", json: {} }),
   transparency: (state: string) => http<TransparencyStats>(`/public/transparency${qs({ state })}`, { auth: false }),
 };
 
@@ -270,7 +523,7 @@ import type { CreateSubmissionInput } from "./client.js";
 
 /** Submit a report with the signed-in citizen's token (if any) so it lands in their account. */
 export function submitReportAuthed(input: CreateSubmissionInput, idempotencyKey: string) {
-  return http<{ submission_id: string; status: string }>("/submissions", {
+  return http<{ submission_id: string; status: string; tracking_code?: string | null }>("/submissions", {
     method: "POST",
     json: input,
     headers: { "idempotency-key": idempotencyKey },

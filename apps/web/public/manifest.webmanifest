@@ -1,0 +1,21 @@
+{
+  "name": "JanSetu: citizen voice to public investment",
+  "short_name": "JanSetu",
+  "description": "Report a local problem by voice, text or photo in your language, and follow it to a verified fix.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1a3c",
+  "theme_color": "#1d3f97",
+  "lang": "en",
+  "categories": ["government", "utilities", "social"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Report an issue", "url": "/report", "icons": [{ "src": "/icon.svg", "sizes": "any" }] },
+    { "name": "Track a report", "url": "/track", "icons": [{ "src": "/icon.svg", "sizes": "any" }] }
+  ]
+}

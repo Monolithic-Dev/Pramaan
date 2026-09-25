@@ -6,6 +6,8 @@ import { useAuth } from "../../auth/AuthContext.js";
 import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { CATEGORY_META, Icon } from "../../ui/Icon.js";
 import { Meter, priorityColor } from "../../ui/charts.js";
+import { SlaChip } from "../../ui/extras.js";
+import { AssignCard, NotesCard, SchemesCard } from "./issueParts.js";
 import { Alert, Badge, Button, Card, CardTitle, EmptyState, Field, Modal, PriorityBadge, SampleDataBadge, Select, Skeleton, StatusBadge, Textarea, cx, timeAgo, useAsync, useToast } from "../../ui/kit.js";
 
 const NEXT_STATUSES = ["verified", "disputed", "prioritized", "funded", "in_progress"];
@@ -127,6 +129,8 @@ export default function IssueDetail() {
               <StatusBadge status={issue.status} label={t(`status.${issue.status}`)} />
               <PriorityBadge priority={issue.priority} label={t(`status.priority.${issue.priority}`)} />
               {issue.emergency_override && <Badge tone="red"><Icon name="bolt" size={11} />{t("console.flag.emergency")}</Badge>}
+              <SlaChip sla={issue.sla} />
+              {issue.support_count > 0 && <Badge tone="teal"><Icon name="thumbsUp" size={11} />{t("issue.supporters", { n: issue.support_count })}</Badge>}
               {issue.is_synthetic && <SampleDataBadge label={t("badge.sample")} />}
               {issue.fraud_flags.map((f) => <Badge key={f} tone="amber">{t(`flag.${f}`)}</Badge>)}
             </div>
@@ -168,6 +172,12 @@ export default function IssueDetail() {
                       <span>{timeAgo(r.submitted_at)}</span>
                     </div>
                     <p className="mt-1 text-sm text-slate-800">{r.text ?? <span className="text-slate-400">{t("my.noText")}</span>}</p>
+                    {r.translated_text && (
+                      <p className="mt-1 flex gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">
+                        <Icon name="language" size={13} className="mt-0.5 shrink-0 text-brand-600" />
+                        <span><b className="text-slate-700">{t("issue.translation")}:</b> {r.translated_text}</span>
+                      </p>
+                    )}
                     {r.photo && <ReportPhoto mediaUrl={r.photo} />}
                   </li>
                 ))}
@@ -212,6 +222,8 @@ export default function IssueDetail() {
             )
           )}
 
+          <NotesCard issueId={issue.issue_id} />
+
           <Card>
             <CardTitle title={t("issue.history")} icon="clock" />
             {history.length === 0 ? (
@@ -239,9 +251,11 @@ export default function IssueDetail() {
               <p className="p-3 text-xs text-slate-500">{issue.lat.toFixed(5)}, {issue.lng.toFixed(5)}</p>
             </Card>
           )}
+          <AssignCard issue={issue} onChanged={refetch} />
           {score ? <ScorePanel score={score} /> : (
             <Card><CardTitle title={t("officer.scoreBreakdownTitle")} icon="scale" /><Alert tone="info">{t("issue.notScored")}</Alert></Card>
           )}
+          <SchemesCard issueId={issue.issue_id} />
         </div>
       </div>
 

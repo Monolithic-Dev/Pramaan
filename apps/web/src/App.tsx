@@ -26,6 +26,18 @@ const Copilot = lazy(() => import("./pages/console/Copilot.js"));
 const Team = lazy(() => import("./pages/console/Team.js"));
 const States = lazy(() => import("./pages/console/States.js"));
 const Audit = lazy(() => import("./pages/console/Audit.js"));
+const Queue = lazy(() => import("./pages/console/Queue.js"));
+const Planner = lazy(() => import("./pages/console/Planner.js"));
+const Schemes = lazy(() => import("./pages/console/Schemes.js"));
+const Impact = lazy(() => import("./pages/console/Impact.js"));
+const Briefing = lazy(() => import("./pages/console/Briefing.js"));
+const Track = lazy(() => import("./pages/Track.js"));
+const Community = lazy(() => import("./pages/Community.js"));
+const Accountability = lazy(() => import("./pages/Accountability.js"));
+const OpenData = lazy(() => import("./pages/OpenData.js"));
+const Channels = lazy(() => import("./pages/Channels.js"));
+const About = lazy(() => import("./pages/About.js"));
+const Notifications = lazy(() => import("./pages/citizen/Notifications.js"));
 
 function NotFound() {
   const { t } = useLanguage();
@@ -58,6 +70,13 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/report" element={<ReportWizard />} />
           <Route path="/transparency" element={<Transparency />} />
+          <Route path="/track" element={<Track />} />
+          <Route path="/track/:code" element={<Track />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/accountability" element={<Accountability />} />
+          <Route path="/open-data" element={<OpenData />} />
+          <Route path="/channels" element={<Channels />} />
+          <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -71,6 +90,7 @@ function App() {
         >
           <Route index element={<MyReports />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path=":submissionId" element={<MyReportDetail />} />
         </Route>
 
@@ -83,7 +103,12 @@ function App() {
           }
         >
           <Route index element={<Overview />} />
+          <Route path="queue" element={<Queue />} />
           <Route path="priorities" element={<Priorities />} />
+          <Route path="planner" element={<RequireAuth kind="officer" permission="manage_projects"><Planner /></RequireAuth>} />
+          <Route path="schemes" element={<Schemes />} />
+          <Route path="impact" element={<Impact />} />
+          <Route path="briefing" element={<Briefing />} />
           <Route path="issues/:issueId" element={<IssueDetail />} />
           <Route path="map" element={<MapPage />} />
           <Route path="projects" element={<Projects />} />

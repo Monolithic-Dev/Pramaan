@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api/api.js";
+import { compact, fullNumber } from "../ui/format.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
 import { Icon } from "../ui/Icon.js";
 import { CATEGORY_COLOR } from "../ui/Icon.js";
@@ -17,8 +19,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function Transparency() {
-  const { t } = useLanguage();
-  const regions = useAsync(() => api.publicRegions(), []);
+  const { t, countryCode } = useLanguage();
+  const regions = useAsync(() => api.publicRegions({ country: countryCode }), [countryCode]);
+  const impact = useAsync(() => api.publicImpact().catch(() => null), []);
   const states = (regions.data?.regions ?? []).filter((r) => r.level === "state" || r.level === "estado");
   const [stateId, setStateId] = useState("");
   useEffect(() => {
@@ -78,6 +81,22 @@ export default function Transparency() {
         </>
       ) : (
         <Card><p className="py-8 text-center text-slate-600">{t("transparency.insufficient", { min: overview.data?.min_required ?? 5 })}</p></Card>
+      )}
+
+      {/* Impact ledger: what changed for people, not just what was reported */}
+      {impact.data && impact.data.status === "ok" && (
+        <>
+          <div className="mb-4 mt-12 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-900">{t("transparency.impact")}</h2>
+            <Link to="/accountability" className="text-sm font-semibold text-brand-700 hover:underline">{t("transparency.seeScorecards")}</Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat label={t("impact.people")} value={compact(impact.data.people_benefited)} hint={t("impact.people.hint", { n: impact.data.resolved })} icon="users" tone="green" />
+            <Stat label={t("impact.days")} value={impact.data.avg_days_to_resolve === null ? "-" : String(impact.data.avg_days_to_resolve)} hint={t("impact.days.hint")} icon="clock" />
+            <Stat label={t("impact.costPer")} value={impact.data.cost_per_beneficiary_inr === null ? "-" : `₹${fullNumber(impact.data.cost_per_beneficiary_inr)}`} hint={t("impact.costPer.hint")} icon="rupee" tone="amber" />
+            <Stat label={t("impact.confirmRate")} value={impact.data.confirmation_rate === null ? "-" : `${impact.data.confirmation_rate}%`} hint={t("impact.confirmRate.hint", { n: impact.data.citizen_confirmations })} icon="thumbsUp" tone="green" />
+          </div>
+        </>
       )}
 
       {/* State lens */}

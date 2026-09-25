@@ -27,6 +27,15 @@ function AccountButton() {
   );
 }
 
+const NAV = [
+  { to: "/report", key: "nav.report" },
+  { to: "/track", key: "nav.track" },
+  { to: "/community", key: "nav.community" },
+  { to: "/accountability", key: "nav.accountability" },
+  { to: "/transparency", key: "nav.transparency" },
+  { to: "/about", key: "nav.howItWorks" },
+];
+
 export function PublicLayout() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -40,9 +49,9 @@ export function PublicLayout() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Brand />
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-            <NavLink to="/report" className={link}>{t("nav.report")}</NavLink>
-            <NavLink to="/transparency" className={link}>{t("nav.transparency")}</NavLink>
-            <a href="/#how" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">{t("nav.howItWorks")}</a>
+            {NAV.map((n) => (
+              <NavLink key={n.to} to={n.to} className={link}>{t(n.key)}</NavLink>
+            ))}
           </nav>
           <div className="hidden items-center gap-2 md:flex">
             <LanguageMenu />
@@ -55,9 +64,9 @@ export function PublicLayout() {
         {open && (
           <div className="border-t border-slate-100 bg-white px-4 py-3 md:hidden" onClick={() => setOpen(false)}>
             <nav className="flex flex-col gap-1">
-              <NavLink to="/report" className={link}>{t("nav.report")}</NavLink>
-              <NavLink to="/transparency" className={link}>{t("nav.transparency")}</NavLink>
-              <a href="/#how" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600">{t("nav.howItWorks")}</a>
+              {NAV.map((n) => (
+                <NavLink key={n.to} to={n.to} className={link}>{t(n.key)}</NavLink>
+              ))}
             </nav>
             <div className="mt-3 flex items-center justify-between">
               <LanguageMenu />
@@ -81,7 +90,10 @@ export function PublicLayout() {
             <h4 className="mb-3 text-sm font-semibold text-slate-900">{t("footer.platform")}</h4>
             <ul className="flex flex-col gap-2 text-sm text-slate-600">
               <li><Link className="hover:text-brand-700" to="/report">{t("nav.report")}</Link></li>
+              <li><Link className="hover:text-brand-700" to="/track">{t("nav.track")}</Link></li>
               <li><Link className="hover:text-brand-700" to="/transparency">{t("nav.transparency")}</Link></li>
+              <li><Link className="hover:text-brand-700" to="/open-data">{t("nav.openData")}</Link></li>
+              <li><Link className="hover:text-brand-700" to="/channels">{t("nav.channels")}</Link></li>
               <li><Link className="hover:text-brand-700" to="/login">{t("nav.signIn")}</Link></li>
             </ul>
           </div>

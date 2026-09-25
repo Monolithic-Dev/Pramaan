@@ -3,12 +3,13 @@ import { useAuth } from "../../auth/AuthContext.js";
 import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
 import { Button, cx } from "../../ui/kit.js";
+import { NotificationBell } from "../NotificationBell.js";
 import { Brand, LanguageMenu } from "./Brand.js";
 
 const ITEMS: { to: string; key: string; icon: IconName; end?: boolean }[] = [
   { to: "/my", key: "citizen.nav.reports", icon: "list", end: true },
   { to: "/report", key: "nav.report", icon: "plus" },
-  { to: "/transparency", key: "nav.transparency", icon: "eye" },
+  { to: "/community", key: "nav.community", icon: "pin" },
   { to: "/my/profile", key: "citizen.nav.profile", icon: "settings" },
 ];
 
@@ -16,13 +17,13 @@ export function CitizenLayout() {
   const { t } = useLanguage();
   const { signOut, email } = useAuth();
   const link = ({ isActive }: { isActive: boolean }) =>
-    cx("flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition", isActive ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-100");
+    cx("flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition", isActive ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-100");
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
       <div className="tricolour" />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <Brand to="/my" />
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
             {ITEMS.map((i) => (
@@ -33,9 +34,10 @@ export function CitizenLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-1">
+            <NotificationBell allHref="/my/notifications" />
             <LanguageMenu />
-            <span className="hidden max-w-[11rem] truncate text-xs text-slate-500 lg:inline">{email}</span>
-            <Button variant="ghost" size="sm" icon="logout" onClick={signOut} aria-label={t("nav.signOut")}>
+            <span className="hidden max-w-[11rem] truncate text-xs text-slate-500 2xl:inline">{email}</span>
+            <Button variant="ghost" size="sm" icon="logout" onClick={signOut} aria-label={t("nav.signOut")} className="whitespace-nowrap">
               <span className="hidden sm:inline">{t("nav.signOut")}</span>
             </Button>
           </div>
