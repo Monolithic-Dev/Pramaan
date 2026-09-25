@@ -4,6 +4,12 @@ import { getFirestore } from "firebase-admin/firestore";
 // Credentials, in order: FIREBASE_SERVICE_ACCOUNT_JSON (raw or base64 JSON, works on
 // any host with no GCP billing), then Application Default Credentials (Cloud Run / gcloud login).
 function loadCredential() {
+  // Local development against the Firebase emulators needs no real credential. A stale
+  // GOOGLE_APPLICATION_CREDENTIALS path would make applicationDefault() throw, so clear it.
+  if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    return applicationDefault();
+  }
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!raw) return applicationDefault();
   const json = raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");

@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { COUNTRY_PROFILES } from "@jansetu/shared-types";
 import type { Deps } from "./deps.js";
 import { processSubmission } from "./services/processSubmission.js";
 import { runScoringBatch } from "./services/scoring.js";
@@ -72,9 +73,17 @@ export function buildApp(deps: Deps) {
   // Triggered by Cloud Scheduler every 15 minutes in production
   // (docs/phases/phase-5-scoring.md §5.4). Also callable directly for an
   // immediate rescore (e.g. after an emergency-override flag flips).
+  // Percentiles are per country (a Brazilian issue is never normalised against Indian demand), so the
+  // batch runs once for every configured country unless ?country= narrows it.
   app.post("/jobs/score", async (request, reply) => {
-    const summary = await runScoringBatch(deps, request.log);
-    return reply.code(200).send(summary);
+    const only = (request.query as { country?: string }).country;
+    const countries = only ? [only] : Object.keys(COUNTRY_PROFILES);
+    const byCountry: Record<string, Awaited<ReturnType<typeof runScoringBatch>>> = {};
+    for (const country of countries) byCountry[country] = await runScoringBatch(deps, request.log, country);
+    return reply.code(200).send({
+      issuesScored: Object.values(byCountry).reduce((n, r) => n + r.issuesScored, 0),
+      by_country: byCountry,
+    });
   });
 
   // Pub/Sub-less deployments: the gateway pings /pubsub-push best-effort, and this sweep

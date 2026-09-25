@@ -10,7 +10,11 @@ import { registerMediaRoutes } from "./routes/media.js";
 import { registerPrivacyRoutes } from "./routes/privacy.js";
 import { registerProjectRoutes } from "./routes/projects.js";
 import { registerSubmissionRoutes } from "./routes/submissions.js";
+import { registerPlannerRoutes } from "./routes/planner.js";
+import { registerPublicRoutes } from "./routes/public.js";
+import { registerReportRoutes } from "./routes/reports.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
+import { registerWorkflowRoutes } from "./routes/workflow.js";
 
 export function buildApp(deps: Deps) {
   // Behind a reverse proxy (Render, Cloud Run) request.ip must come from X-Forwarded-For or
@@ -50,6 +54,10 @@ export function buildApp(deps: Deps) {
       registerInsightRoutes(v1, deps);
       registerMediaRoutes(v1, deps);
       registerConsoleRoutes(v1, deps);
+      registerWorkflowRoutes(v1, deps);
+      registerPlannerRoutes(v1, deps);
+      registerReportRoutes(v1, deps);
+      registerPublicRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

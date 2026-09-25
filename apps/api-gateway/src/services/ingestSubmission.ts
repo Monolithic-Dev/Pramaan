@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from "fastify";
 import type { ConsentRecord, Submission, SubmissionChannel } from "@jansetu/shared-types";
 import { isWithinCountryBoundingBox, scrubPii } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
+import { newTrackingCode } from "../lib/trackingCode.js";
 
 export interface IngestSubmissionInput {
   channel: SubmissionChannel;
@@ -34,6 +35,8 @@ function hashIp(ip: string): string {
 export interface IngestSubmissionResult {
   submission_id: string;
   status: Submission["status"];
+  /** Lets a citizen with no account follow the report (GET /public/track/:code). */
+  tracking_code?: string | null;
 }
 
 function hashRequestBody(input: IngestSubmissionInput): string {
@@ -63,7 +66,11 @@ export async function ingestSubmission(
     }
     const original = await deps.store.getSubmission(existing.submissionId);
     return {
-      result: { submission_id: existing.submissionId, status: original?.status ?? "queued" },
+      result: {
+        submission_id: existing.submissionId,
+        status: original?.status ?? "queued",
+        tracking_code: original?.tracking_code ?? null,
+      },
     };
   }
 
@@ -104,6 +111,7 @@ export async function ingestSubmission(
     status: "queued",
     processing_error: null,
     submitter_ip_hash: input.submitterIp ? hashIp(input.submitterIp) : null,
+    tracking_code: newTrackingCode(),
   };
 
   const consent: ConsentRecord = {
@@ -133,5 +141,5 @@ export async function ingestSubmission(
     await deps.store.putSubmission(submission);
   }
 
-  return { result: { submission_id: submissionId, status: submission.status } };
+  return { result: { submission_id: submissionId, status: submission.status, tracking_code: submission.tracking_code } };
 }
