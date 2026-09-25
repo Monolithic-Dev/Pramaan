@@ -25,7 +25,9 @@ export function verifyGrounded(text: string, toolResults: unknown[]): Groundedne
 // for the short, templated/agent-generated prose this guards.
 function splitSentences(text: string): string[] {
   return text
-    .split(/(?<=[^\d\s])[.!?]+\s+(?=[A-Z(])/)
+    // The punctuation stays with its sentence (dropping it ran sentences together). A decimal like
+    // "0.63" is never split: nothing whitespace follows its dot.
+    .split(/(?<=[.!?])\s+(?=[A-Z(])/)
     .map((s) => s.trim())
     .filter(Boolean);
 }

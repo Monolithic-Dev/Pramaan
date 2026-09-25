@@ -200,6 +200,7 @@ async function main() {
     const lng = region.centroid_lng + between(-0.04, 0.04);
     const lastMs = Math.min(NOW - 3_600_000, firstMs + Math.min(ageDays, between(2, 40)) * DAY);
     const id = `dm_iss_${String(issueN).padStart(4, "0")}`;
+    const area = pick(LOCALITIES);
 
     const subs: Submission[] = [];
     for (let k = 0; k < reports; k++) {
@@ -209,7 +210,7 @@ async function main() {
       const english = template.reports[idx];
       const text = lang === "en" ? english : BANK[template.id]?.[lang]?.[idx] ?? english;
       const at = k === 0 ? firstMs : firstMs + (lastMs - firstMs) * rand();
-      const locality = pick(LOCALITIES);
+      const locality = area;
       subs.push({
         submission_id: `dm_sub_${String(subN).padStart(5, "0")}`,
         idempotency_key: `dm_idem_${subN}`,
@@ -241,7 +242,7 @@ async function main() {
 
     const issue: Issue = {
       issue_id: id, country_code: region.country_code, state_id: state, category: template.category, subcategory: template.subcategory,
-      canonical_description: template.canonical, embedding: null, embedding_model: null, geo_cluster_id: `dm_cl_${issueN}`,
+      canonical_description: `${area}: ${template.canonical}`, embedding: null, embedding_model: null, geo_cluster_id: `dm_cl_${issueN}`,
       admin_region_id: region.region_id, geohash: geohashEncode(lat, lng, 6), centroid_lat: lat, centroid_lng: lng, is_synthetic: true,
       support_count: 0, submission_ids: subs.map((s) => s.submission_id), report_count: reports, distinct_reporter_count: distinct,
       first_reported_at: iso(firstMs), last_reported_at: subs.length ? subs[subs.length - 1].submitted_at : iso(firstMs),
@@ -348,9 +349,14 @@ async function main() {
   };
 
   const STAGES = ["open", "verified", "prioritized", "funded", "in_progress", "resolved"] as const;
-  const statusFor = (ageDays: number, scored: boolean): (typeof STAGES)[number] | "disputed" => {
-    if (!scored) return weighted(["open", "verified", "disputed"] as const, [62, 32, 6]);
-    const w = ageDays > 200 ? [8, 10, 6, 10, 10, 50, 3] : ageDays > 60 ? [15, 18, 12, 14, 14, 24, 2] : [45, 30, 10, 6, 3, 3, 3];
+  // Some districts are simply better run than others: perf (0.5 fast .. 1.6 very fast) scales how quickly issues
+  // move and how many get resolved, which is what makes the public scorecards spread from A to E.
+  const perfByRegion = new Map(leaves.map((r) => [r.region_id, 0.5 + rand() * 1.1]));
+  const statusFor = (ageDays: number, scored: boolean, perf: number): (typeof STAGES)[number] | "disputed" => {
+    if (!scored) return weighted(["open", "verified", "disputed"] as const, [Math.max(20, 75 - perf * 25), 25 + perf * 10, 4]);
+    // [open, verified, prioritized, funded, in_progress, resolved, disputed]
+    const base = ageDays > 200 ? [2, 8, 6, 10, 10, 60, 3] : ageDays > 60 ? [7, 14, 12, 14, 14, 36, 3] : [40, 30, 11, 6, 3, 4, 3];
+    const w = base.map((v, i) => (i === 0 ? v * (1.7 - perf) : i === 5 ? v * (0.3 + perf * 1.1) : v));
     return weighted(["open", "verified", "prioritized", "funded", "in_progress", "resolved", "disputed"] as const, w);
   };
 
@@ -371,11 +377,14 @@ async function main() {
     if (citizenIdx >= 0) target = scored || citizenOrder[citizenIdx] === "open" ? citizenOrder[citizenIdx] : "verified";
     else if (issue.fraud_flags.length) target = "open";
     else if (issue.emergency_override) target = weighted(["open", "verified", "prioritized", "in_progress"] as const, [25, 30, 25, 20]);
-    else target = statusFor(ageDays, scored);
+    else target = statusFor(ageDays, scored, perfByRegion.get(d.region.region_id) ?? 1);
     if (!scored && STAGES.indexOf(target as never) > 1) target = "verified";
 
     // Timeline: each stage takes a while; if it would run past "now", squeeze it, or stop at an earlier stage.
-    const durations: Record<string, number> = { verified: between(1, 12), prioritized: between(2, 14), funded: between(5, 28), in_progress: between(4, 24), resolved: between(20, 80) };
+    const perf = perfByRegion.get(d.region.region_id) ?? 1;
+    const durations: Record<string, number> = {
+      verified: between(1, 8) / perf, prioritized: between(2, 10) / perf, funded: between(4, 20) / perf, in_progress: between(3, 16) / perf, resolved: between(12, 50) / perf,
+    };
     const path = target === "disputed" ? ["disputed"] : STAGES.slice(1, STAGES.indexOf(target) + 1);
     const total = path.reduce((n, s) => n + (durations[s] ?? between(1, 10)), 0);
     const budgetDays = Math.max(0, ageDays - 1.5);

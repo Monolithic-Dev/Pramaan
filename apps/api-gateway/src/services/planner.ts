@@ -143,6 +143,8 @@ export function optimizePlan(candidates: Candidate[], params: PlanParams) {
 
   return {
     candidates: candidates.length,
+    // What funding every eligible issue would cost: lets the UI pick a budget that forces real trade-offs.
+    candidates_cost_inr: candidates.reduce((n, c) => n + c.cost_inr, 0),
     plan,
     remaining_inr: remaining,
     equity_floor_met: params.min_vulnerable_share === 0 || plan.vulnerable_share >= params.min_vulnerable_share - 0.001,

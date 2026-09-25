@@ -50,6 +50,12 @@ describe("stripUngroundedSentences", () => {
     expect(stripped).toContain("funding threshold");
   });
 
+  it("keeps each sentence's full stop when it drops another", () => {
+    const text = "Ward 14 has 14 reports. It received 999999 in funding. The score is 0.628. Officers should act.";
+    const stripped = stripUngroundedSentences(text, [{ report_count: 14, composite_score: 0.628 }]);
+    expect(stripped).toBe("Ward 14 has 14 reports. The score is 0.628. Officers should act.");
+  });
+
   it("keeps sentences with no numerals regardless of tool results", () => {
     const text = "There is no investment on record for this ward.";
     const stripped = stripUngroundedSentences(text, []);

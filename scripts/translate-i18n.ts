@@ -2,7 +2,11 @@
 // Run: GEMINI_API_KEY=... pnpm --filter @jansetu/scripts exec tsx translate-i18n.ts
 import { readFileSync, writeFileSync } from "node:fs";
 
-const LANGS: Record<string, string> = { hi: "Hindi", ta: "Tamil", pt: "Brazilian Portuguese" };
+const LANGS: Record<string, string> = {
+  hi: "Hindi", ta: "Tamil", pt: "Brazilian Portuguese", bn: "Bengali", te: "Telugu",
+  mr: "Marathi", kn: "Kannada", ml: "Malayalam", gu: "Gujarati", pa: "Punjabi (Gurmukhi script)",
+};
+const placeholders = (text: string) => (text.match(/{[A-Za-z0-9_]+}/g) ?? []).sort().join("|");
 const DIR = "../apps/web/src/i18n";
 const MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash"];
 const BATCH = 60;
@@ -82,13 +86,15 @@ async function main() {
       }
       if (!translated) throw new Error("batch failed after 3 attempts");
       for (const [k] of batch) {
-        if (typeof translated[k] === "string" && translated[k].length > 0) {
+        // A translation is only accepted if it keeps exactly the {placeholders} the English has.
+        if (typeof translated[k] === "string" && translated[k].length > 0 && placeholders(translated[k]) === placeholders(en[k])) {
           existing[k] = translated[k];
         } else {
-          console.warn(`  missing translation for ${k}, falling back to English`);
+          console.warn(`  bad or missing translation for ${k}, falling back to English`);
           existing[k] = en[k];
         }
       }
+      await new Promise((r) => setTimeout(r, 600));
     }
     const sorted = Object.fromEntries(Object.entries(existing).sort(([a], [b]) => a.localeCompare(b)));
     writeFileSync(`${DIR}/${lang}.json`, JSON.stringify(sorted, null, 2) + "\n");

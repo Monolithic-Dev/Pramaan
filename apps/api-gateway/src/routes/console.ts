@@ -191,6 +191,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
           submitted_at: s.submitted_at,
           language: s.detected_language,
           text: s.pii_scrubbed_text,
+          translated_text: s.translated_text,
           photo: s.photo_url,
           has_audio: Boolean(s.raw_audio_url),
           location_confidence: s.location_confidence,

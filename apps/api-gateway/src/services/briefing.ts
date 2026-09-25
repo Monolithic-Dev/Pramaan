@@ -118,7 +118,12 @@ export async function narrateBriefing(deps: Deps, facts: BriefingFacts, language
   try {
     const text = await deps.narrator.narrate(facts, languageName);
     // Same numeric guardrail the copilot uses: a sentence whose figures are not in the facts is dropped.
-    const grounded = stripUngroundedSentences(text, [facts]);
+    // Paragraph by paragraph, so the briefing keeps its shape after unverifiable sentences are dropped.
+    const grounded = text
+      .split(/\n{2,}/)
+      .map((p) => stripUngroundedSentences(p, [facts]).trim())
+      .filter(Boolean)
+      .join("\n\n");
     if (grounded.trim().length >= 20) return { text: grounded, source: "gemini" as const };
   } catch (err) {
     log?.warn({ err }, "briefing narration failed; using the template");

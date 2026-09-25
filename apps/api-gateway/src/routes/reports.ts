@@ -62,6 +62,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: Deps) {
     return reply.code(200).send({
       region,
       region_name: regions.get(region)?.name ?? region,
+      sample_data: issues.some((i) => i.is_synthetic === true),
       ...computeImpact(issues, new Map(scores.map((s) => [s.issue_id, s])), projects, impacts),
     });
   });
