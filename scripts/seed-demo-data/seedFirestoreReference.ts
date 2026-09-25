@@ -3,17 +3,11 @@
 //
 // Run: FIREBASE_SERVICE_ACCOUNT_JSON=<json|base64> pnpm --filter @jansetu/scripts seed-firestore-reference
 //  or: gcloud auth application-default login, then GCP_PROJECT_ID=<id> pnpm ... seed-firestore-reference
-import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { initFirebase } from "../lib/firebase.js";
 import { loadReferenceRows } from "./referenceCsv.js";
 
-const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-initializeApp({
-  credential: raw
-    ? cert(JSON.parse(raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8")))
-    : applicationDefault(),
-  projectId: process.env.GCP_PROJECT_ID ?? process.env.FIREBASE_PROJECT_ID,
-});
+initFirebase();
 const db = getFirestore();
 
 async function write(collection: string, docs: [string, object][]) {
