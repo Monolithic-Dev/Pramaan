@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
+import { useMemo, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/api.js";
-import { useLanguage } from "../i18n/LanguageProvider.js";
+import { SUPPORTED_LANGUAGES, useLanguage } from "../i18n/LanguageProvider.js";
+import { IndiaDots, type Glow } from "../ui/IndiaDots.js";
 import { Icon, type IconName } from "../ui/Icon.js";
 import { Badge, Button, Card, SampleDataBadge, Skeleton, useAsync } from "../ui/kit.js";
 
@@ -17,8 +19,8 @@ function LiveStats() {
   ];
 
   return (
-    <div className="rounded-3xl border border-white/15 bg-white/10 p-5 shadow-lift backdrop-blur">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="rounded-3xl border border-white/15 bg-white/10 p-4 shadow-lift backdrop-blur">
+      <div className="mb-3 flex items-center justify-between">
         <p className="flex items-center gap-2 text-sm font-semibold text-white">
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -28,12 +30,11 @@ function LiveStats() {
         </p>
         {totals?.sample_data && <SampleDataBadge label={t("badge.sample")} />}
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-4 gap-2">
         {cells.map((c) => (
-          <div key={c.label} className="rounded-2xl bg-white/10 p-4">
-            <Icon name={c.icon} size={18} className="text-saffron-400" />
-            {loading ? <Skeleton className="mt-2 h-7 w-16 !bg-white/20" /> : <p className="mt-2 text-3xl font-bold text-white">{c.value}</p>}
-            <p className="text-xs text-brand-100">{c.label}</p>
+          <div key={c.label} className="rounded-xl bg-white/10 p-3">
+            {loading ? <Skeleton className="h-6 w-12 !bg-white/20" /> : <p className="text-xl font-bold text-white sm:text-2xl">{c.value}</p>}
+            <p className="mt-0.5 text-[11px] leading-tight text-brand-100">{c.label}</p>
           </div>
         ))}
       </div>
@@ -42,17 +43,58 @@ function LiveStats() {
   );
 }
 
+/** India, lit up wherever citizens are actually reporting. Real coarse locations, aggregated to ~1 degree. */
+function LiveMap() {
+  const { data } = useAsync(() => api.publicIssues({ country: "IN" }).catch(() => ({ issues: [] })), []);
+  const glows = useMemo<Glow[]>(() => {
+    const cells = new Map<string, { lat: number; lng: number; n: number }>();
+    for (const i of data?.issues ?? []) {
+      const key = `${Math.round(i.lat)}:${Math.round(i.lng)}`;
+      const c = cells.get(key) ?? { lat: Math.round(i.lat), lng: Math.round(i.lng), n: 0 };
+      c.n += 1;
+      cells.set(key, c);
+    }
+    const max = Math.max(1, ...[...cells.values()].map((c) => c.n));
+    return [...cells.values()].map((c) => ({ lat: c.lat, lng: c.lng, weight: c.n / max, label: `${c.n}` }));
+  }, [data]);
+  return <IndiaDots glows={glows} className="mx-auto w-full max-w-[26rem] text-white" />;
+}
+
+function TrackBox() {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+  function go(e: FormEvent) {
+    e.preventDefault();
+    if (code.trim()) navigate(`/track/${encodeURIComponent(code.trim())}`);
+  }
+  return (
+    <form onSubmit={go} className="mt-6 flex max-w-md items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 backdrop-blur">
+      <Icon name="search" size={18} className="ml-3 shrink-0 text-brand-200" />
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value.toUpperCase())}
+        placeholder={t("landing.track.placeholder")}
+        aria-label={t("track.code")}
+        className="min-w-0 flex-1 bg-transparent py-2 font-mono text-sm tracking-widest text-white placeholder:text-brand-200/70 focus:outline-none"
+      />
+      <Button type="submit" size="sm" variant="accent">{t("track.find")}</Button>
+    </form>
+  );
+}
+
 const STEPS: { icon: IconName; key: string }[] = [
   { icon: "mic", key: "landing.step1" },
   { icon: "sparkles", key: "landing.step2" },
   { icon: "scale", key: "landing.step3" },
-  { icon: "checkCircle", key: "landing.step4" },
+  { icon: "rupee", key: "landing.step4" },
+  { icon: "checkCircle", key: "landing.step5" },
 ];
 
 const AUDIENCES: { icon: IconName; key: string; to: string; cta: string }[] = [
   { icon: "users", key: "landing.aud.citizen", to: "/report", cta: "landing.aud.citizenCta" },
   { icon: "building", key: "landing.aud.officer", to: "/login?as=officer", cta: "landing.aud.officerCta" },
-  { icon: "eye", key: "landing.aud.public", to: "/transparency", cta: "landing.aud.publicCta" },
+  { icon: "eye", key: "landing.aud.public", to: "/accountability", cta: "landing.aud.publicCta" },
 ];
 
 const FEATURES: { icon: IconName; key: string }[] = [
@@ -60,10 +102,14 @@ const FEATURES: { icon: IconName; key: string }[] = [
   { icon: "mic", key: "landing.f.voice" },
   { icon: "camera", key: "landing.f.vision" },
   { icon: "layers", key: "landing.f.dedup" },
+  { icon: "rupee", key: "landing.f.schemes" },
+  { icon: "sliders", key: "landing.f.planner" },
   { icon: "trend", key: "landing.f.forecast" },
   { icon: "scale", key: "landing.f.equity" },
   { icon: "bot", key: "landing.f.copilot" },
-  { icon: "shield", key: "landing.f.privacy" },
+  { icon: "award", key: "landing.f.scorecards" },
+  { icon: "lock", key: "landing.f.privacy" },
+  { icon: "code", key: "landing.f.opendata" },
 ];
 
 export default function Landing() {
@@ -74,7 +120,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="hero-grid relative overflow-hidden text-white">
         <div className="dotted absolute inset-0 opacity-20" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:py-24">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-20">
           <div className="fade-up">
             <Badge tone="saffron" className="mb-5">
               <Icon name="sparkles" size={12} />
@@ -86,17 +132,14 @@ export default function Landing() {
             <p className="mt-5 max-w-xl text-lg text-brand-100">{t("landing.subtitle")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/report">
-                <Button size="lg" variant="accent" icon="plus">
-                  {t("landing.cta.report")}
-                </Button>
+                <Button size="lg" variant="accent" icon="plus">{t("landing.cta.report")}</Button>
               </Link>
               <Link to="/login?as=officer">
-                <Button size="lg" variant="secondary" className="!border-white/30 !bg-white/10 !text-white hover:!bg-white/20">
-                  {t("landing.cta.officer")}
-                </Button>
+                <Button size="lg" variant="secondary" className="!border-white/30 !bg-white/10 !text-white hover:!bg-white/20">{t("landing.cta.officer")}</Button>
               </Link>
             </div>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-100">
+            <TrackBox />
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-100">
               {["landing.trust1", "landing.trust2", "landing.trust3"].map((k) => (
                 <li key={k} className="flex items-center gap-2">
                   <Icon name="checkCircle" size={16} className="text-emerald-400" />
@@ -105,9 +148,27 @@ export default function Landing() {
               ))}
             </ul>
           </div>
-          <div className="fade-up" style={{ animationDelay: "0.1s" }}>
+          <div className="fade-up space-y-4" style={{ animationDelay: "0.1s" }}>
+            <LiveMap />
             <LiveStats />
           </div>
+        </div>
+      </section>
+
+      {/* Reach band */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-8 text-center sm:px-6 md:grid-cols-4">
+          {[
+            [String(SUPPORTED_LANGUAGES.length), t("landing.reach.languages")],
+            ["36", t("landing.reach.states")],
+            ["4", t("landing.reach.channels")],
+            ["2", t("landing.reach.countries")],
+          ].map(([n, l]) => (
+            <div key={l}>
+              <p className="text-4xl font-extrabold tracking-tight text-brand-800">{n}</p>
+              <p className="mt-1 text-sm text-slate-600">{l}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -144,7 +205,7 @@ export default function Landing() {
             <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">{t("landing.how.eyebrow")}</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{t("landing.how.title")}</h2>
           </div>
-          <ol className="mt-10 grid gap-6 md:grid-cols-4">
+          <ol className="mt-10 grid gap-6 md:grid-cols-5">
             {STEPS.map((s, i) => (
               <li key={s.key} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <span className="absolute -top-3 left-5 rounded-full bg-brand-700 px-2.5 py-0.5 text-xs font-bold text-white">{i + 1}</span>
@@ -159,18 +220,46 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Explainable score */}
+      {/* Funding intelligence */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">{t("landing.score.eyebrow")}</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{t("landing.score.title")}</h2>
-            <p className="mt-4 text-slate-600">{t("landing.score.body")}</p>
-            <Link to="/transparency" className="mt-5 inline-flex items-center gap-2 font-semibold text-brand-700 hover:text-brand-900">
-              {t("landing.score.cta")} <Icon name="arrowRight" size={16} />
-            </Link>
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">{t("landing.fund.eyebrow")}</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{t("landing.fund.title")}</h2>
+            <p className="mt-4 text-slate-600">{t("landing.fund.body")}</p>
+            <ul className="mt-5 space-y-2 text-sm text-slate-700">
+              {["landing.fund.p1", "landing.fund.p2", "landing.fund.p3"].map((k) => (
+                <li key={k} className="flex gap-2"><Icon name="check" size={16} className="mt-0.5 shrink-0 text-emerald-600" />{t(k)}</li>
+              ))}
+            </ul>
           </div>
           <Card className="!p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t("landing.fund.example")}</p>
+            <div className="mt-4 space-y-3">
+              {[
+                ["JJM", "Har Ghar Jal", 50],
+                ["PMGSY", "Rural connectivity", 60],
+                ["AMRUT 2.0", "Urban water and sewerage", 33],
+                ["Samagra Shiksha", "School infrastructure", 60],
+              ].map(([short, mission, share]) => (
+                <div key={short as string}>
+                  <div className="mb-1 flex items-baseline justify-between text-sm">
+                    <span><b className="text-slate-900">{short}</b> <span className="text-slate-500">· {mission}</span></span>
+                    <span className="tabular-nums text-slate-600">{t("landing.fund.centre", { pct: share as number })}</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-saffron-500" style={{ width: `${share}%` }} /></div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">{t("landing.fund.note")}</p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Explainable score */}
+      <section className="bg-white py-16">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
+          <Card className="order-2 !p-6 lg:order-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t("landing.score.formula")}</p>
             <div className="mt-4 space-y-4">
               {[
@@ -191,6 +280,14 @@ export default function Landing() {
             </div>
             <p className="mt-5 rounded-xl bg-slate-50 p-3 font-mono text-xs text-slate-700">score = (0.40 x demand + 0.30 x vulnerability + 0.30 x gap) x duplication x efficacy</p>
           </Card>
+          <div className="order-1 lg:order-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">{t("landing.score.eyebrow")}</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{t("landing.score.title")}</h2>
+            <p className="mt-4 text-slate-600">{t("landing.score.body")}</p>
+            <Link to="/about" className="mt-5 inline-flex items-center gap-2 font-semibold text-brand-700 hover:text-brand-900">
+              {t("landing.score.cta")} <Icon name="arrowRight" size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -225,9 +322,7 @@ export default function Landing() {
               <h3 className="mt-4 text-lg font-semibold text-slate-900">{t(`${a.key}.title`)}</h3>
               <p className="mt-1 flex-1 text-sm text-slate-600">{t(`${a.key}.body`)}</p>
               <Link to={a.to} className="mt-5">
-                <Button variant="secondary" className="w-full">
-                  {t(a.cta)}
-                </Button>
+                <Button variant="secondary" className="w-full">{t(a.cta)}</Button>
               </Link>
             </Card>
           ))}
@@ -240,12 +335,13 @@ export default function Landing() {
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">{t("landing.scale.title")}</h2>
             <p className="mt-3 text-slate-600">{t("landing.scale.body")}</p>
+            <Link to="/about" className="mt-4 inline-flex items-center gap-2 font-semibold text-brand-700 hover:text-brand-900">
+              {t("landing.scale.cta")} <Icon name="arrowRight" size={16} />
+            </Link>
           </div>
           <div className="flex flex-wrap gap-2">
-            {["English", "हिन्दी", "தமிழ்", "Português", "IN-DL", "IN-MH", "IN-KA", "BR-SP"].map((chip) => (
-              <Badge key={chip} tone="blue" className="!px-3 !py-1.5 !text-sm">
-                {chip}
-              </Badge>
+            {[...SUPPORTED_LANGUAGES.map((l) => l.label), "IN-DL", "IN-MH", "IN-KA", "IN-TN", "BR-SP", "+31"].map((chip) => (
+              <Badge key={chip} tone="blue" className="!px-3 !py-1.5 !text-sm">{chip}</Badge>
             ))}
           </div>
         </div>

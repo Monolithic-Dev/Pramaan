@@ -5,6 +5,8 @@ import { useAuth } from "../../auth/AuthContext.js";
 import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
 import { Badge, Button, cx, Select, useAsync } from "../../ui/kit.js";
+import { CommandPalette } from "../CommandPalette.js";
+import { NotificationBell } from "../NotificationBell.js";
 import { Brand, LanguageMenu } from "./Brand.js";
 
 // ---- Jurisdiction context: every console page reads the selected region from here -----------
@@ -14,6 +16,8 @@ interface ScopeValue {
   regionName: string;
   setRegionId: (id: string) => void;
   regions: RegionInfo[];
+  /** The officer's own jurisdiction is a whole country (a national administrator). */
+  isNational: boolean;
 }
 const ScopeContext = createContext<ScopeValue | null>(null);
 export function useScope(): ScopeValue {
@@ -34,14 +38,24 @@ const SECTIONS: { key: string; items: NavItem[] }[] = [
     key: "console.section.insight",
     items: [
       { to: "/console", key: "console.nav.overview", icon: "home", end: true },
+      { to: "/console/queue", key: "console.nav.queue", icon: "inbox" },
       { to: "/console/priorities", key: "console.nav.priorities", icon: "list" },
       { to: "/console/map", key: "console.nav.map", icon: "map" },
       { to: "/console/projects", key: "console.nav.projects", icon: "folder" },
     ],
   },
   {
+    key: "console.section.funding",
+    items: [
+      { to: "/console/planner", key: "console.nav.planner", icon: "sliders", perm: "manage_projects" },
+      { to: "/console/schemes", key: "console.nav.schemes", icon: "rupee" },
+      { to: "/console/impact", key: "console.nav.impact", icon: "target" },
+    ],
+  },
+  {
     key: "console.section.intelligence",
     items: [
+      { to: "/console/briefing", key: "console.nav.briefing", icon: "printer" },
       { to: "/console/forecasts", key: "console.nav.forecasts", icon: "trend" },
       { to: "/console/equity", key: "console.nav.equity", icon: "scale", perm: "view_equity" },
       { to: "/console/copilot", key: "console.nav.copilot", icon: "bot" },
@@ -58,6 +72,7 @@ const SECTIONS: { key: string; items: NavItem[] }[] = [
 ];
 
 const ROLE_TONE = { field_officer: "blue", district_collector: "violet", state_admin: "saffron" } as const;
+const LEVEL_ORDER = ["country", "state", "estado", "district", "município"];
 
 export function ConsoleLayout() {
   const { t } = useLanguage();
@@ -66,19 +81,28 @@ export function ConsoleLayout() {
   const location = useLocation();
   const [regionId, setRegionId] = useState(me?.region_id ?? "");
   const { data } = useAsync(() => api.regions(), []);
-  const regions = data?.regions ?? [];
+  const regions = useMemo(() => data?.regions ?? [], [data]);
 
-  useEffect(() => setMenuOpen(false), [location.pathname]);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
+  const isNational = regions.find((r) => r.regionId === me?.region_id)?.level === "country";
   const scope = useMemo<ScopeValue>(
-    () => ({
-      regionId,
-      regionName: regions.find((r) => r.regionId === regionId)?.name ?? regionId,
-      setRegionId,
-      regions,
-    }),
-    [regionId, regions],
+    () => ({ regionId, regionName: regions.find((r) => r.regionId === regionId)?.name ?? regionId, setRegionId, regions, isNational }),
+    [regionId, regions, isNational],
   );
+
+  const grouped = useMemo(() => {
+    const groups = new Map<string, RegionInfo[]>();
+    for (const r of regions) groups.set(r.level, [...(groups.get(r.level) ?? []), r]);
+    return [...groups]
+      .sort(([a], [b]) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b))
+      .map(([level, rs]) => [level, rs.sort((a, b) => a.name.localeCompare(b.name))] as const);
+  }, [regions]);
+
+  const visible = SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => !i.perm || can(i.perm)) })).filter((s) => s.items.length > 0);
+  const paletteTargets = visible.flatMap((s) => s.items.map((i) => ({ to: i.to, label: t(i.key), icon: i.icon })));
 
   const link = ({ isActive }: { isActive: boolean }) =>
     cx(
@@ -92,23 +116,19 @@ export function ConsoleLayout() {
         <Brand dark to="/console" />
       </div>
       <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Console">
-        {SECTIONS.map((section) => {
-          const items = section.items.filter((i) => !i.perm || can(i.perm));
-          if (items.length === 0) return null;
-          return (
-            <div key={section.key} className="mb-5">
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-300">{t(section.key)}</p>
-              <div className="flex flex-col gap-0.5">
-                {items.map((i) => (
-                  <NavLink key={i.to} to={i.to} end={i.end} className={link}>
-                    <Icon name={i.icon} size={18} />
-                    {t(i.key)}
-                  </NavLink>
-                ))}
-              </div>
+        {visible.map((section) => (
+          <div key={section.key} className="mb-5">
+            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-300">{t(section.key)}</p>
+            <div className="flex flex-col gap-0.5">
+              {section.items.map((i) => (
+                <NavLink key={i.to} to={i.to} end={i.end} className={link}>
+                  <Icon name={i.icon} size={18} />
+                  {t(i.key)}
+                </NavLink>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </nav>
       <div className="border-t border-white/10 p-4">
         <div className="mb-3 flex items-center gap-3">
@@ -117,7 +137,11 @@ export function ConsoleLayout() {
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-white">{email}</p>
-            {me?.role && <Badge tone={ROLE_TONE[me.role]} className="mt-0.5">{t(`role.${me.role}`)}</Badge>}
+            {me?.role && (
+              <Badge tone={ROLE_TONE[me.role]} className="mt-0.5">
+                {t(isNational && me.role === "state_admin" ? "role.national_admin" : `role.${me.role}`)}
+              </Badge>
+            )}
           </div>
         </div>
         <Button variant="ghost" size="sm" icon="logout" onClick={signOut} className="w-full justify-start !text-brand-100 hover:!bg-white/10">
@@ -130,7 +154,7 @@ export function ConsoleLayout() {
   return (
     <ScopeContext.Provider value={scope}>
       <div className="flex min-h-screen bg-slate-50">
-        <aside className="hidden w-64 shrink-0 bg-gradient-to-b from-brand-950 to-brand-900 lg:block">
+        <aside className="no-print hidden w-64 shrink-0 bg-gradient-to-b from-brand-950 to-brand-900 lg:block">
           <div className="sticky top-0 h-screen">{sidebar}</div>
         </aside>
         {menuOpen && (
@@ -143,25 +167,29 @@ export function ConsoleLayout() {
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:px-6">
-            <div className="flex items-center gap-3">
+          <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
               <button type="button" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden" aria-label="Menu" onClick={() => setMenuOpen(true)}>
                 <Icon name="menu" />
               </button>
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <Icon name="pin" size={16} className="text-brand-600" />
+              <label className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
+                <Icon name="pin" size={16} className="shrink-0 text-brand-600" />
                 <span className="hidden font-medium sm:inline">{t("console.jurisdiction")}</span>
-                <Select aria-label={t("console.jurisdiction")} value={regionId} onChange={(e) => setRegionId(e.target.value)} className="!w-auto !py-1.5">
+                <Select aria-label={t("console.jurisdiction")} value={regionId} onChange={(e) => setRegionId(e.target.value)} className="!w-auto max-w-[14rem] !py-1.5">
                   {regions.length === 0 && <option value={regionId}>{regionId}</option>}
-                  {regions.map((r) => (
-                    <option key={r.regionId} value={r.regionId}>
-                      {r.name} ({r.level})
-                    </option>
+                  {grouped.map(([level, rs]) => (
+                    <optgroup key={level} label={t(`level.${level}`)}>
+                      {rs.map((r) => (
+                        <option key={r.regionId} value={r.regionId}>{r.name}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </Select>
               </label>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <CommandPalette targets={paletteTargets} regionId={regionId} />
+              <NotificationBell />
               <LanguageMenu />
             </div>
           </header>

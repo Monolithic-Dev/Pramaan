@@ -10,6 +10,7 @@ import type { AgentTurnResponse, GeminiAgentClient } from "../lib/geminiAgent.js
 import type { IdentityToolkit } from "../lib/identityToolkit.js";
 import type { MediaStore } from "../lib/mediaStore.js";
 import type { OfficerAccount, OfficerAdmin } from "../lib/officerAdmin.js";
+import type { Narrator } from "../lib/narrator.js";
 import type { Translator } from "../lib/translator.js";
 import type { Publisher } from "../lib/pubsub.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
@@ -80,6 +81,12 @@ export function createFakeDeps(): FakeDeps {
     },
   };
 
+  const narrator: Narrator = {
+    async narrate(_facts, language) {
+      return `Briefing in ${language}.`;
+    },
+  };
+
   const authVerifier: AuthVerifier = {
     async verifyIdToken(token) {
       const decoded = tokens.get(token);
@@ -145,6 +152,7 @@ export function createFakeDeps(): FakeDeps {
     geminiAgent,
     mediaStore,
     translator,
+    narrator,
     storedMedia,
     publishedMessages,
     tokens,

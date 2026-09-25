@@ -50,4 +50,12 @@ export async function httpBlobUrl(path: string): Promise<string> {
   return URL.createObjectURL(await response.blob());
 }
 
+/** An authenticated download (e.g. a CSV export) as a Blob. */
+export async function httpBlob(path: string): Promise<Blob> {
+  const token = await tokenGetter();
+  const response = await fetch(`${BASE_URL}${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+  if (!response.ok) throw new ApiClientError(response.status, "DOWNLOAD_ERROR", "Could not download the file.");
+  return response.blob();
+}
+
 export const getIdToken = () => tokenGetter();

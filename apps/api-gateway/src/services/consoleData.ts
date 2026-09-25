@@ -3,6 +3,7 @@ import { geohashDecodeCenter } from "@jansetu/shared-utils";
 import type { Deps } from "../deps.js";
 import type { RegionInfo } from "../lib/bigquery.js";
 import { priorityBand } from "../insights/transparency.js";
+import { slaFor } from "./sla.js";
 
 /** Issues visible to a jurisdiction: a state sees every issue in the state, a district only its own. */
 export async function getIssuesInScope(deps: Deps, regionId: string): Promise<Issue[]> {
@@ -12,9 +13,23 @@ export async function getIssuesInScope(deps: Deps, regionId: string): Promise<Is
     level === "state" || level === "estado"
       ? await deps.store.listIssues(regionId)
       : level === "country"
-        ? await deps.store.listIssues()
+        ? // A country-level officer sees their own country only: issue.country_code is the country region id.
+          (await deps.store.listIssues()).filter((i) => i.country_code === regionId)
         : await deps.store.getIssuesByRegion(regionId);
   return issues.filter((i) => i.status !== "tombstoned");
+}
+
+/** Every region at or below `scopeId`, answered from the region list itself: no per-region lookups. */
+export function regionsWithin(regions: RegionInfo[], scopeId: string): RegionInfo[] {
+  const byId = new Map(regions.map((r) => [r.regionId, r]));
+  const within = (id: string | null): boolean => {
+    for (let hops = 0; id && hops < 8; hops++) {
+      if (id === scopeId) return true;
+      id = byId.get(id)?.parentRegionId ?? null;
+    }
+    return false;
+  };
+  return regions.filter((r) => within(r.regionId));
 }
 
 export function issueLocation(issue: Issue): { lat: number; lng: number } | null {
@@ -55,6 +70,10 @@ export function summarizeIssue(issue: Issue, regions: Map<string, RegionInfo>, p
     emergency_override: issue.emergency_override,
     fraud_flags: issue.fraud_flags,
     is_synthetic: issue.is_synthetic === true,
+    support_count: issue.support_count ?? 0,
+    assigned_to_uid: issue.assigned_to_uid ?? null,
+    assigned_to_label: issue.assigned_to_label ?? null,
+    sla: slaFor(issue),
     has_project: projectIssueIds ? projectIssueIds.has(issue.issue_id) : undefined,
   };
 }

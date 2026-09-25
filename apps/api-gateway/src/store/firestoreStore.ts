@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import type {
   AgentSession,
+  BudgetPlan,
+  IssueComment,
+  Notification,
   AgentTurn,
   Citizen,
   ConsentRecord,
@@ -229,6 +232,81 @@ export function createFirestoreStore(db: Firestore): Store {
         .map((d) => d.data() as AuditLogEntry)
         .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
         .slice(0, limit);
+    },
+
+    async listScores() {
+      const snapshot = await db.collection("priorityScores").where("is_canonical", "==", true).get();
+      const latest = new Map<string, PriorityScore>();
+      for (const d of snapshot.docs) {
+        const s = d.data() as PriorityScore;
+        const cur = latest.get(s.issue_id);
+        if (!cur || cur.computed_at < s.computed_at) latest.set(s.issue_id, s);
+      }
+      return [...latest.values()];
+    },
+    async listImpactRecords() {
+      const snapshot = await db.collection("impactRecords").get();
+      return snapshot.docs.map((d) => d.data() as ImpactRecord);
+    },
+    async putComment(comment) {
+      await db.collection("issueComments").doc(comment.comment_id).set(comment);
+    },
+    async listComments(issueId) {
+      const snapshot = await db.collection("issueComments").where("issue_id", "==", issueId).get();
+      return snapshot.docs.map((d) => d.data() as IssueComment).sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    },
+    async putNotification(notification) {
+      await db.collection("notifications").doc(notification.notification_id).set(notification);
+    },
+    async listNotifications(recipientId, limit) {
+      const snapshot = await db.collection("notifications").where("recipient_id", "==", recipientId).get();
+      return snapshot.docs
+        .map((d) => d.data() as Notification)
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        .slice(0, limit);
+    },
+    async markNotificationsRead(recipientId, ids) {
+      const snapshot = await db.collection("notifications").where("recipient_id", "==", recipientId).get();
+      const targets = snapshot.docs.filter((d) => {
+        const n = d.data() as Notification;
+        return !n.read_at && (!ids || ids.includes(n.notification_id));
+      });
+      const readAt = new Date().toISOString();
+      for (let i = 0; i < targets.length; i += 400) {
+        const batch = db.batch();
+        for (const d of targets.slice(i, i + 400)) batch.update(d.ref, { read_at: readAt });
+        await batch.commit();
+      }
+      return targets.length;
+    },
+    async putPlan(plan) {
+      await db.collection("budgetPlans").doc(plan.plan_id).set(plan);
+    },
+    async getPlan(planId) {
+      const doc = await db.collection("budgetPlans").doc(planId).get();
+      return doc.exists ? (doc.data() as BudgetPlan) : null;
+    },
+    async listPlans(regionId) {
+      const ref = regionId ? db.collection("budgetPlans").where("region_id", "==", regionId) : db.collection("budgetPlans");
+      const snapshot = await ref.get();
+      return snapshot.docs.map((d) => d.data() as BudgetPlan).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    },
+    async getSubmissionByTrackingCode(code) {
+      const snapshot = await db.collection("submissions").where("tracking_code", "==", code).limit(1).get();
+      return snapshot.empty ? null : (snapshot.docs[0].data() as Submission);
+    },
+    async putSupport(issueId, citizenId) {
+      try {
+        // create() fails if the document exists, which makes the endorsement idempotent per citizen.
+        await db.collection("issueSupports").doc(`${issueId}_${citizenId}`).create({ issue_id: issueId, citizen_id: citizenId, created_at: new Date().toISOString() });
+        return true;
+      } catch (err) {
+        if ((err as { code?: number }).code === 6) return false; // ALREADY_EXISTS
+        throw err;
+      }
+    },
+    async hasSupport(issueId, citizenId) {
+      return (await db.collection("issueSupports").doc(`${issueId}_${citizenId}`).get()).exists;
     },
   };
 }

@@ -1,43 +1,68 @@
 # JanSetu
 
-AI-powered citizen demand → infrastructure priority platform. See [`docs/`](docs/) for the full spec set (PRD, architecture, data model, AI pipeline, security, roadmap) and [`docs/phases/`](docs/phases/) for the phase-by-phase build plan.
+**Citizen voice to public investment.** A citizen reports a problem by voice, text or photo in their own language. JanSetu understands it, merges it with what their neighbours reported, scores it in the open, matches it to the national scheme that can pay for the fix, helps an officer decide what to fund, and then asks the citizens whether it really got fixed.
 
-## Monorepo layout
+Built for the Google Cloud *Build with AI: Code for Communities* hackathon. One codebase, India and Brazil already running side by side, designed as a Digital Public Good.
+
+## What is inside
+
+| For | What they get |
+|---|---|
+| **Citizens** | Report in 11 languages by web, voice, WhatsApp or SMS, with an installable, offline-tolerant app. A tracking code follows the report with no account. Notifications, "I'm affected too" on a community map, and a confirm-the-fix step. |
+| **Officers** (3 roles, jurisdiction-scoped) | Ranked, explainable priorities, a live map, "my queue" with SLA clocks, assignment and notes, projects, a **budget optimiser** with an equity floor, a **national scheme matcher** (PMGSY, JJM, AMRUT 2.0, SBM, NHM, Samagra Shiksha, RDSS, MPLADS...), a grounded policy co-pilot, early-warning forecasts, an equity audit, an impact ledger and a printable AI weekly briefing. |
+| **The public** | District scorecards graded by a visible formula, an impact ledger, open data (CSV + a try-it API), and a page explaining exactly how it works. Aggregates only, k-anonymous. |
+
+**Design principles:** every score is explainable; the AI answers only from real data (numbers it cannot trace are removed, unanswerable questions are refused); fairness is measured, not assumed; privacy by design (DPDP / LGPD); a fix only counts when citizens confirm it *and* an officer signs off.
+
+## Architecture
+
+```
+Citizens (web/PWA, voice, WhatsApp, SMS)
+      |
+ API gateway (Fastify)  -- auth + RBAC, idempotent ingest, console/planner/public APIs
+      |
+ AI worker (Gemini)     -- understand + translate + vision + speech, dedup (embeddings), scoring
+      |
+ Firestore (+ reference data, audit log)  ->  Officer console | Public ledger | Citizen loop
+```
+
 ```
 apps/
-  web/                 React (Vite) PWA — citizen report flow + officer/policymaker dashboard
-  api-gateway/          Fastify — ingestion, auth, agent endpoint
-  worker-ai-pipeline/   Node service — categorization, dedup, prioritization, brief generation
-packages/
-  shared-types/         TypeScript interfaces mirroring docs/DATA_MODEL.md
-  shared-utils/         geospatial helpers, cosine similarity, formatting
-  ai-prompts/           versioned prompt templates from docs/AI_PIPELINE.md
-infra/gcp/              gcloud setup scripts
+  web/                  React 19 + Tailwind + Leaflet: citizen app, officer console, public site
+  api-gateway/          Fastify: ingest, RBAC, workflow, planner, schemes, public API
+  worker-ai-pipeline/   Fastify: categorise, translate, dedup, score (Gemini)
+packages/               shared-types, shared-utils (scoring maths, geohash), ai-prompts
+scripts/                seeders, translators, smoke tests, officer tooling
+docs/                   PRD, architecture, data model, security, deployment
 ```
 
-## Getting started
+## Run it locally (no cloud account needed)
+
+The whole stack runs on the Firebase emulators plus a Gemini API key for the AI parts. Full steps in [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
+
 ```bash
 pnpm install
-pnpm turbo run dev
+# 1. start the Firestore + Auth emulators, the worker (:8081), the gateway (:8080) and the web app (:5173)
+# 2. seed reference geography + a realistic demo dataset (runs the real scoring engine):
+#    scripts/  ->  seedFirestoreReference.ts  then  seedDemoData.ts
+# 3. open http://localhost:5173
 ```
 
-- `apps/api-gateway` → http://localhost:8080/healthz
-- `apps/worker-ai-pipeline` → http://localhost:8081/healthz
-- `apps/web` → http://localhost:5173
+Demo logins (password `DemoAdmin!2026` for officers): `national@jansetu.demo` (whole India), `admin@jansetu.demo` (Delhi state admin), `collector@jansetu.demo` (district collector), `field@jansetu.demo` (field officer), `brasil@jansetu.demo` (Brazil). Citizen: `citizen@jansetu.demo` / `DemoCitizen!2026`. Try the tracking code `JS-K7M3P9QD` on `/track`.
 
-### Environment variables
-Create a `.env` at the repo root (gitignored) — both backend services load it
-automatically. See `apps/api-gateway/.env.example` and
-`apps/worker-ai-pipeline/.env.example` for the full list; nothing is required
-to run the test suites, only for hitting real Firebase/Vertex AI.
+## Tests
 
-## Scripts
-- `pnpm turbo run build` — build every app/package
-- `pnpm turbo run lint` — typecheck every app/package
-- `pnpm turbo run test` — run all tests (Vitest)
-
-## GCP setup
 ```bash
-infra/gcp/setup.sh <gcp-project-id>
+pnpm turbo run lint test build        # typecheck, 200+ unit and route tests, production build
+cd scripts && tsx smoke-emulator.ts   # 42-check end-to-end run against the real worker and Gemini
 ```
-Enables the APIs required by later phases (Vertex AI, Cloud Run, Firestore, BigQuery, Pub/Sub, Secret Manager, Translation, Speech-to-Text).
+
+The smoke test drives the whole product: three citizens reporting the same problem in two languages merge into one issue, get scored, are worked by officers, funded, confirmed by the citizens and resolved, with jurisdiction and role refusals checked on the way.
+
+## Deploy
+
+Free stack (Firebase Spark, Render free tier, Gemini API key): [`docs/FREE_DEPLOYMENT_GUIDE.md`](docs/FREE_DEPLOYMENT_GUIDE.md). Cloud Run / BigQuery for scale: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+## Data honesty
+
+Reference data (populations, indices, investment records) and all demo issues are **illustrative samples**, generated by the scripts in `scripts/seed-demo-data/` and labelled "Illustrative sample data" everywhere they appear. Scheme sharing ratios are typical published patterns and are shown with a reminder to confirm against current guidelines.

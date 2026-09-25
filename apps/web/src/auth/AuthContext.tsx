@@ -3,6 +3,10 @@ import { api, type Me } from "../api/api.js";
 import { setTokenGetter } from "../api/http.js";
 
 const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ?? "";
+// Local dev against the Firebase Auth emulator: set VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099
+const EMULATOR_URL = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL ?? "";
+const IDENTITY_BASE = EMULATOR_URL ? `${EMULATOR_URL}/identitytoolkit.googleapis.com` : "https://identitytoolkit.googleapis.com";
+const SECURETOKEN_BASE = EMULATOR_URL ? `${EMULATOR_URL}/securetoken.googleapis.com` : "https://securetoken.googleapis.com";
 const STORAGE_KEY = "jansetu.session";
 
 interface Session {
@@ -22,7 +26,7 @@ export class AuthError extends Error {
 }
 
 async function identity(endpoint: string, body: object) {
-  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`, {
+  const response = await fetch(`${IDENTITY_BASE}/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -99,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (Date.now() < s.expiresAt - 60_000) return s.idToken;
     if (!s.refreshToken) return s.idToken;
     try {
-      const response = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`, {
+      const response = await fetch(`${SECURETOKEN_BASE}/v1/token?key=${FIREBASE_API_KEY}`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(s.refreshToken)}`,

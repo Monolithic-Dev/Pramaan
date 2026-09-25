@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { CONSENT_VERSION } from "../components/ConsentNotice.js";
 import { LocationPicker, type LatLng } from "../components/LocationPicker.js";
 import { VoiceRecorder } from "../components/VoiceRecorder.js";
+import { CopyButton } from "../ui/extras.js";
 import { useOfflineQueue } from "../hooks/useOfflineQueue.js";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis.js";
 import { SUPPORTED_LANGUAGES, useLanguage } from "../i18n/LanguageProvider.js";
@@ -113,10 +114,12 @@ export default function ReportWizard() {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; queued: boolean } | null>(null);
+  const [done, setDone] = useState<{ id: string; queued: boolean; code: string | null } | null>(null);
   const idempotencyKey = useRef(crypto.randomUUID());
 
-  useEffect(() => window.scrollTo({ top: 0 }), [step, done]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [step, done]);
 
   function detectLocation() {
     if (!("geolocation" in navigator)) return setError(t("report.locationError"));
@@ -177,12 +180,12 @@ export default function ReportWizard() {
     try {
       if (!navigator.onLine) throw new TypeError("offline");
       const result = await submitReportAuthed(input, idempotencyKey.current);
-      setDone({ id: result.submission_id, queued: false });
+      setDone({ id: result.submission_id, queued: false, code: result.tracking_code ?? null });
       speak(t("report.confirmationBody", { id: result.submission_id }));
     } catch (err) {
       if (!navigator.onLine || err instanceof TypeError) {
         enqueue(input, idempotencyKey.current);
-        setDone({ id: idempotencyKey.current, queued: true });
+        setDone({ id: idempotencyKey.current, queued: true, code: null });
       } else if (err instanceof ApiClientError && err.status === 429) {
         setError(t("report.errorRate"));
       } else {
@@ -202,15 +205,29 @@ export default function ReportWizard() {
         </span>
         <h1 className="mt-6 text-3xl font-bold text-slate-900">{t("report.confirmationTitle")}</h1>
         <p className="mt-2 text-slate-600">{done.queued ? t("report.offlineQueued") : t("report.confirmationSub")}</p>
-        <div className="mx-auto mt-6 flex max-w-sm items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3">
-          <div className="text-left">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t("status.idLabel")}</p>
-            <p className="font-mono text-lg font-bold text-slate-900">{done.id}</p>
+        {done.code ? (
+          <div className="mx-auto mt-6 max-w-sm rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50/60 px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">{t("report.trackingCode")}</p>
+            <p className="mt-1 font-mono text-3xl font-extrabold tracking-[0.15em] text-brand-900">{done.code}</p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
+              <CopyButton text={done.code} label={t("common.copy")} copiedLabel={t("common.copied")} />
+              <Link to={`/track/${done.code}`} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100"><Icon name="search" size={14} />{t("report.trackNow")}</Link>
+              {"share" in navigator && (
+                <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" onClick={() => void navigator.share({ title: "JanSetu", text: t("report.shareText", { code: done.code ?? "" }), url: `${location.origin}/track/${done.code}` }).catch(() => undefined)}>
+                  <Icon name="send" size={14} />{t("report.share")}
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-600">{t("report.trackingHint")}</p>
           </div>
-          <button type="button" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Copy" onClick={() => navigator.clipboard?.writeText(done.id)}>
-            <Icon name="copy" size={18} />
-          </button>
-        </div>
+        ) : (
+          <div className="mx-auto mt-6 flex max-w-sm items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3">
+            <div className="text-left">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t("status.idLabel")}</p>
+              <p className="font-mono text-lg font-bold text-slate-900">{done.id}</p>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 space-y-4">
           {signedIn && !done.queued ? (
@@ -249,7 +266,7 @@ export default function ReportWizard() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t("report.title")}</h1>
           <p className="mt-1 text-slate-600">{t("report.subtitle")}</p>
         </div>
-        <div className="flex gap-1.5" role="group" aria-label="Language">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Language">
           {SUPPORTED_LANGUAGES.map((l) => (
             <button
               key={l.code}

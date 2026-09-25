@@ -5,6 +5,8 @@ import type { Deps } from "../deps.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { requireAuth, requireOfficer } from "../middleware/auth.js";
 import { confirmResolutionSchema } from "../schemas/projects.js";
+import { completeIfConfirmed } from "../services/impactLoop.js";
+import { notifyReporters } from "../services/notify.js";
 
 const DEFAULT_CONFIRMATIONS_REQUIRED = 3;
 
@@ -64,6 +66,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         }),
       );
       request.log.info({ projectId, notifications }, "impact loop: mark-complete notification plan");
+      if (issue) await notifyReporters(deps, issue, "issue.confirm_resolution", { project_id: projectId });
 
       await deps.store.updateProject(projectId, { marked_complete_at: new Date().toISOString() });
 
@@ -123,10 +126,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         officer_signed_off_at: new Date().toISOString(),
       });
 
-      const impactRecord = await deps.store.getImpactRecord(projectId);
-      if (impactRecord && impactRecord.confirmations_received >= impactRecord.confirmations_required) {
-        await deps.store.updateProject(projectId, { status: "completed" });
-      }
+      await completeIfConfirmed(deps, projectId);
 
       await deps.store.putAuditLogEntry({
         audit_id: randomUUID(),
@@ -193,9 +193,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
 
       // Resolution requires the confirmation threshold AND a separate officer
       // sign-off (docs/EDGE_CASES.md #13) — never flips on citizen input alone.
-      if (updated.confirmations_received >= updated.confirmations_required && project.officer_signed_off_at) {
-        await deps.store.updateProject(projectId, { status: "completed" });
-      }
+      await completeIfConfirmed(deps, projectId);
 
       return reply.code(200).send({ impact_id: updated.impact_id });
     },

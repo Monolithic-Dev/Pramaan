@@ -3,74 +3,24 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { getCountryProfile, type Issue, type IssueStatus, type Project } from "@jansetu/shared-types";
 import type { Deps } from "../deps.js";
+import { audit, bad, forbidden, issueInScope, outside } from "./helpers.js";
 import { generateBrief } from "../agent/tools.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { priorityBand } from "../insights/transparency.js";
 import { hasMinimumRole, requireAuth, requireOfficer } from "../middleware/auth.js";
+import { DEPARTMENT, estimateBudget } from "../services/costing.js";
+import { notifyReporters } from "../services/notify.js";
+import { slaFor } from "../services/sla.js";
 import { permissionsFor } from "../services/permissions.js";
 import {
   computeOverview,
   getIssuesInScope,
   regionNameMap,
+  regionsWithin,
   summarizeIssue,
 } from "../services/consoleData.js";
 
-const bad = (message: string | undefined) => ({ error: { code: "VALIDATION_ERROR", message } });
-const forbidden = (message: string) => ({ error: { code: "FORBIDDEN", message } });
-const outside = { error: { code: "JURISDICTION_MISMATCH", message: "This is outside your jurisdiction." } };
-
-// Category -> the department that would own the fix, and an indicative budget. Both are labelled
-// as indicative in the UI: they seed a project brief, they are not a sanctioned estimate.
-const DEPARTMENT: Record<string, string> = {
-  roads: "Public Works Department",
-  water: "Water Supply & Sewerage Board",
-  electricity: "Electricity Distribution Company",
-  sanitation: "Municipal Sanitation Department",
-  health_infra: "Health & Family Welfare Department",
-  education_infra: "Education Department",
-  other: "District Administration",
-};
-const BASE_BUDGET: Record<string, number> = {
-  roads: 500_000,
-  water: 750_000,
-  electricity: 400_000,
-  sanitation: 600_000,
-  health_infra: 900_000,
-  education_infra: 800_000,
-  other: 300_000,
-};
-
 const STATUS_TARGETS = ["verified", "disputed", "prioritized", "funded", "in_progress"] as const;
-
-/** Resolves the officer's jurisdiction check for an issue, sending the 403 itself. */
-async function issueInScope(deps: Deps, request: FastifyRequest, reply: FastifyReply, issue: Issue) {
-  const officer = request.officer!;
-  const target = issue.admin_region_id ?? issue.state_id;
-  if (officer.regionId && target && (await isWithinScope(deps.bigqueryAgent, target, officer.regionId))) return true;
-  reply.code(403).send(outside);
-  return false;
-}
-
-async function audit(
-  deps: Deps,
-  request: FastifyRequest,
-  action: string,
-  targetId: string,
-  before: unknown,
-  after: unknown,
-  justification: string | null,
-) {
-  await deps.store.putAuditLogEntry({
-    audit_id: randomUUID(),
-    actor_id: request.citizenId ?? "unknown-officer",
-    action,
-    target_id: targetId,
-    before,
-    after,
-    justification,
-    timestamp: new Date().toISOString(),
-  });
-}
 
 export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
   const officerOnly = { preHandler: [requireOfficer(deps.authVerifier)] };
@@ -157,6 +107,8 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
         q: z.string().optional(),
         sort: z.enum(["score", "reports", "recent"]).default("score"),
         flagged: z.enum(["true", "false"]).optional(),
+        assigned: z.enum(["me", "unassigned"]).optional(),
+        overdue: z.enum(["true"]).optional(),
         limit: z.coerce.number().int().min(1).max(500).default(200),
       })
       .safeParse(request.query);
@@ -180,6 +132,8 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
       .filter((i) => !q.data.category || i.category === q.data.category)
       .filter((i) => !q.data.status || i.status === q.data.status)
       .filter((i) => q.data.flagged === undefined || (i.fraud_flags.length > 0) === (q.data.flagged === "true"))
+      .filter((i) => q.data.assigned === undefined || (q.data.assigned === "me" ? i.assigned_to_uid === request.citizenId : !i.assigned_to_uid))
+      .filter((i) => !q.data.overdue || slaFor(i).state === "overdue")
       .filter(
         (i) =>
           !needle ||
@@ -237,6 +191,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
           submitted_at: s.submitted_at,
           language: s.detected_language,
           text: s.pii_scrubbed_text,
+          translated_text: s.translated_text,
           photo: s.photo_url,
           has_audio: Boolean(s.raw_audio_url),
           location_confidence: s.location_confidence,
@@ -275,6 +230,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
 
     const updated = await deps.store.updateIssue(issueId, { status: body.data.status as IssueStatus });
     await audit(deps, request, "issue_status_change", issueId, { status: issue.status }, { status: updated.status }, body.data.justification);
+    await notifyReporters(deps, issue, "issue.status_changed", { status: updated.status });
     return reply.code(200).send({ issue_id: issueId, status: updated.status });
   });
 
@@ -299,7 +255,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
       return reply.code(409).send({ error: { code: "NOT_SCORED", message: "Score this issue first (it needs 3 distinct reporters or an emergency override)." } });
     }
     const score = await deps.store.getCanonicalScore(issueId);
-    const budget = Math.round((BASE_BUDGET[issue.category] ?? BASE_BUDGET.other) * (1 + Math.min(issue.report_count, 50) / 50));
+    const budget = estimateBudget(issue);
     const project: Project = {
       project_id: `proj_${randomUUID().replace(/-/g, "").slice(0, 10)}`,
       issue_id: issueId,
@@ -356,6 +312,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
     const updated = await deps.store.updateProject(projectId, { status: body.data.status });
     await deps.store.updateIssue(issue.issue_id, { status: body.data.status });
     await audit(deps, request, "project_status_change", projectId, { status: project.status }, { status: updated.status }, null);
+    await notifyReporters(deps, issue, body.data.status === "funded" ? "issue.funded" : "issue.status_changed", { status: body.data.status });
     return reply.code(200).send(updated);
   });
 
@@ -377,12 +334,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
   app.get("/regions", officerOnly, async (request, reply) => {
     const officer = request.officer!;
     if (!officer.regionId) return reply.code(200).send({ regions: [] });
-    const all = await deps.bigqueryAgent.listRegions();
-    const visible = [];
-    for (const r of all) {
-      if (await isWithinScope(deps.bigqueryAgent, r.regionId, officer.regionId)) visible.push(r);
-    }
-    return reply.code(200).send({ regions: visible });
+    return reply.code(200).send({ regions: regionsWithin(await deps.bigqueryAgent.listRegions(), officer.regionId) });
   });
 
   // ---- State admin: officer accounts and the audit log ---------------------------------------------

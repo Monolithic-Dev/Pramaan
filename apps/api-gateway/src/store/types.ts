@@ -1,5 +1,8 @@
 import type {
   AgentSession,
+  BudgetPlan,
+  IssueComment,
+  Notification,
   AgentTurn,
   Citizen,
   ConsentRecord,
@@ -99,4 +102,32 @@ export interface Store {
   listProjects(): Promise<Project[]>;
   /** Newest first. */
   listAuditLog(limit: number): Promise<AuditLogEntry[]>;
+
+  // --- Product console v2: workflow, notifications, planning, public participation ---
+
+  /** Latest canonical score of every scored issue: one read for planners and scorecards
+   *  instead of one query per issue. */
+  listScores(): Promise<PriorityScore[]>;
+  listImpactRecords(): Promise<ImpactRecord[]>;
+
+  putComment(comment: IssueComment): Promise<void>;
+  /** Oldest first. */
+  listComments(issueId: string): Promise<IssueComment[]>;
+
+  putNotification(notification: Notification): Promise<void>;
+  /** Newest first. */
+  listNotifications(recipientId: string, limit: number): Promise<Notification[]>;
+  /** Marks the given ids (or every unread one when ids is null) as read; returns how many changed. */
+  markNotificationsRead(recipientId: string, ids: string[] | null): Promise<number>;
+
+  putPlan(plan: BudgetPlan): Promise<void>;
+  getPlan(planId: string): Promise<BudgetPlan | null>;
+  /** Newest first. */
+  listPlans(regionId?: string): Promise<BudgetPlan[]>;
+
+  getSubmissionByTrackingCode(code: string): Promise<Submission | null>;
+
+  /** Records an "I'm affected too" endorsement. Returns false if this citizen already gave one. */
+  putSupport(issueId: string, citizenId: string): Promise<boolean>;
+  hasSupport(issueId: string, citizenId: string): Promise<boolean>;
 }

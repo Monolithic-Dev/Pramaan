@@ -10,3 +10,44 @@ inv-ka-mysuru-water-2324,ka-mysuru,IN,KA,Sample Rural Water Supply Scheme,JJM,30
 inv-br-sao-paulo-sanitation-2324,br-sao-paulo,BR,SP,Sample PAC Sanitation Upgrade,PAC,2500000,BRL,sanitation,2023-24,2023-08-12,synthetic_demo
 inv-br-campinas-roads-2425,br-campinas,BR,SP,Sample PAC Road Maintenance Scheme,PAC,900000,BRL,roads,2024-25,2024-03-20,synthetic_demo
 inv-br-santos-health-2324,br-santos,BR,SP,Sample Minha Casa Minha Vida Health Annex,MCMV,600000,BRL,health,2023-24,2023-11-02,synthetic_demo
+inv-tn-chennai-water-2324,tn-chennai,IN,TN,Sample Water Supply Scheme,JJM,780442,INR,water,2023-24,2023-05-15,synthetic_demo
+inv-tn-chennai-sanitation-2425,tn-chennai,IN,TN,Sample Sanitation Upgrade Scheme,AMRUT,1917775,INR,sanitation,2024-25,2024-06-15,synthetic_demo
+inv-tn-madurai-roads-2324,tn-madurai,IN,TN,Sample Road Maintenance Scheme,PMGSY,1869559,INR,roads,2023-24,2023-10-15,synthetic_demo
+inv-tn-madurai-health-2324,tn-madurai,IN,TN,Sample Primary Health Centre Scheme,NHM,784750,INR,health,2023-24,2023-09-15,synthetic_demo
+inv-wb-kolkata-sanitation-2324,wb-kolkata,IN,WB,Sample Sanitation Upgrade Scheme,AMRUT,1276571,INR,sanitation,2023-24,2023-09-15,synthetic_demo
+inv-wb-howrah-health-2324,wb-howrah,IN,WB,Sample Primary Health Centre Scheme,NHM,525126,INR,health,2023-24,2023-03-15,synthetic_demo
+inv-wb-howrah-water-2324,wb-howrah,IN,WB,Sample Water Supply Scheme,JJM,1964353,INR,water,2023-24,2023-03-15,synthetic_demo
+inv-ts-warangal-sanitation-2324,ts-warangal,IN,TS,Sample Sanitation Upgrade Scheme,AMRUT,1663249,INR,sanitation,2023-24,2023-07-15,synthetic_demo
+inv-ts-warangal-education-2425,ts-warangal,IN,TS,Sample School Infrastructure Scheme,SAMAGRA,1742997,INR,education,2024-25,2024-04-15,synthetic_demo
+inv-gj-ahmedabad-sanitation-2324,gj-ahmedabad,IN,GJ,Sample Sanitation Upgrade Scheme,AMRUT,851687,INR,sanitation,2023-24,2023-06-15,synthetic_demo
+inv-gj-ahmedabad-education-2425,gj-ahmedabad,IN,GJ,Sample School Infrastructure Scheme,SAMAGRA,1643659,INR,education,2024-25,2024-10-15,synthetic_demo
+inv-gj-surat-education-2425,gj-surat,IN,GJ,Sample School Infrastructure Scheme,SAMAGRA,2008497,INR,education,2024-25,2024-06-15,synthetic_demo
+inv-gj-surat-sanitation-2324,gj-surat,IN,GJ,Sample Sanitation Upgrade Scheme,AMRUT,1439520,INR,sanitation,2023-24,2023-10-15,synthetic_demo
+inv-rj-jaipur-water-2324,rj-jaipur,IN,RJ,Sample Water Supply Scheme,JJM,1761021,INR,water,2023-24,2023-11-15,synthetic_demo
+inv-up-lucknow-roads-2425,up-lucknow,IN,UP,Sample Road Maintenance Scheme,PMGSY,2133648,INR,roads,2024-25,2024-09-15,synthetic_demo
+inv-up-lucknow-health-2324,up-lucknow,IN,UP,Sample Primary Health Centre Scheme,NHM,2041829,INR,health,2023-24,2023-09-15,synthetic_demo
+inv-up-varanasi-sanitation-2324,up-varanasi,IN,UP,Sample Sanitation Upgrade Scheme,AMRUT,1988822,INR,sanitation,2023-24,2023-09-15,synthetic_demo
+inv-br-patna-roads-2425,br-patna,IN,BR,Sample Road Maintenance Scheme,PMGSY,716990,INR,roads,2024-25,2024-09-15,synthetic_demo
+inv-br-gaya-health-2425,br-gaya,IN,BR,Sample Primary Health Centre Scheme,NHM,1175758,INR,health,2024-25,2024-03-15,synthetic_demo
+inv-br-gaya-water-2425,br-gaya,IN,BR,Sample Water Supply Scheme,JJM,1574693,INR,water,2024-25,2024-05-15,synthetic_demo
+inv-mp-bhopal-sanitation-2324,mp-bhopal,IN,MP,Sample Sanitation Upgrade Scheme,AMRUT,828732,INR,sanitation,2023-24,2023-10-15,synthetic_demo
+inv-mp-bhopal-roads-2425,mp-bhopal,IN,MP,Sample Road Maintenance Scheme,PMGSY,798385,INR,roads,2024-25,2024-07-15,synthetic_demo
+inv-kl-ernakulam-roads-2425,kl-ernakulam,IN,KL,Sample Road Maintenance Scheme,PMGSY,732525,INR,roads,2024-25,2024-08-15,synthetic_demo
+inv-od-khordha-roads-2425,od-khordha,IN,OD,Sample Road Maintenance Scheme,PMGSY,1499872,INR,roads,2024-25,2024-11-15,synthetic_demo
+inv-od-cuttack-health-2425,od-cuttack,IN,OD,Sample Primary Health Centre Scheme,NHM,985705,INR,health,2024-25,2024-08-15,synthetic_demo
+inv-od-cuttack-roads-2324,od-cuttack,IN,OD,Sample Road Maintenance Scheme,PMGSY,1663550,INR,roads,2023-24,2023-07-15,synthetic_demo
+inv-as-kamrup-metropolitan-health-2425,as-kamrup-metropolitan,IN,AS,Sample Primary Health Centre Scheme,NHM,1773342,INR,health,2024-25,2024-08-15,synthetic_demo
+inv-uk-dehradun-health-2324,uk-dehradun,IN,UK,Sample Primary Health Centre Scheme,NHM,1524660,INR,health,2023-24,2023-05-15,synthetic_demo
+inv-uk-dehradun-sanitation-2425,uk-dehradun,IN,UK,Sample Sanitation Upgrade Scheme,AMRUT,1290340,INR,sanitation,2024-25,2024-05-15,synthetic_demo
+inv-ct-raipur-water-2324,ct-raipur,IN,CT,Sample Water Supply Scheme,JJM,2092014,INR,water,2023-24,2023-10-15,synthetic_demo
+inv-ap-visakhapatnam-roads-2324,ap-visakhapatnam,IN,AP,Sample Road Maintenance Scheme,PMGSY,1753523,INR,roads,2023-24,2023-09-15,synthetic_demo
+inv-pb-ludhiana-health-2324,pb-ludhiana,IN,PB,Sample Primary Health Centre Scheme,NHM,2080688,INR,health,2023-24,2023-06-15,synthetic_demo
+inv-pb-ludhiana-roads-2324,pb-ludhiana,IN,PB,Sample Road Maintenance Scheme,PMGSY,739723,INR,roads,2023-24,2023-09-15,synthetic_demo
+inv-hr-gurugram-health-2425,hr-gurugram,IN,HR,Sample Primary Health Centre Scheme,NHM,1281130,INR,health,2024-25,2024-09-15,synthetic_demo
+inv-hr-gurugram-health-2324,hr-gurugram,IN,HR,Sample Primary Health Centre Scheme,NHM,1044137,INR,health,2023-24,2023-09-15,synthetic_demo
+inv-hp-shimla-health-2425,hp-shimla,IN,HP,Sample Primary Health Centre Scheme,NHM,2186938,INR,health,2024-25,2024-03-15,synthetic_demo
+inv-br-rio-de-janeiro-roads-2425,br-rio-de-janeiro,BR,RJ,Sample Road Maintenance Scheme,PMGSY,760282,BRL,roads,2024-25,2024-09-15,synthetic_demo
+inv-br-salvador-health-2425,br-salvador,BR,BA,Sample Primary Health Centre Scheme,NHM,1567766,BRL,health,2024-25,2024-08-15,synthetic_demo
+inv-br-salvador-health-2324,br-salvador,BR,BA,Sample Primary Health Centre Scheme,NHM,2086786,BRL,health,2023-24,2023-04-15,synthetic_demo
+inv-br-recife-sanitation-2324,br-recife,BR,PE,Sample Sanitation Upgrade Scheme,AMRUT,2234635,BRL,sanitation,2023-24,2023-06-15,synthetic_demo
+inv-br-porto-alegre-sanitation-2425,br-porto-alegre,BR,RS,Sample Sanitation Upgrade Scheme,AMRUT,760690,BRL,sanitation,2024-25,2024-08-15,synthetic_demo

@@ -5,7 +5,7 @@
    "resolved" states: a nod to the tricolour without using the emblem. Noto fallbacks make sure
    Devanagari and Tamil never render as boxes (docs/phases/phase-7-frontend.md "Traps"). */
 @theme {
-  --font-sans: "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", system-ui, sans-serif;
+  --font-sans: "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Bengali", "Noto Sans Telugu", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Gujarati", "Noto Sans Gurmukhi", system-ui, sans-serif;
 
   --color-brand-50: #eef4ff;
   --color-brand-100: #dbe7ff;
@@ -97,3 +97,18 @@ body {
 /* Leaflet: match the app's rounded look and keep popups readable. */
 .leaflet-container { font-family: var(--font-sans); border-radius: inherit; }
 .leaflet-popup-content-wrapper { border-radius: 0.75rem; }
+
+@keyframes india-pulse {
+  0%, 100% { transform: scale(0.7); opacity: 0.35; }
+  50% { transform: scale(1.15); opacity: 0.08; }
+}
+.india-pulse { transform-box: fill-box; transform-origin: center; animation: india-pulse 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .india-pulse { animation: none; } }
+
+/* Printable briefing: hide the app chrome, keep the document. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  main { max-width: none !important; padding: 0 !important; }
+  .print-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; break-inside: avoid; }
+}

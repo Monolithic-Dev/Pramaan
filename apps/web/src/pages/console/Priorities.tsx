@@ -5,6 +5,7 @@ import { useScope } from "../../components/layout/ConsoleLayout.js";
 import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { CATEGORY_META, Icon } from "../../ui/Icon.js";
 import { Meter, priorityColor } from "../../ui/charts.js";
+import { SlaChip } from "../../ui/extras.js";
 import { Alert, Badge, Button, Card, EmptyState, Input, PageHeader, SampleDataBadge, Select, Skeleton, StatusBadge, cx, timeAgo, useAsync } from "../../ui/kit.js";
 
 const CATEGORIES = ["roads", "water", "electricity", "sanitation", "health_infra", "education_infra", "other"];
@@ -33,13 +34,15 @@ export function IssueRow({ i, onOpen }: { i: IssueSummary; onOpen: () => void })
         <span className="font-semibold tabular-nums text-slate-900">{i.report_count}</span>
         <span className="text-xs text-slate-500"> / {t("console.people", { count: i.distinct_reporter_count })}</span>
       </td>
-      <td className="px-4 py-3"><StatusBadge status={i.status} label={t(`status.${i.status}`)} /></td>
+      <td className="px-4 py-3"><div className="flex flex-col items-start gap-1"><StatusBadge status={i.status} label={t(`status.${i.status}`)} />{i.status === "open" && <SlaChip sla={i.sla} />}</div></td>
       <td className="hidden px-4 py-3 text-sm text-slate-500 lg:table-cell">{timeAgo(i.first_reported_at)}</td>
       <td className="hidden px-4 py-3 lg:table-cell">
         <div className="flex flex-wrap gap-1">
           {i.emergency_override && <Badge tone="red"><Icon name="bolt" size={11} />{t("console.flag.emergency")}</Badge>}
           {i.fraud_flags.map((f) => <Badge key={f} tone="amber">{t(`flag.${f}`)}</Badge>)}
           {i.has_project && <Badge tone="teal"><Icon name="folder" size={11} />{t("console.flag.project")}</Badge>}
+          {i.assigned_to_label && <Badge tone="indigo"><Icon name="users" size={11} />{i.assigned_to_label.split("@")[0]}</Badge>}
+          {i.support_count > 0 && <Badge tone="teal"><Icon name="thumbsUp" size={11} />{i.support_count}</Badge>}
         </div>
       </td>
     </tr>

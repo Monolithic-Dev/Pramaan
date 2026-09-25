@@ -1,5 +1,8 @@
 import type {
   AgentSession,
+  BudgetPlan,
+  IssueComment,
+  Notification,
   AgentTurn,
   Citizen,
   ConsentRecord,
@@ -37,6 +40,10 @@ export function createInMemoryStore(): Store & {
   const projects = new Map<string, Project>();
   const impactRecords = new Map<string, ImpactRecord>(); // keyed by project_id
   const states = new Map<string, StateRecord>();
+  const comments = new Map<string, IssueComment>();
+  const notifications = new Map<string, Notification>();
+  const plans = new Map<string, BudgetPlan>();
+  const supports = new Set<string>();
 
   return {
     async getCitizen(citizenId) {
@@ -189,6 +196,65 @@ export function createInMemoryStore(): Store & {
     },
     async listAuditLog(limit) {
       return [...auditLog].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)).slice(0, limit);
+    },
+    async listScores() {
+      const latest = new Map<string, PriorityScore>();
+      for (const s of priorityScores.values()) {
+        if (!s.is_canonical) continue;
+        const cur = latest.get(s.issue_id);
+        if (!cur || cur.computed_at < s.computed_at) latest.set(s.issue_id, s);
+      }
+      return [...latest.values()];
+    },
+    async listImpactRecords() {
+      return [...impactRecords.values()];
+    },
+    async putComment(comment) {
+      comments.set(comment.comment_id, comment);
+    },
+    async listComments(issueId) {
+      return [...comments.values()].filter((c) => c.issue_id === issueId).sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    },
+    async putNotification(notification) {
+      notifications.set(notification.notification_id, notification);
+    },
+    async listNotifications(recipientId, limit) {
+      return [...notifications.values()]
+        .filter((n) => n.recipient_id === recipientId)
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        .slice(0, limit);
+    },
+    async markNotificationsRead(recipientId, ids) {
+      let changed = 0;
+      for (const n of notifications.values()) {
+        if (n.recipient_id !== recipientId || n.read_at || (ids && !ids.includes(n.notification_id))) continue;
+        notifications.set(n.notification_id, { ...n, read_at: new Date().toISOString() });
+        changed += 1;
+      }
+      return changed;
+    },
+    async putPlan(plan) {
+      plans.set(plan.plan_id, plan);
+    },
+    async getPlan(planId) {
+      return plans.get(planId) ?? null;
+    },
+    async listPlans(regionId) {
+      return [...plans.values()]
+        .filter((p) => !regionId || p.region_id === regionId)
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    },
+    async getSubmissionByTrackingCode(code) {
+      return [...submissions.values()].find((s) => s.tracking_code === code) ?? null;
+    },
+    async putSupport(issueId, citizenId) {
+      const key = `${issueId}:${citizenId}`;
+      if (supports.has(key)) return false;
+      supports.add(key);
+      return true;
+    },
+    async hasSupport(issueId, citizenId) {
+      return supports.has(`${issueId}:${citizenId}`);
     },
     issues,
     priorityScores,

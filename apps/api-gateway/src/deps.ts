@@ -6,6 +6,7 @@ import { createGeminiAgentClient, type GeminiAgentClient } from "./lib/geminiAge
 import { createIdentityToolkit, type IdentityToolkit } from "./lib/identityToolkit.js";
 import { createFirestoreMediaStore, createGcsMediaStore, type MediaStore } from "./lib/mediaStore.js";
 import { createFirebaseOfficerAdmin, type OfficerAdmin } from "./lib/officerAdmin.js";
+import { createGeminiNarrator, type Narrator } from "./lib/narrator.js";
 import { createGeminiTranslator, type Translator } from "./lib/translator.js";
 import { createHttpPublisher, createPubSubPublisher, type Publisher } from "./lib/pubsub.js";
 import { createFirestoreStore } from "./store/firestoreStore.js";
@@ -20,6 +21,7 @@ export interface Deps {
   geminiAgent: GeminiAgentClient;
   mediaStore: MediaStore;
   translator: Translator;
+  narrator: Narrator;
   officerAdmin: OfficerAdmin;
 }
 
@@ -38,6 +40,7 @@ export function createRealDeps(): Deps {
     geminiAgent: createGeminiAgentClient(),
     mediaStore: process.env.MEDIA_BUCKET ? createGcsMediaStore() : createFirestoreMediaStore(getDb()),
     translator: createGeminiTranslator(),
+    narrator: createGeminiNarrator(),
     officerAdmin: createFirebaseOfficerAdmin(),
   };
 }

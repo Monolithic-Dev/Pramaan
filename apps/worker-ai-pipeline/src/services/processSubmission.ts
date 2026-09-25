@@ -117,6 +117,14 @@ export async function processSubmission(
   );
 
   submission.resolved_region_id = adminRegionId;
+  // Officers read reports in English: keep the model's language detection and translation on the submission
+  // (voice reports already carry the transcript's language).
+  if (!isFallback) {
+    submission.detected_language ??= categorization.language?.toLowerCase().slice(0, 2) ?? null;
+    if (categorization.english_translation?.trim() && submission.detected_language !== "en") {
+      submission.translated_text = categorization.english_translation.trim();
+    }
+  }
 
   try {
     const issueId = await dedupe(

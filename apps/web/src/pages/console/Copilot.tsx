@@ -41,7 +41,9 @@ export default function Copilot() {
     return () => { alive = false; };
   }, [regionId]);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [turns]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turns]);
 
   async function send(query: string) {
     if (!query.trim() || sending || !sessionId) return;

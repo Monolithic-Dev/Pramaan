@@ -142,6 +142,8 @@ export interface Submission {
   /** SHA-256 of the submitting IP (never the raw address) — burst-detection input
    *  only (docs/SECURITY_PRIVACY.md §4); null for channels with no IP (WhatsApp/SMS). */
   submitter_ip_hash: string | null;
+  /** Short unguessable code (e.g. JS-7K3M9Q) so a citizen with no account can follow the report. */
+  tracking_code?: string | null;
 }
 
 export interface Issue {
@@ -165,6 +167,15 @@ export interface Issue {
   centroid_lng?: number | null;
   /** true for illustrative sample data loaded by the demo seeder; the UI labels it (never present synthetic data as real). */
   is_synthetic?: boolean;
+  /** Citizens who endorsed the issue with "I'm affected too". Shown to officers and the public;
+   *  it never feeds demand_score (only distinct reporters do). */
+  support_count?: number;
+  /** Workflow: the officer accountable for the next step, and the SLA clock (services/sla.ts). */
+  assigned_to_uid?: string | null;
+  assigned_to_label?: string | null;
+  assigned_at?: string | null;
+  /** Set only when an officer overrides the default SLA for the issue's priority band. */
+  sla_due_at?: string | null;
   submission_ids: string[];
   report_count: number;
   /** Distinct citizen_ids behind report_count — this, not report_count, feeds demand_score. */
@@ -402,3 +413,61 @@ export interface StateRecord {
 }
 
 export { COUNTRY_PROFILES, DEFAULT_COUNTRY_CODE, getCountryProfile } from "./countryProfiles.js";
+
+export type NotificationKind =
+  | "issue.status_changed"
+  | "issue.funded"
+  | "issue.confirm_resolution"
+  | "issue.assigned"
+  | "issue.emergency"
+  | "issue.comment"
+  | "plan.approved";
+
+/** In-app inbox entry. The client renders the text from kind + params in the reader's language,
+ *  so a notification is never stored pre-translated. */
+export interface Notification {
+  notification_id: string;
+  recipient_id: string;
+  kind: NotificationKind;
+  params: Record<string, string | number>;
+  /** In-app route to open, e.g. /my/sub_abc or /console/issues/iss_1. */
+  link: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+/** Internal note on an issue, visible to officers in jurisdiction only. */
+export interface IssueComment {
+  comment_id: string;
+  issue_id: string;
+  author_id: string;
+  author_label: string;
+  author_role: OfficerRole;
+  body: string;
+  created_at: string;
+}
+
+export interface BudgetPlanItem {
+  issue_id: string;
+  cost_inr: number;
+  value: number;
+  composite_score: number;
+  vulnerability_score: number;
+  beneficiaries: number;
+  category: string;
+  region_id: string | null;
+  scheme_id: string | null;
+}
+
+export interface BudgetPlan {
+  plan_id: string;
+  name: string;
+  region_id: string;
+  created_by: string;
+  created_at: string;
+  status: "draft" | "approved";
+  approved_at: string | null;
+  params: { budget_inr: number; min_vulnerable_share: number };
+  items: BudgetPlanItem[];
+  totals: { cost_inr: number; beneficiaries: number; vulnerable_share: number; issues: number };
+}
