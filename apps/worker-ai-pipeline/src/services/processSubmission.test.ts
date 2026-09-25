@@ -114,6 +114,29 @@ describe("processSubmission", () => {
     expect(stored?.issue_id).toMatch(/^iss_/);
   });
 
+  it("keeps the detected language and an English translation of a non-English report for officers", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission({ raw_text: "सड़क पर बड़ा गड्ढा है", pii_scrubbed_text: "सड़क पर बड़ा गड्ढा है" });
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push({ ...goodCategorization, language: "hi", english_translation: "There is a big pothole on the road" });
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    const stored = await deps.store.getSubmission(sub.submission_id);
+    expect(stored).toMatchObject({ detected_language: "hi", translated_text: "There is a big pothole on the road" });
+  });
+
+  it("does not store a 'translation' for an English report", async () => {
+    const deps = createFakeDeps();
+    const sub = makeSubmission();
+    await deps.store.putSubmission(sub);
+    deps.nextCategorizations.push({ ...goodCategorization, language: "en", english_translation: "" });
+
+    await processSubmission(deps, sub.submission_id, log);
+
+    expect(await deps.store.getSubmission(sub.submission_id)).toMatchObject({ detected_language: "en", translated_text: null });
+  });
+
   it("merges two submissions from different citizens with a similar embedding into one issue", async () => {
     const deps = createFakeDeps();
     const sameEmbedding = [1, 0, 0, 0, 0, 0, 0, 0];

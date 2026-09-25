@@ -213,7 +213,17 @@ export async function generateBrief(deps: Deps, issueId: string) {
   // copied verbatim from real fetched data, so it is grounded by construction.
   // Numbers are printed in their shortest form (0.7, not 0.700) so the substring-based
   // groundedness verifier can find them in the source records.
-  const fmt = (n: number, digits: number) => String(Number(n.toFixed(digits)));
+  const round = (n: number, digits: number) => Number(n.toFixed(digits));
+  const fmt = (n: number, digits: number) => String(round(n, digits));
+  // The brief prints scores to 2-3 decimals, but the stored score has full float precision
+  // (0.7467427552814604). Verifying against the raw record would reject every real brief, so the
+  // verifier is given the same rounded values the brief displays: still an exact match, no tolerance.
+  const displayedScore = {
+    composite_score: round(score.composite_score, 3),
+    demand_score: round(score.demand_score, 2),
+    vulnerability_score: round(score.vulnerability_score, 2),
+    gap_score: round(score.gap_score, 2),
+  };
   const brief =
     `${issue.category}/${issue.subcategory} issue with ${issue.report_count} reports ` +
     `from ${issue.distinct_reporter_count} distinct reporters. Composite priority score: ` +
@@ -227,7 +237,7 @@ export async function generateBrief(deps: Deps, issueId: string) {
   // template is expected to always pass today, but a hardcoded `true` couldn't
   // catch a future interpolation bug, and this is the panel a judge asking "how
   // do you know it didn't hallucinate" gets shown (docs/phases/phase-6-agent-rag.md §6.5).
-  const verification = verifyGrounded(brief, [issue, score]);
+  const verification = verifyGrounded(brief, [issue, displayedScore, score.data_fallbacks]);
 
   return {
     generated_brief: brief,

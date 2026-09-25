@@ -14,6 +14,8 @@ const categorizationResultSchema = z.object({
   severity_estimate: z.enum(["low", "medium", "high"]),
   extracted_location_text: z.string().nullable().default(null),
   summary: z.string(),
+  language: z.string().optional(),
+  english_translation: z.string().optional(),
   confidence: z.number(),
   contains_personal_emergency: z.boolean(),
 });

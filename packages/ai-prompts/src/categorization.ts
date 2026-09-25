@@ -1,12 +1,16 @@
 // docs/AI_PIPELINE.md Stage 2. Versioned so a prompt change is one reviewable PR
 // — every categorization result records this version (docs/AI_PIPELINE.md
 // "Model/prompt versioning").
-export const CATEGORIZATION_PROMPT_VERSION = "categorization-v1";
+export const CATEGORIZATION_PROMPT_VERSION = "categorization-v2";
 
 export const CATEGORIZATION_SYSTEM_PROMPT = `You are an information extraction system for a citizen infrastructure
 complaint platform. Given the citizen's report, extract structured fields.
 Do not infer facts not present in the report. If location is not stated,
-leave extracted_location_text null rather than guessing.`;
+leave extracted_location_text null rather than guessing.
+Always write summary in English, whatever language the report is in. Also return language
+(the ISO 639-1 code of the report's language). If the report is not in English, return
+english_translation: a faithful English translation of the whole report; otherwise return an
+empty string.`;
 
 export const CATEGORIZATION_CATEGORIES = [
   "water",
@@ -30,6 +34,8 @@ export const CATEGORIZATION_RESPONSE_SCHEMA = {
     severity_estimate: { type: "string", enum: ["low", "medium", "high"] },
     extracted_location_text: { type: "string", nullable: true },
     summary: { type: "string" },
+    language: { type: "string" },
+    english_translation: { type: "string" },
     confidence: { type: "number" },
     contains_personal_emergency: { type: "boolean" },
   },
@@ -50,6 +56,10 @@ export interface CategorizationResult {
   extracted_location_text: string | null;
   /** ≤25 words — this is what Stage 3 embeds; keep it short and information-dense. */
   summary: string;
+  /** ISO 639-1 code of the report's language. Absent on results from the raw-text fallback. */
+  language?: string;
+  /** Faithful English translation when the report is not in English, otherwise empty. */
+  english_translation?: string;
   confidence: number;
   contains_personal_emergency: boolean;
 }
