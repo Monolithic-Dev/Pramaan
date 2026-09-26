@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, submitReportAuthed, uploadMediaAuthed } from "../api/api.js";
+import { api, submitReportAuthed, uploadMediaAuthed, type NearbyIssue } from "../api/api.js";
 import { ApiClientError } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { CONSENT_VERSION } from "../components/ConsentNotice.js";
@@ -41,6 +41,71 @@ function Stepper({ step }: { step: number }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+/** "Is this already reported?" (the FixMyStreet pattern): open issues right around the chosen spot, so a
+ *  citizen can add their voice to an existing one instead of filing a duplicate. Filing anyway is always
+ *  fine: the AI merges true duplicates on its own. */
+function NearbyReports({ coords, signedIn }: { coords: LatLng; signedIn: boolean }) {
+  const { t } = useLanguage();
+  const [issues, setIssues] = useState<NearbyIssue[] | null>(null);
+  const [joined, setJoined] = useState<Record<string, "busy" | "done" | "error">>({});
+
+  // Keyed by location by the caller, so a new pin starts from a fresh, empty state.
+  useEffect(() => {
+    let live = true;
+    const timer = setTimeout(() => {
+      api.nearby(coords.lat, coords.lng).then((r) => live && setIssues(r.issues)).catch(() => live && setIssues([]));
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [coords.lat, coords.lng]);
+
+  async function join(issueId: string) {
+    setJoined((j) => ({ ...j, [issueId]: "busy" }));
+    try {
+      await api.support(issueId);
+      setJoined((j) => ({ ...j, [issueId]: "done" }));
+    } catch {
+      setJoined((j) => ({ ...j, [issueId]: "error" }));
+    }
+  }
+
+  if (!issues || issues.length === 0) return null;
+  return (
+    <section aria-labelledby="nearby-title" className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+      <h3 id="nearby-title" className="flex items-center gap-2 font-semibold text-slate-900">
+        <Icon name="users" size={18} className="text-amber-700" />{t("report.nearby.title", { n: issues.length })}
+      </h3>
+      <p className="mt-1 text-sm text-slate-700">{t("report.nearby.body")}</p>
+      <ul className="mt-3 divide-y divide-amber-200/70">
+        {issues.map((i) => {
+          const meta = CATEGORY_META[i.category] ?? CATEGORY_META.other;
+          const state = joined[i.issue_id];
+          return (
+            <li key={i.issue_id} className="flex flex-wrap items-center gap-3 py-2.5">
+              <span className={cx("rounded-lg p-1.5", meta.bg, meta.tone)}><Icon name={meta.icon} size={16} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-900">{t(`category.${i.category}`)} · <span className="font-normal">{i.subcategory}</span></p>
+                <p className="text-xs text-slate-600">{t("report.nearby.meta", { m: i.distance_m, n: i.report_count + i.support_count })}</p>
+              </div>
+              {state === "done" ? (
+                <Badge tone="green"><Icon name="check" size={12} />{t("report.nearby.joined")}</Badge>
+              ) : signedIn ? (
+                <Button size="sm" variant="secondary" loading={state === "busy"} onClick={() => join(i.issue_id)}>{t("report.nearby.join")}</Button>
+              ) : (
+                <Link to="/login" className="text-sm font-semibold text-brand-700 hover:underline">{t("report.nearby.signIn")}</Link>
+              )}
+              {state === "error" && <p role="alert" className="w-full text-xs text-rose-600">{t("report.errorGeneric")}</p>}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-2 text-xs text-slate-600">{t("report.nearby.different")}</p>
+    </section>
   );
 }
 
@@ -108,6 +173,7 @@ export default function ReportWizard() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoOffline, setPhotoOffline] = useState<Blob | null>(null);
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [locationText, setLocationText] = useState("");
   const [locating, setLocating] = useState(false);
@@ -142,19 +208,26 @@ export default function ReportWizard() {
     if (!file) return;
     setError(null);
     setPhotoBusy(true);
+    setPhotoOffline(null);
+    let blob: Blob | null = null;
     try {
-      const blob = await compressImage(file);
+      blob = await compressImage(file);
       setPhotoPreview(URL.createObjectURL(blob));
       setPhotoUrl(await uploadMediaAuthed("photo", blob));
-    } catch {
-      setPhotoPreview(null);
-      setError(t("report.uploadError"));
+    } catch (err) {
+      // No connection: keep the photo on the device; the offline queue uploads it later.
+      if (blob && (!navigator.onLine || err instanceof TypeError)) {
+        setPhotoOffline(blob);
+      } else {
+        setPhotoPreview(null);
+        setError(t("report.uploadError"));
+      }
     } finally {
       setPhotoBusy(false);
     }
   }
 
-  const hasContent = Boolean(text.trim() || audioUrl || photoUrl);
+  const hasContent = Boolean(text.trim() || audioUrl || photoUrl || photoOffline);
   const hasLocation = Boolean(coords || locationText.trim());
 
   function next() {
@@ -179,12 +252,14 @@ export default function ReportWizard() {
     };
     try {
       if (!navigator.onLine) throw new TypeError("offline");
-      const result = await submitReportAuthed(input, idempotencyKey.current);
+      // A photo taken while offline: the connection is back, so upload it now.
+      const body = photoOffline ? { ...input, photo_url: await uploadMediaAuthed("photo", photoOffline) } : input;
+      const result = await submitReportAuthed(body, idempotencyKey.current);
       setDone({ id: result.submission_id, queued: false, code: result.tracking_code ?? null });
       speak(t("report.confirmationBody", { id: result.submission_id }));
     } catch (err) {
       if (!navigator.onLine || err instanceof TypeError) {
-        enqueue(input, idempotencyKey.current);
+        await enqueue(input, idempotencyKey.current, photoOffline);
         setDone({ id: idempotencyKey.current, queued: true, code: null });
       } else if (err instanceof ApiClientError && err.status === 429) {
         setError(t("report.errorRate"));
@@ -297,10 +372,11 @@ export default function ReportWizard() {
                 <div className="relative w-fit">
                   <img src={photoPreview} alt="" className="h-40 rounded-xl border border-slate-200 object-cover" />
                   {photoBusy && <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/70"><Spinner /></div>}
-                  <button type="button" aria-label="Remove photo" onClick={() => { setPhotoPreview(null); setPhotoUrl(null); }} className="absolute -right-2 -top-2 rounded-full bg-slate-900 p-1 text-white shadow">
+                  <button type="button" aria-label="Remove photo" onClick={() => { setPhotoPreview(null); setPhotoUrl(null); setPhotoOffline(null); }} className="absolute -right-2 -top-2 rounded-full bg-slate-900 p-1 text-white shadow">
                     <Icon name="x" size={14} />
                   </button>
                   {photoUrl && <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-emerald-700"><Icon name="checkCircle" size={14} />{t("report.photoAttached")}</p>}
+                  {photoOffline && <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-amber-700"><Icon name="clock" size={14} />{t("report.photoOffline")}</p>}
                 </div>
               ) : (
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 p-4 text-slate-600 transition hover:border-brand-400 hover:bg-brand-50/40">
@@ -329,6 +405,7 @@ export default function ReportWizard() {
                 <Icon name="checkCircle" size={16} /> {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
               </p>
             )}
+            {coords && <NearbyReports key={`${coords.lat},${coords.lng}`} coords={coords} signedIn={signedIn} />}
             <Field label={t("report.locationManualLabel")} htmlFor="report-location" hint={t("report.locationManualHint")}>
               <Input id="report-location" value={locationText} onChange={(e) => setLocationText(e.target.value)} placeholder={t("report.locationManualPlaceholder")} />
             </Field>
@@ -345,7 +422,7 @@ export default function ReportWizard() {
                   {text.trim() || <span className="text-slate-400">{t("report.review.noText")}</span>}
                   <div className="mt-1.5 flex gap-1.5">
                     {audioUrl && <Badge tone="blue"><Icon name="mic" size={12} /> {t("report.audioSaved")}</Badge>}
-                    {photoUrl && <Badge tone="blue"><Icon name="camera" size={12} /> {t("report.photoAttached")}</Badge>}
+                    {(photoUrl || photoOffline) && <Badge tone="blue"><Icon name="camera" size={12} /> {t("report.photoAttached")}</Badge>}
                   </div>
                 </dd>
               </div>

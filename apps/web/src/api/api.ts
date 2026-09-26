@@ -59,6 +59,20 @@ export interface Sla {
   due_at: string;
   state: "met" | "ok" | "due_soon" | "overdue";
   days_left: number | null;
+  /** 1: missed deadline, raised to the district collector. 2: missed by a further window, raised to the state admin. */
+  escalation?: 0 | 1 | 2;
+  escalated_to?: "district_collector" | "state_admin" | null;
+}
+
+export interface NearbyIssue {
+  issue_id: string;
+  category: string;
+  subcategory: string;
+  status: string;
+  report_count: number;
+  support_count: number;
+  distance_m: number;
+  first_reported_at: string;
 }
 
 export interface IssueDetail {
@@ -409,6 +423,10 @@ export interface Tracking {
   priority: Priority;
   other_reporters: number;
   project_stage: string | null;
+  /** The work is marked done: this reporter is being asked whether it was really fixed. */
+  awaiting_confirmation?: boolean;
+  /** Times citizens rejected the fix and sent the work back. */
+  reopened_count?: number;
 }
 
 export interface IssueQuery {
@@ -515,6 +533,10 @@ export const api = {
   publicIssues: (params: { country?: string; category?: string } = {}) => http<{ issues: PublicIssue[] }>(`/public/issues${qs(params)}`, { auth: false }),
   publicSchemes: () => http<{ schemes: Scheme[] }>("/public/schemes", { auth: false }),
   track: (code: string) => http<Tracking>(`/public/track/${encodeURIComponent(code)}`, { auth: false }),
+  confirmByCode: (code: string, confirmed: boolean) =>
+    http<{ completed: boolean; reopened: boolean }>(`/public/track/${encodeURIComponent(code)}/confirm`, { method: "POST", json: { confirmed }, auth: false }),
+  nearby: (lat: number, lng: number) =>
+    http<{ radius_m: number; issues: NearbyIssue[] }>(`/public/nearby${qs({ lat, lng })}`, { auth: false }),
   support: (issueId: string) => http<{ support_count: number; already_supported: boolean }>(`/issues/${issueId}/support`, { method: "POST", json: {} }),
   transparency: (state: string) => http<TransparencyStats>(`/public/transparency${qs({ state })}`, { auth: false }),
 };

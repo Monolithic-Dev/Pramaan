@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { submitReportAuthed } from "../api/api.js";
+import { submitReportAuthed, uploadMediaAuthed } from "../api/api.js";
 import { ApiClientError, type CreateSubmissionInput } from "../api/client.js";
+import { deleteOfflineMedia, loadOfflineMedia, saveOfflineMedia } from "../utils/offlineMedia.js";
 
 interface QueuedSubmission {
   idempotencyKey: string;
   input: CreateSubmissionInput;
   queuedAt: string;
+  /** A photo taken offline, waiting in IndexedDB under this key until it can be uploaded. */
+  photoKey?: string;
 }
 
 const STORAGE_KEY = "pramaan.offlineQueue";
 
-// ponytail: localStorage instead of IndexedDB — payloads here are small JSON
-// (no photo/audio blobs are uploaded yet, see docs/phases/phase-7-manual-checklist.md),
-// so localStorage's size limit isn't a real constraint. Upgrade path: move to
-// IndexedDB (docs/phases/phase-7-frontend.md §7.2) once media upload exists.
-// Similarly, this replays on the browser's `online` event rather than
-// registering a Background Sync API handler — simpler, works while the tab is
-// open, which covers the demo ("airplane mode off, watch it sync").
+// The queue itself is small JSON, so it lives in localStorage; photos taken offline are Blobs and
+// wait in IndexedDB (utils/offlineMedia.ts). It replays on the browser's `online` event and on the
+// next visit rather than through Background Sync, which iOS Safari does not support.
 function readQueue(): QueuedSubmission[] {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
@@ -48,6 +47,17 @@ export function useOfflineQueue(authReady: boolean) {
     const remaining: QueuedSubmission[] = [];
     for (const item of queue) {
       try {
+        if (item.photoKey) {
+          const blob = await loadOfflineMedia(item.photoKey);
+          if (blob) {
+            item.input = { ...item.input, photo_url: await uploadMediaAuthed("photo", blob) };
+            // Persist the uploaded URL before submitting: a retry must resend the identical body,
+            // or the server rejects the reused Idempotency-Key as a conflict.
+            writeQueue([...remaining, item, ...queue.slice(queue.indexOf(item) + 1)]);
+          }
+          await deleteOfflineMedia(item.photoKey).catch(() => undefined);
+          item.photoKey = undefined;
+        }
         await submitReportAuthed(item.input, item.idempotencyKey);
       } catch (err) {
         if (!isPermanent(err)) remaining.push(item); // still offline or throttled: keep for next try
@@ -64,9 +74,18 @@ export function useOfflineQueue(authReady: boolean) {
     return () => window.removeEventListener("online", flush);
   }, [flush, authReady]);
 
-  const enqueue = useCallback((input: CreateSubmissionInput, idempotencyKey: string) => {
+  const enqueue = useCallback(async (input: CreateSubmissionInput, idempotencyKey: string, photo?: Blob | null) => {
+    let photoKey: string | undefined;
+    if (photo) {
+      try {
+        await saveOfflineMedia(idempotencyKey, photo);
+        photoKey = idempotencyKey;
+      } catch {
+        // No IndexedDB (private mode): the report still goes, just without the photo.
+      }
+    }
     const queue = readQueue();
-    queue.push({ idempotencyKey, input, queuedAt: new Date().toISOString() });
+    queue.push({ idempotencyKey, input, queuedAt: new Date().toISOString(), photoKey });
     writeQueue(queue);
     setPendingCount(queue.length);
   }, []);

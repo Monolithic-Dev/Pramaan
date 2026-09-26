@@ -9,7 +9,14 @@ export function SlaChip({ sla }: { sla: Sla }) {
   const { t } = useLanguage();
   if (sla.state === "met") return <Badge tone="green"><Icon name="check" size={12} />{t("sla.met")}</Badge>;
   const days = Math.abs(sla.days_left ?? 0);
-  if (sla.state === "overdue") return <Badge tone="red"><Icon name="clock" size={12} />{t("sla.overdue", { days })}</Badge>;
+  if (sla.state === "overdue") {
+    return (
+      <span className="inline-flex flex-wrap gap-1">
+        <Badge tone="red"><Icon name="clock" size={12} />{t("sla.overdue", { days })}</Badge>
+        {sla.escalated_to && <Badge tone="violet"><Icon name="arrowRight" size={12} className="-rotate-90" />{t(`sla.escalated.${sla.escalated_to}`)}</Badge>}
+      </span>
+    );
+  }
   if (sla.state === "due_soon") return <Badge tone="amber"><Icon name="clock" size={12} />{t("sla.due_soon", { days })}</Badge>;
   return <Badge tone="slate"><Icon name="clock" size={12} />{t("sla.ok", { days })}</Badge>;
 }
