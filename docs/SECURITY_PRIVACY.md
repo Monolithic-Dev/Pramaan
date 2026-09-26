@@ -8,7 +8,7 @@ A public, government-facing platform handling citizen location and contact data 
 |---|---|---|
 | Citizen | Phone OTP (Firebase Auth) | Anonymous submission also allowed, with stricter rate limits and no impact-loop follow-up |
 | Field Officer | Identity Platform / SSO, role = `field_officer` | Scoped to their `jurisdiction` claim — server enforces this on every request, never trusts client-supplied jurisdiction |
-| District Collector | SSO, role = `collector` | Scoped to district |
+| District Collector | SSO, role = `district_collector` | Scoped to district |
 | State Admin | SSO, role = `state_admin` | Full config access within their `state_id` only |
 
 Role-based access control (RBAC) is enforced server-side on every write endpoint — jurisdiction scoping is a data-access-layer concern, never a UI-only restriction.
@@ -49,3 +49,24 @@ Every officer action (`verify`, `dispute`, `mark-complete`) is logged with actor
 
 ## 7. Secrets management
 All API keys, service credentials, and webhook verification tokens are stored in Secret Manager, never in source control or environment files committed to the repo. CI/CD injects secrets at deploy time only.
+
+## 8. Controls as implemented
+Each row points at the code that enforces it, so the claims above can be checked rather than trusted.
+
+| Control | Where |
+|---|---|
+| **One permission map for every role.** Enforced on every route and returned by `GET /me`, so the UI never invents permissions | `apps/api-gateway/src/services/permissions.ts` |
+| **Jurisdiction on every officer read and write.** Ancestor test on the region chain; never client-trusted. Covers issues, projects, plans, analytics, exports, media, officer accounts and the audit log | `routes/helpers.ts` (`regionInScope`, `issueInScope`), `agent/scopeGuard.ts` |
+| **Disabled officers lose access immediately.** Disabling revokes refresh tokens, and officer ID tokens are verified with `checkRevoked` | `lib/officerAdmin.ts`, `lib/authVerifier.ts` |
+| **Media can't be pointed at other storage.** Only URLs minted by `POST /media` are accepted on submissions, webhooks and resolution photos. Both readers are pinned to the app's own bucket | `lib/mediaStore.ts` (`owns`), `worker-ai-pipeline/src/lib/media.ts` |
+| **Media is scoped like its issue.** An officer can fetch a photo only if they may see the issue it belongs to | `routes/console.ts` `GET /media/*` |
+| **Webhooks fail closed.** 503 until a shared secret is configured; constant-time comparison | `routes/webhooks.ts` |
+| **The impact loop can't be gamed by one person.** One answer per reporter per round; officers can't answer as citizens; sign-off needs `district_collector` | `services/impactLoop.ts`, `routes/projects.ts` |
+| **Scheduler-only jobs.** Escalation requires the worker shared secret | `routes/jobs.ts` |
+| **Response hardening.** `nosniff`, `X-Frame-Options: DENY`, HSTS, `no-referrer`, `CSP default-src 'none'`, `no-store` | `app.ts` |
+| **Traceability.** Every response and log line carries `x-request-id` (a validated caller id or a fresh UUID); 5xx bodies include it | `app.ts` |
+| **Correct error classes.** Client mistakes stay 4xx; only dependency failures are 502, so monitoring alerts on real outages | `app.ts` |
+| **Real client IPs for rate limits.** Exactly one proxy hop trusted; a spoofed `X-Forwarded-For` can't dodge the limiter | `app.ts` (`TRUST_PROXY_HOPS`) |
+| **Graceful shutdown.** SIGTERM drains in-flight requests before exit (Cloud Run / Render) | `apps/*/src/index.ts` |
+| **Client storage denied.** Firestore rules deny all direct client access; everything goes through the API | `firestore.rules` |
+| **Export safety.** CSV cells that a spreadsheet would execute as formulas are neutralised; open data suppresses cells under 3 | `routes/reports.ts` (`csvCell`), `routes/public.ts` |
