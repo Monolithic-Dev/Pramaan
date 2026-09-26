@@ -118,6 +118,8 @@ export function registerInsightRoutes(app: FastifyInstance, deps: Deps) {
         });
       }
       const project = await deps.store.getProjectByIssue(issue.issue_id);
+      const impact = project?.marked_complete_at ? await deps.store.getImpactRecord(project.project_id) : null;
+      const alreadyAnswered = impact?.confirmed_by?.includes(submission.citizen_id) ?? false;
       let explanation = project?.generated_brief ?? null;
       const language = (citizen?.preferred_language ?? "en").split("-")[0];
       let explanationLanguage = "en";
@@ -140,7 +142,7 @@ export function registerInsightRoutes(app: FastifyInstance, deps: Deps) {
         explanation_language: explanationLanguage,
         // Lets the citizen app show "Was this fixed?" once an officer marks the work complete.
         project_id: project?.project_id ?? null,
-        awaiting_confirmation: Boolean(project?.marked_complete_at) && project?.status !== "completed",
+        awaiting_confirmation: Boolean(project?.marked_complete_at) && project?.status !== "completed" && !alreadyAnswered,
         first_reported_at: issue.first_reported_at,
         category: issue.category,
         preferred_language: citizen?.preferred_language ?? null,

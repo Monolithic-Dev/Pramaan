@@ -310,6 +310,9 @@ export interface ImpactRecord {
   confirmations_received: number;
   confirmations_required: number;
   confirmations_negative: number;
+  /** Citizen ids that have already responded, so the threshold counts distinct reporters, not calls.
+   *  Optional because records written before this field existed lack it. */
+  confirmed_by?: string[];
   resolution_photo_url: string | null;
   resolved_at: string;
   verified_by: string;
