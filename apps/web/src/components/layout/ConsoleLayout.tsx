@@ -145,6 +145,8 @@ export function ConsoleLayout() {
             )}
           </div>
         </div>
+        {/* On phones the header has no room for it, so the language picker lives here. */}
+        <div className="mb-1 sm:hidden"><LanguageMenu dark /></div>
         <Button variant="ghost" size="sm" icon="logout" onClick={signOut} className="w-full justify-start !text-brand-100 hover:!bg-white/10">
           {t("nav.signOut")}
         </Button>
@@ -169,14 +171,14 @@ export function ConsoleLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <button type="button" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden" aria-label="Menu" onClick={() => setMenuOpen(true)}>
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <button type="button" className="shrink-0 rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden" aria-label="Menu" onClick={() => setMenuOpen(true)}>
                 <Icon name="menu" />
               </button>
-              <label className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
+              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-600">
                 <Icon name="pin" size={16} className="shrink-0 text-brand-600" />
                 <span className="hidden font-medium sm:inline">{t("console.jurisdiction")}</span>
-                <Select aria-label={t("console.jurisdiction")} value={regionId} onChange={(e) => setRegionId(e.target.value)} className="!w-auto max-w-[14rem] !py-1.5">
+                <Select aria-label={t("console.jurisdiction")} value={regionId} onChange={(e) => setRegionId(e.target.value)} className="min-w-0 max-w-[14rem] py-1.5!">
                   {regions.length === 0 && <option value={regionId}>{regionId}</option>}
                   {grouped.map(([level, rs]) => (
                     <optgroup key={level} label={t(`level.${level}`)}>
@@ -188,10 +190,10 @@ export function ConsoleLayout() {
                 </Select>
               </label>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1.5">
               <CommandPalette targets={paletteTargets} regionId={regionId} />
               <NotificationBell />
-              <LanguageMenu />
+              <div className="hidden sm:block"><LanguageMenu /></div>
             </div>
           </header>
           <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 focus:outline-none sm:px-6">
