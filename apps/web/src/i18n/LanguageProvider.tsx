@@ -3,8 +3,8 @@ import en from "./en.json";
 
 // Each language doubles as the country signal for a submission
 // (docs/CROSS_BORDER_AND_DPG.md) — there's no separate country switcher UI;
-// picking Portuguese is how a citizen tells JanSetu they're reporting in
-// Brazil. countryCode must be a COUNTRY_PROFILES key (@jansetu/shared-types).
+// picking Portuguese is how a citizen tells Pramaan they're reporting in
+// Brazil. countryCode must be a COUNTRY_PROFILES key (@pramaan/shared-types).
 export const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English", speechLang: "en-IN", countryCode: "IN" },
   { code: "hi", label: "हिन्दी", speechLang: "hi-IN", countryCode: "IN" },
@@ -37,7 +37,7 @@ const LOADERS: Record<Exclude<LanguageCode, "en">, () => Promise<{ default: Dict
   pt: () => import("./pt.json"),
 };
 
-const STORAGE_KEY = "jansetu.language";
+const STORAGE_KEY = "pramaan.language";
 const isSupported = (code: string | null | undefined): code is LanguageCode => SUPPORTED_LANGUAGES.some((l) => l.code === code);
 
 interface LanguageContextValue {

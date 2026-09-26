@@ -7,8 +7,8 @@ description: >
   table", "the query is failing at runtime".
 ---
 
-## What this covers for JanSetu specifically
-JanSetu deliberately splits storage: Firestore for low-latency operational documents, BigQuery
+## What this covers for Pramaan specifically
+Pramaan deliberately splits storage: Firestore for low-latency operational documents, BigQuery
 for analytical joins against reference data (`InfraIndex`, `InvestmentRecord`) — both
 partitioned by `state_id` for the Option A→B federation path described in
 `docs/ARCHITECTURE.md`.

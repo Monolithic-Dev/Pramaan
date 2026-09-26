@@ -1,4 +1,4 @@
-# Full Review Checklist — JanSetu
+# Full Review Checklist — Pramaan
 
 One line per watch-out item, consolidated from every other skill. Work top to bottom on any
 non-trivial PR; skip sections that genuinely don't apply to the diff.

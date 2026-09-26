@@ -1,4 +1,4 @@
-# JanSetu — 16-Day Build Plan
+# Pramaan — 16-Day Build Plan
 
 Replaces `ROADMAP.md`, which assumed 18-20 working days remaining and scheduled the submission package past the deadline.
 

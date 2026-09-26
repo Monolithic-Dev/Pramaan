@@ -2,13 +2,13 @@
 name: senior-security
 description: >
   Use for auth, RBAC/jurisdiction enforcement, secrets, PII handling, and DPDP Act 2023
-  compliance questions across JanSetu. Trigger on "add auth to X", "is this endpoint
+  compliance questions across Pramaan. Trigger on "add auth to X", "is this endpoint
   protected", "where do we store this", "is this DPDP-compliant", "rotate this secret",
   "audit log for X", "does this leak PII".
 ---
 
-## What this covers for JanSetu specifically
-JanSetu is a government-facing platform handling citizen phone numbers, precise location, and
+## What this covers for Pramaan specifically
+Pramaan is a government-facing platform handling citizen phone numbers, precise location, and
 photos. Treat every PII field and every officer action as something that could genuinely be
 asked about in a compliance review, not just as hackathon-demo plumbing.
 

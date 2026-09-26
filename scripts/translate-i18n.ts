@@ -1,5 +1,5 @@
 // Fills missing keys in apps/web/src/i18n/{hi,ta,pt}.json from en.json using Gemini.
-// Run: GEMINI_API_KEY=... pnpm --filter @jansetu/scripts exec tsx translate-i18n.ts
+// Run: GEMINI_API_KEY=... pnpm --filter @pramaan/scripts exec tsx translate-i18n.ts
 import { readFileSync, writeFileSync } from "node:fs";
 
 const LANGS: Record<string, string> = {
@@ -32,6 +32,7 @@ async function translateBatch(langName: string, entries: [string, string][]): Pr
   const prompt = `Translate the JSON object values below into ${langName}, for a government citizen-services web app UI.
 Keep the JSON keys exactly the same. Keep any "{placeholder}" tokens (curly braces and the name inside) unchanged, verbatim, in the translated text.
 Keep it natural, concise UI copy — not literal word-for-word translation. Do not translate the placeholder names themselves.
+"Pramaan" is the product's name: keep it a proper noun, written phonetically in the target script (e.g. Hindi "प्रमाण"), never replaced by a synonym or translated for its meaning.
 Reply with ONLY the translated JSON object, no markdown fences, no commentary.
 
 ${JSON.stringify(source, null, 2)}`;

@@ -4,7 +4,7 @@ import type {
   Issue,
   PriorityScore,
   VulnerabilityBand,
-} from "@jansetu/shared-types";
+} from "@pramaan/shared-types";
 
 export const MIN_BAND_SAMPLE = 5;
 const FUNDED_STATUSES = new Set(["funded", "in_progress", "resolved"]);

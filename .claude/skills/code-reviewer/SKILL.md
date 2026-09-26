@@ -1,12 +1,12 @@
 ---
 name: code-reviewer
 description: >
-  Use when reviewing a pull request or diff anywhere in the JanSetu monorepo before merging.
+  Use when reviewing a pull request or diff anywhere in the Pramaan monorepo before merging.
   Trigger on "review this PR", "review this diff", "is this ready to merge", "check this
   code before I merge it".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 A single consolidated checklist pulling the highest-value "watch out for" items from every
 other skill in this set, so a reviewer — human or agent — doesn't need all eleven other skills
 open at once to catch the mistakes this project specifically tends to produce.

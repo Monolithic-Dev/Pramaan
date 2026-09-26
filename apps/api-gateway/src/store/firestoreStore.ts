@@ -14,7 +14,7 @@ import type {
   Project,
   StateRecord,
   Submission,
-} from "@jansetu/shared-types";
+} from "@pramaan/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {

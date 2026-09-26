@@ -1,5 +1,5 @@
-import type { BudgetPlanItem, Issue, PriorityScore, Project } from "@jansetu/shared-types";
-import { computeCompositeScore, type ScoreWeights } from "@jansetu/shared-utils";
+import type { BudgetPlanItem, Issue, PriorityScore, Project } from "@pramaan/shared-types";
+import { computeCompositeScore, type ScoreWeights } from "@pramaan/shared-utils";
 import type { RegionInfo } from "../lib/bigquery.js";
 import { estimateBudget } from "./costing.js";
 import { inferSettlement, matchSchemes } from "./schemes.js";

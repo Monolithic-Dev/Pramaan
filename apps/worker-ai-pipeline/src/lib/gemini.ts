@@ -3,7 +3,7 @@ import {
   CATEGORIZATION_RESPONSE_SCHEMA,
   CATEGORIZATION_SYSTEM_PROMPT,
   type CategorizationResult,
-} from "@jansetu/ai-prompts";
+} from "@pramaan/ai-prompts";
 import { z } from "zod";
 import { env } from "./env.js";
 import { buildGenAI, generateWithFallback, parseModelList } from "./genai.js";

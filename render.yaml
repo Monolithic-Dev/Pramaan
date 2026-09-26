@@ -3,11 +3,11 @@
 # See docs/FREE_DEPLOYMENT_GUIDE.md. Secrets marked sync:false are entered in the Render dashboard.
 services:
   - type: web
-    name: jansetu-api
+    name: pramaan-api
     runtime: node
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile
-    startCommand: pnpm --filter @jansetu/api-gateway exec tsx src/index.ts
+    startCommand: pnpm --filter @pramaan/api-gateway exec tsx src/index.ts
     healthCheckPath: /healthz
     envVars:
       - { key: NODE_VERSION, value: "20" }
@@ -19,11 +19,11 @@ services:
       - { key: WORKER_SHARED_SECRET, sync: false }
 
   - type: web
-    name: jansetu-worker
+    name: pramaan-worker
     runtime: node
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile
-    startCommand: pnpm --filter @jansetu/worker-ai-pipeline exec tsx src/index.ts
+    startCommand: pnpm --filter @pramaan/worker-ai-pipeline exec tsx src/index.ts
     healthCheckPath: /healthz
     envVars:
       - { key: NODE_VERSION, value: "20" }
@@ -33,9 +33,9 @@ services:
       - { key: WORKER_SHARED_SECRET, sync: false }
 
   - type: web
-    name: jansetu-web
+    name: pramaan-web
     runtime: static
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @jansetu/web build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @pramaan/web build
     staticPublishPath: apps/web/dist
     routes:
       - { type: rewrite, source: /*, destination: /index.html }

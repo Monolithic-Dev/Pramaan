@@ -1,5 +1,5 @@
 {
-  "name": "@jansetu/web",
+  "name": "@pramaan/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@jansetu/shared-types": "workspace:*",
+    "@pramaan/shared-types": "workspace:*",
     "leaflet": "^1.9.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

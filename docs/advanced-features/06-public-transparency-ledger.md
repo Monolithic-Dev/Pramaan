@@ -1,7 +1,7 @@
 # Feature 6: Public Transparency Ledger
 
 ## Why this is unique
-JanSetu already calls itself a "Digital Public Good." This is the feature that makes that phrase
+Pramaan already calls itself a "Digital Public Good." This is the feature that makes that phrase
 literally true rather than aspirational: a public, no-login page showing aggregate accountability
 data — how many issues are reported, verified, funded, and resolved, and how long each stage
 takes, per state. Any citizen, journalist, or auditor can see it without an account. That's a

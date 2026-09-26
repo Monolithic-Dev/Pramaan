@@ -1,7 +1,7 @@
 // Loads the same sample reference data into Firestore (ref_* collections) for the free,
 // no-billing deployment. Safe to re-run: documents are keyed deterministically and overwritten.
 //
-// Run: FIREBASE_SERVICE_ACCOUNT_JSON=<json|base64> pnpm --filter @jansetu/scripts seed-firestore-reference
+// Run: FIREBASE_SERVICE_ACCOUNT_JSON=<json|base64> pnpm --filter @pramaan/scripts seed-firestore-reference
 //  or: gcloud auth application-default login, then GCP_PROJECT_ID=<id> pnpm ... seed-firestore-reference
 import { getFirestore } from "firebase-admin/firestore";
 import { initFirebase } from "../lib/firebase.js";

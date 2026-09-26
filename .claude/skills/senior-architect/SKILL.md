@@ -1,7 +1,7 @@
 ---
 name: senior-architect
 description: >
-  Use when making or reviewing structural decisions for JanSetu — service boundaries
+  Use when making or reviewing structural decisions for Pramaan — service boundaries
   between apps/api-gateway, apps/worker-ai-pipeline, and apps/web; the Firestore-vs-BigQuery
   split; the multi-tenant state_id partitioning model; or anything that would force
   revisiting docs/ARCHITECTURE.md. Trigger on "should this be its own service", "how should
@@ -9,8 +9,8 @@ description: >
   across states", "is this the right place for this logic".
 ---
 
-## What this covers for JanSetu specifically
-JanSetu's architecture rests on two deliberate decisions: ingestion is decoupled from the AI
+## What this covers for Pramaan specifically
+Pramaan's architecture rests on two deliberate decisions: ingestion is decoupled from the AI
 pipeline via Pub/Sub (so citizen-facing latency never depends on AI availability), and every
 table/collection is partitioned by `state_id` so the system can move from a single shared
 deployment (Option A) to a per-state federated one (Option B) as a config change, not a

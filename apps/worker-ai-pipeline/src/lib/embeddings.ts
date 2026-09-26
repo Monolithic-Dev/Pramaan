@@ -1,4 +1,4 @@
-import { withRetry } from "@jansetu/shared-utils";
+import { withRetry } from "@pramaan/shared-utils";
 import { env } from "./env.js";
 import { buildGenAI } from "./genai.js";
 

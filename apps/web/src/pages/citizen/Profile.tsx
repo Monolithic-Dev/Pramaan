@@ -19,7 +19,7 @@ export default function Profile() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "jansetu-my-data.json";
+      a.download = "pramaan-my-data.json";
       a.click();
       URL.revokeObjectURL(url);
       toast("success", t("profile.exported"));

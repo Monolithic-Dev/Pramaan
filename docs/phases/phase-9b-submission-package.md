@@ -61,7 +61,7 @@ Structure it explicitly around the five evaluation parameters. Judges score agai
 
 | # | Slide | Content |
 |---|---|---|
-| 1 | Title | JanSetu, one line, team, live URL |
+| 1 | Title | Pramaan, one line, team, live URL |
 | 2 | Problem | The problem statement, plus the two hard parts everyone skips: dedup and outcome measurement |
 | 3 | The gap in the obvious solution | The `README.md` paragraph — it is the strongest writing in your doc set, use it verbatim |
 | 4 | Solution overview | The loop: citizen → issue → score → project → confirmation → score |
@@ -92,7 +92,7 @@ Slides 6, 7, and 10 are where you win. Slide 7 in particular — a measured guar
 
 Draft:
 
-> JanSetu turns millions of raw, multilingual citizen infrastructure complaints — via voice, WhatsApp, SMS, and web — into a small number of deduplicated, verified, and explainable priority projects that a state government can fund and track to completion. Officers interrogate the data through a Gemini agent that cites every figure to a tool result and refuses to answer when the data does not support one. The impact loop closes: citizens confirm resolution, and realised outcomes feed back into future prioritisation.
+> Pramaan turns millions of raw, multilingual citizen infrastructure complaints — via voice, WhatsApp, SMS, and web — into a small number of deduplicated, verified, and explainable priority projects that a state government can fund and track to completion. Officers interrogate the data through a Gemini agent that cites every figure to a tool result and refuses to answer when the data does not support one. The impact loop closes: citizens confirm resolution, and realised outcomes feed back into future prioritisation.
 
 Three sentences, each carrying a different differentiator. Adjust wording, keep the structure.
 

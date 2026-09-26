@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
-import type { DataFallback, InfraIndexType, Issue, PriorityScore } from "@jansetu/shared-types";
-import { computeCompositeScore, demandScore, gapScore, percentile } from "@jansetu/shared-utils";
+import type { DataFallback, InfraIndexType, Issue, PriorityScore } from "@pramaan/shared-types";
+import { computeCompositeScore, demandScore, gapScore, percentile } from "@pramaan/shared-utils";
 import type { AncestryStep } from "../lib/bigquery.js";
 import { currentFiscalYearStart, parseFiscalYearStart } from "../lib/bigquery.js";
 import { DEFAULT_SCORE_WEIGHTS } from "../lib/weights.js";

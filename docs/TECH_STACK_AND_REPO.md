@@ -1,4 +1,4 @@
-# Tech Stack & Repository Structure: JanSetu
+# Tech Stack & Repository Structure: Pramaan
 
 This document makes the implementation decisions concrete. `ARCHITECTURE.md`, `API_SPEC.md`, and `AI_PIPELINE.md` describe the system in language-agnostic terms — this is the layer on top that says exactly what to type into `pnpm create`.
 
@@ -36,7 +36,7 @@ The frontend is locked to the JavaScript/TypeScript ecosystem regardless (React 
 | Frontend (citizen report flow + officer Conversational UI) | TypeScript | React 18 + Vite, Tailwind CSS, one app with role-based routing (see 4.3) |
 | API Gateway (ingestion, auth, agent/dashboard reads) | TypeScript | Fastify — lighter and faster than Express/NestJS for a service this size, first-class TS support |
 | AI Worker (agent orchestration, tools, categorization, dedup) | TypeScript | Node.js, hosts `@google/genai` function schemas for the Agent to call |
-| Shared types/contracts | TypeScript | Internal `@jansetu/shared-types` workspace package, mirrors `DATA_MODEL.md` |
+| Shared types/contracts | TypeScript | Internal `@pramaan/shared-types` workspace package, mirrors `DATA_MODEL.md` |
 | Request/schema validation | TypeScript | Zod — same schema used for frontend form validation and backend request validation |
 | Infra as code | Terraform (HCL) if someone on the team knows it; otherwise a scripted `gcloud` setup file | Don't learn Terraform under a hackathon clock just for its own sake — a documented shell script of `gcloud` commands is a perfectly fine substitute for this scope |
 | Synthetic demo dataset generator (`TESTING.md`) | TypeScript (Python is fine too — it's a throwaway script, not a service) | Node script, run once to seed Firestore/BigQuery |
@@ -65,7 +65,7 @@ The hackathon submission package asks for **"Source code — public or access-gr
 
 ### 2.3 Concrete folder layout
 ```
-jansetu/
+pramaan/
 ├── apps/
 │   ├── web/                     # React app — citizen report flow (/report) +
 │   │                             officer conversational AI interface (/chat),
@@ -113,8 +113,8 @@ If most of your team is meaningfully stronger in Python than TypeScript, it's le
 ## 4. Quickstart (bootstrap commands)
 ```bash
 # Initialize the monorepo
-pnpm dlx create-turbo@latest jansetu
-cd jansetu
+pnpm dlx create-turbo@latest pramaan
+cd pramaan
 
 # Frontend
 pnpm create vite apps/web --template react-ts

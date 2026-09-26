@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { getCountryProfile } from "@jansetu/shared-types";
-import { geohashDecodeCenter } from "@jansetu/shared-utils";
+import { getCountryProfile } from "@pramaan/shared-types";
+import { geohashDecodeCenter } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { getEquityAudit, getForecasts } from "../insights/service.js";

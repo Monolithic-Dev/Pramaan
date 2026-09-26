@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type { SubmissionChannel } from "@jansetu/shared-types";
+import type { SubmissionChannel } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { env } from "../lib/env.js";
 import { getOrCreateCitizenByPhone } from "../services/citizens.js";

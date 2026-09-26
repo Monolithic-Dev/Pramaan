@@ -70,7 +70,7 @@ From the repo root (Git Bash), using that key file:
 ```bash
 export FIREBASE_SERVICE_ACCOUNT_JSON=$(base64 -w0 path/to/downloaded-key.json)
 export FIREBASE_PROJECT_ID=<your-project-id>
-pnpm --filter @jansetu/scripts seed-firestore-reference
+pnpm --filter @pramaan/scripts seed-firestore-reference
 ```
 
 It writes 13 regions (India + Brazil), infrastructure indexes and investment records. Check in Firestore:
@@ -79,7 +79,7 @@ collections `ref_admin_regions`, `ref_infra_index`, `ref_investment_record`.
 ## Step 3: Create an officer login
 
 ```bash
-pnpm --filter @jansetu/scripts create-officer officer@example.com 'ChooseAStrongPassword1' state_admin IN-DL IN
+pnpm --filter @pramaan/scripts create-officer officer@example.com 'ChooseAStrongPassword1' state_admin IN-DL IN
 ```
 
 Roles: `state_admin` (all screens), `district_collector`, `field_officer`. The `region_id` is the officer
@@ -90,25 +90,25 @@ jurisdiction, e.g. `IN-DL` (Delhi), `IN-MH`, `IN-KA`, `dl-central-delhi`, `BR-SP
 
 1. Push this repo to GitHub (it already is) and sign up at <https://render.com> with GitHub (no card).
 2. **New, Blueprint,** pick this repo. Render reads `render.yaml` and proposes three services:
-   `jansetu-api`, `jansetu-worker`, `jansetu-web`. Click **Apply**.
+   `pramaan-api`, `pramaan-worker`, `pramaan-web`. Click **Apply**.
 3. Fill the environment variables it asks for (Dashboard, each service, **Environment**):
 
-| Variable | jansetu-api | jansetu-worker | jansetu-web |
+| Variable | pramaan-api | pramaan-worker | pramaan-web |
 |---|---|---|---|
 | `FIREBASE_PROJECT_ID` | yes | yes | |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | base64 from Step 1 | same | |
 | `FIREBASE_WEB_API_KEY` | web API key | | |
 | `GEMINI_API_KEY` | your key | your key | |
 | `WORKER_SHARED_SECRET` | any long random string | **same string** | |
-| `WORKER_URL` | `https://jansetu-worker.onrender.com` (worker's URL) | | |
+| `WORKER_URL` | `https://pramaan-worker.onrender.com` (worker's URL) | | |
 | `WEBHOOK_SHARED_SECRET` | optional: only to enable the WhatsApp/SMS webhooks (they return 503 without it) | | |
-| `VITE_API_BASE_URL` | | | `https://jansetu-api.onrender.com/v1` |
+| `VITE_API_BASE_URL` | | | `https://pramaan-api.onrender.com/v1` |
 | `VITE_FIREBASE_API_KEY` | | | web API key |
 
    Generate the secret with: `openssl rand -hex 24`. The URLs are shown at the top of each Render service page;
    if Render adds a suffix, use the exact URL.
-4. After the first deploy, redeploy `jansetu-web` once so it picks up the API URL.
-5. In Firebase, **Authentication, Settings, Authorized domains:** add the `jansetu-web` domain
+4. After the first deploy, redeploy `pramaan-web` once so it picks up the API URL.
+5. In Firebase, **Authentication, Settings, Authorized domains:** add the `pramaan-web` domain
    (`something.onrender.com`).
 
 Check: open `https://<api>/healthz` and `https://<worker>/healthz`. Both return `{"status":"ok"}`.
@@ -138,14 +138,14 @@ browsers, or run more submissions, before expecting scores.
 
 ## Automated end-to-end checks (run against your real Firestore, Auth and Gemini)
 
-With the API on :8080 and the worker on :8081 running locally (`pnpm --filter @jansetu/api-gateway dev` etc.,
+With the API on :8080 and the worker on :8081 running locally (`pnpm --filter @pramaan/api-gateway dev` etc.,
 with `WORKER_URL=http://localhost:8081` and `WORKER_SHARED_SECRET` set on both):
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=<path-to-service-account.json>
 export E2E_OFFICER_PASSWORD=<password you gave create-officer>
-pnpm --filter @jansetu/scripts exec tsx e2e-local.ts <folder-with-pothole.jpg-and-report-en.wav>
-pnpm --filter @jansetu/scripts exec tsx e2e-agent.ts
+pnpm --filter @pramaan/scripts exec tsx e2e-local.ts <folder-with-pothole.jpg-and-report-en.wav>
+pnpm --filter @pramaan/scripts exec tsx e2e-agent.ts
 ```
 
 `e2e-local.ts` runs about 75 checks (ingestion, idempotency, Hindi/English/Portuguese, dedup, burst detection,
@@ -156,7 +156,7 @@ dl-central-delhi) and `admin.br@pramaan.test` (state_admin, BR-SP) from `create-
 20-30 minutes because reports are processed one at a time against the real Gemini API.
 
 ## Troubleshooting
-- **Site loads but calls fail:** `VITE_API_BASE_URL` wrong, or `jansetu-web` not redeployed after setting it.
+- **Site loads but calls fail:** `VITE_API_BASE_URL` wrong, or `pramaan-web` not redeployed after setting it.
 - **CORS error in browser console:** the api service is asleep or crashed; open its `/healthz` and check Render logs.
 - **Submission stays `queued`:** worker asleep or `WORKER_SHARED_SECRET` mismatch. The 15-minute cron will retry.
 - **"The query requires an index":** open the link in the error; it creates the Firestore index in one click.

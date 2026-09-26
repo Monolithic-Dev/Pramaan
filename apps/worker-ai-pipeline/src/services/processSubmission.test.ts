@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import type { CategorizationResult } from "@jansetu/ai-prompts";
-import type { Submission } from "@jansetu/shared-types";
+import type { CategorizationResult } from "@pramaan/ai-prompts";
+import type { Submission } from "@pramaan/shared-types";
 import { buildApp } from "../app.js";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 import { processSubmission } from "./processSubmission.js";

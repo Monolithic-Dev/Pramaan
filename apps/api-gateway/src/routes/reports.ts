@@ -91,7 +91,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: Deps) {
     return reply
       .code(200)
       .header("content-type", "text/csv; charset=utf-8")
-      .header("content-disposition", `attachment; filename="jansetu-issues-${region}.csv"`)
+      .header("content-disposition", `attachment; filename="pramaan-issues-${region}.csv"`)
       .send(toCsv(rows));
   });
 }

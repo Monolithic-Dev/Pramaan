@@ -4,8 +4,8 @@ RUN corepack enable
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
 COPY packages ./packages
 COPY apps/worker-ai-pipeline ./apps/worker-ai-pipeline
-RUN pnpm install --frozen-lockfile --filter @jansetu/worker-ai-pipeline...
-RUN pnpm --filter @jansetu/worker-ai-pipeline build
+RUN pnpm install --frozen-lockfile --filter @pramaan/worker-ai-pipeline...
+RUN pnpm --filter @pramaan/worker-ai-pipeline build
 
 FROM node:20-slim
 WORKDIR /app

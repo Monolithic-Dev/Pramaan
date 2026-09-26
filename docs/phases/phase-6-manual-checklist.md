@@ -8,7 +8,7 @@ audit endpoint are implemented and unit-tested (57/57 api-gateway tests). See
 1. **Run against a real project**:
    ```bash
    gcloud auth application-default login
-   GCP_PROJECT_ID=<project-id> pnpm --filter @jansetu/api-gateway dev
+   GCP_PROJECT_ID=<project-id> pnpm --filter @pramaan/api-gateway dev
    ```
 2. **Manual smoke test**: create a session (`POST /v1/agent/sessions`) with an officer JWT carrying `region_id`, then `POST /v1/agent/sessions/{id}/messages` with a real question and watch the SSE stream — confirm `tool_call` events arrive before `token`.
 3. **Tool-selection accuracy suite** (§6.7): write the 30-question set with expected tool sequences against real seed data, run each through a live session, measure exact-match rate. Target ≥ 80%. This can't be built as a placeholder the way `DEDUP-TUNING.md` was — "did Gemini pick the right tool" is meaningless without a real model in the loop.

@@ -1,94 +1,94 @@
 region_id,country_code,level,name,parent_region_id,population,boundary_ref,centroid_lat,centroid_lng
-IN-DL,IN,state,Delhi,IN,16787941,bq://jansetu.reference.in_admin_boundaries/state/DL,28.7041,77.1025
-IN-MH,IN,state,Maharashtra,IN,112374333,bq://jansetu.reference.in_admin_boundaries/state/MH,19.7515,75.7139
-IN-KA,IN,state,Karnataka,IN,61095297,bq://jansetu.reference.in_admin_boundaries/state/KA,15.3173,75.7139
-dl-central-delhi,IN,district,Central Delhi,IN-DL,582320,bq://jansetu.reference.in_admin_boundaries/district/dl-central-delhi,28.6519,77.2315
-dl-south-delhi,IN,district,South Delhi,IN-DL,2731929,bq://jansetu.reference.in_admin_boundaries/district/dl-south-delhi,28.5245,77.2066
-mh-mumbai-city,IN,district,Mumbai City,IN-MH,3145966,bq://jansetu.reference.in_admin_boundaries/district/mh-mumbai-city,18.9388,72.8354
-mh-pune,IN,district,Pune,IN-MH,9426959,bq://jansetu.reference.in_admin_boundaries/district/mh-pune,18.5204,73.8567
-ka-bengaluru-urban,IN,district,Bengaluru Urban,IN-KA,9621551,bq://jansetu.reference.in_admin_boundaries/district/ka-bengaluru-urban,12.9716,77.5946
-ka-mysuru,IN,district,Mysuru,IN-KA,3001127,bq://jansetu.reference.in_admin_boundaries/district/ka-mysuru,12.2958,76.6394
-BR-SP,BR,estado,São Paulo,BR,46024937,bq://jansetu.reference.br_admin_boundaries/estado/SP,-23.5505,-46.6333
-br-sao-paulo,BR,município,São Paulo,BR-SP,12325232,bq://jansetu.reference.br_admin_boundaries/municipio/sao-paulo,-23.5505,-46.6333
-br-campinas,BR,município,Campinas,BR-SP,1223237,bq://jansetu.reference.br_admin_boundaries/municipio/campinas,-22.9099,-47.0626
-br-santos,BR,município,Santos,BR-SP,433991,bq://jansetu.reference.br_admin_boundaries/municipio/santos,-23.9608,-46.3339
-IN,IN,country,India,,1210854977,bq://jansetu.reference.in_admin_boundaries/country/IN,22.9734,78.6569
-BR,BR,country,Brasil,,203062512,bq://jansetu.reference.br_admin_boundaries/country/BR,-14.235,-51.9253
-IN-AN,IN,state,Andaman and Nicobar Islands,IN,380581,bq://jansetu.reference.in_admin_boundaries/state/AN,11.7401,92.6586
-IN-AP,IN,state,Andhra Pradesh,IN,49577103,bq://jansetu.reference.in_admin_boundaries/state/AP,15.9129,79.74
-IN-AR,IN,state,Arunachal Pradesh,IN,1383727,bq://jansetu.reference.in_admin_boundaries/state/AR,28.218,94.7278
-IN-AS,IN,state,Assam,IN,31205576,bq://jansetu.reference.in_admin_boundaries/state/AS,26.2006,92.9376
-IN-BR,IN,state,Bihar,IN,104099452,bq://jansetu.reference.in_admin_boundaries/state/BR,25.0961,85.3131
-IN-CH,IN,state,Chandigarh,IN,1055450,bq://jansetu.reference.in_admin_boundaries/state/CH,30.7333,76.7794
-IN-CT,IN,state,Chhattisgarh,IN,25545198,bq://jansetu.reference.in_admin_boundaries/state/CT,21.2787,81.8661
-IN-DN,IN,state,Dadra and Nagar Haveli and Daman and Diu,IN,585764,bq://jansetu.reference.in_admin_boundaries/state/DN,20.3974,72.8328
-IN-GA,IN,state,Goa,IN,1458545,bq://jansetu.reference.in_admin_boundaries/state/GA,15.2993,74.124
-IN-GJ,IN,state,Gujarat,IN,60439692,bq://jansetu.reference.in_admin_boundaries/state/GJ,22.2587,71.1924
-IN-HR,IN,state,Haryana,IN,25351462,bq://jansetu.reference.in_admin_boundaries/state/HR,29.0588,76.0856
-IN-HP,IN,state,Himachal Pradesh,IN,6864602,bq://jansetu.reference.in_admin_boundaries/state/HP,31.1048,77.1734
-IN-JK,IN,state,Jammu and Kashmir,IN,12541302,bq://jansetu.reference.in_admin_boundaries/state/JK,33.7782,76.5762
-IN-JH,IN,state,Jharkhand,IN,32988134,bq://jansetu.reference.in_admin_boundaries/state/JH,23.6102,85.2799
-IN-KL,IN,state,Kerala,IN,33406061,bq://jansetu.reference.in_admin_boundaries/state/KL,10.8505,76.2711
-IN-LA,IN,state,Ladakh,IN,274289,bq://jansetu.reference.in_admin_boundaries/state/LA,34.1526,77.577
-IN-LD,IN,state,Lakshadweep,IN,64473,bq://jansetu.reference.in_admin_boundaries/state/LD,10.5667,72.6417
-IN-MP,IN,state,Madhya Pradesh,IN,72626809,bq://jansetu.reference.in_admin_boundaries/state/MP,22.9734,78.6569
-IN-MN,IN,state,Manipur,IN,2855794,bq://jansetu.reference.in_admin_boundaries/state/MN,24.6637,93.9063
-IN-ML,IN,state,Meghalaya,IN,2966889,bq://jansetu.reference.in_admin_boundaries/state/ML,25.467,91.3662
-IN-MZ,IN,state,Mizoram,IN,1097206,bq://jansetu.reference.in_admin_boundaries/state/MZ,23.1645,92.9376
-IN-NL,IN,state,Nagaland,IN,1978502,bq://jansetu.reference.in_admin_boundaries/state/NL,26.1584,94.5624
-IN-OD,IN,state,Odisha,IN,41974218,bq://jansetu.reference.in_admin_boundaries/state/OD,20.9517,85.0985
-IN-PY,IN,state,Puducherry,IN,1247953,bq://jansetu.reference.in_admin_boundaries/state/PY,11.9416,79.8083
-IN-PB,IN,state,Punjab,IN,27743338,bq://jansetu.reference.in_admin_boundaries/state/PB,31.1471,75.3412
-IN-RJ,IN,state,Rajasthan,IN,68548437,bq://jansetu.reference.in_admin_boundaries/state/RJ,27.0238,74.2179
-IN-SK,IN,state,Sikkim,IN,610577,bq://jansetu.reference.in_admin_boundaries/state/SK,27.533,88.5122
-IN-TN,IN,state,Tamil Nadu,IN,72147030,bq://jansetu.reference.in_admin_boundaries/state/TN,11.1271,78.6569
-IN-TS,IN,state,Telangana,IN,35193978,bq://jansetu.reference.in_admin_boundaries/state/TS,18.1124,79.0193
-IN-TR,IN,state,Tripura,IN,3673917,bq://jansetu.reference.in_admin_boundaries/state/TR,23.9408,91.9882
-IN-UP,IN,state,Uttar Pradesh,IN,199812341,bq://jansetu.reference.in_admin_boundaries/state/UP,26.8467,80.9462
-IN-UK,IN,state,Uttarakhand,IN,10086292,bq://jansetu.reference.in_admin_boundaries/state/UK,30.0668,79.0193
-IN-WB,IN,state,West Bengal,IN,91276115,bq://jansetu.reference.in_admin_boundaries/state/WB,22.9868,87.855
-tn-chennai,IN,district,Chennai,IN-TN,4646732,bq://jansetu.reference.in_admin_boundaries/district/tn-chennai,13.0827,80.2707
-tn-coimbatore,IN,district,Coimbatore,IN-TN,3458045,bq://jansetu.reference.in_admin_boundaries/district/tn-coimbatore,11.0168,76.9558
-tn-madurai,IN,district,Madurai,IN-TN,3038252,bq://jansetu.reference.in_admin_boundaries/district/tn-madurai,9.9252,78.1198
-wb-kolkata,IN,district,Kolkata,IN-WB,4496694,bq://jansetu.reference.in_admin_boundaries/district/wb-kolkata,22.5726,88.3639
-wb-howrah,IN,district,Howrah,IN-WB,4850029,bq://jansetu.reference.in_admin_boundaries/district/wb-howrah,22.5958,88.2636
-ts-hyderabad,IN,district,Hyderabad,IN-TS,3943323,bq://jansetu.reference.in_admin_boundaries/district/ts-hyderabad,17.385,78.4867
-ts-warangal,IN,district,Warangal,IN-TS,3512576,bq://jansetu.reference.in_admin_boundaries/district/ts-warangal,17.9689,79.5941
-gj-ahmedabad,IN,district,Ahmedabad,IN-GJ,7214225,bq://jansetu.reference.in_admin_boundaries/district/gj-ahmedabad,23.0225,72.5714
-gj-surat,IN,district,Surat,IN-GJ,6081322,bq://jansetu.reference.in_admin_boundaries/district/gj-surat,21.1702,72.8311
-rj-jaipur,IN,district,Jaipur,IN-RJ,6626178,bq://jansetu.reference.in_admin_boundaries/district/rj-jaipur,26.9124,75.7873
-rj-jodhpur,IN,district,Jodhpur,IN-RJ,3685681,bq://jansetu.reference.in_admin_boundaries/district/rj-jodhpur,26.2389,73.0243
-up-lucknow,IN,district,Lucknow,IN-UP,4589838,bq://jansetu.reference.in_admin_boundaries/district/up-lucknow,26.8467,80.9462
-up-varanasi,IN,district,Varanasi,IN-UP,3676841,bq://jansetu.reference.in_admin_boundaries/district/up-varanasi,25.3176,82.9739
-up-kanpur-nagar,IN,district,Kanpur Nagar,IN-UP,4581268,bq://jansetu.reference.in_admin_boundaries/district/up-kanpur-nagar,26.4499,80.3319
-br-patna,IN,district,Patna,IN-BR,5838465,bq://jansetu.reference.in_admin_boundaries/district/br-patna,25.5941,85.1376
-br-gaya,IN,district,Gaya,IN-BR,4391418,bq://jansetu.reference.in_admin_boundaries/district/br-gaya,24.7914,85.0002
-mp-bhopal,IN,district,Bhopal,IN-MP,2371061,bq://jansetu.reference.in_admin_boundaries/district/mp-bhopal,23.2599,77.4126
-mp-indore,IN,district,Indore,IN-MP,3276697,bq://jansetu.reference.in_admin_boundaries/district/mp-indore,22.7196,75.8577
-kl-thiruvananthapuram,IN,district,Thiruvananthapuram,IN-KL,3301427,bq://jansetu.reference.in_admin_boundaries/district/kl-thiruvananthapuram,8.5241,76.9366
-kl-ernakulam,IN,district,Ernakulam,IN-KL,3282388,bq://jansetu.reference.in_admin_boundaries/district/kl-ernakulam,9.9816,76.2999
-od-khordha,IN,district,Khordha,IN-OD,2251673,bq://jansetu.reference.in_admin_boundaries/district/od-khordha,20.2961,85.8245
-od-cuttack,IN,district,Cuttack,IN-OD,2618708,bq://jansetu.reference.in_admin_boundaries/district/od-cuttack,20.4625,85.883
-jh-ranchi,IN,district,Ranchi,IN-JH,2914253,bq://jansetu.reference.in_admin_boundaries/district/jh-ranchi,23.3441,85.3096
-as-kamrup-metropolitan,IN,district,Kamrup Metropolitan,IN-AS,1253938,bq://jansetu.reference.in_admin_boundaries/district/as-kamrup-metropolitan,26.1445,91.7362
-uk-dehradun,IN,district,Dehradun,IN-UK,1696694,bq://jansetu.reference.in_admin_boundaries/district/uk-dehradun,30.3165,78.0322
-ct-raipur,IN,district,Raipur,IN-CT,4063872,bq://jansetu.reference.in_admin_boundaries/district/ct-raipur,21.2514,81.6296
-ap-visakhapatnam,IN,district,Visakhapatnam,IN-AP,4288113,bq://jansetu.reference.in_admin_boundaries/district/ap-visakhapatnam,17.6868,83.2185
-pb-ludhiana,IN,district,Ludhiana,IN-PB,3498739,bq://jansetu.reference.in_admin_boundaries/district/pb-ludhiana,30.901,75.8573
-hr-gurugram,IN,district,Gurugram,IN-HR,1514432,bq://jansetu.reference.in_admin_boundaries/district/hr-gurugram,28.4595,77.0266
-hp-shimla,IN,district,Shimla,IN-HP,813384,bq://jansetu.reference.in_admin_boundaries/district/hp-shimla,31.1048,77.1734
-ga-north-goa,IN,district,North Goa,IN-GA,818008,bq://jansetu.reference.in_admin_boundaries/district/ga-north-goa,15.4909,73.8278
-jk-srinagar,IN,district,Srinagar,IN-JK,1269751,bq://jansetu.reference.in_admin_boundaries/district/jk-srinagar,34.0837,74.7973
-mn-imphal-west,IN,district,Imphal West,IN-MN,517992,bq://jansetu.reference.in_admin_boundaries/district/mn-imphal-west,24.817,93.9368
-BR-MG,BR,estado,Minas Gerais,BR,20539989,bq://jansetu.reference.br_admin_boundaries/estado/MG,-18.5122,-44.555
-BR-RJ,BR,estado,Rio de Janeiro,BR,16055174,bq://jansetu.reference.br_admin_boundaries/estado/RJ,-22.9068,-43.1729
-BR-BA,BR,estado,Bahia,BR,14136417,bq://jansetu.reference.br_admin_boundaries/estado/BA,-12.5797,-41.7007
-BR-PE,BR,estado,Pernambuco,BR,9058931,bq://jansetu.reference.br_admin_boundaries/estado/PE,-8.0476,-34.877
-BR-RS,BR,estado,Rio Grande do Sul,BR,10882965,bq://jansetu.reference.br_admin_boundaries/estado/RS,-30.0346,-51.2177
-BR-CE,BR,estado,Ceará,BR,8794957,bq://jansetu.reference.br_admin_boundaries/estado/CE,-3.7319,-38.5267
-br-belo-horizonte,BR,município,Belo Horizonte,BR-MG,2315560,bq://jansetu.reference.br_admin_boundaries/municipio/belo-horizonte,-19.9167,-43.9345
-br-rio-de-janeiro,BR,município,Rio de Janeiro,BR-RJ,6211423,bq://jansetu.reference.br_admin_boundaries/municipio/rio-de-janeiro,-22.9068,-43.1729
-br-salvador,BR,município,Salvador,BR-BA,2418005,bq://jansetu.reference.br_admin_boundaries/municipio/salvador,-12.9714,-38.5014
-br-recife,BR,município,Recife,BR-PE,1488920,bq://jansetu.reference.br_admin_boundaries/municipio/recife,-8.0476,-34.877
-br-porto-alegre,BR,município,Porto Alegre,BR-RS,1332570,bq://jansetu.reference.br_admin_boundaries/municipio/porto-alegre,-30.0346,-51.2177
-br-fortaleza,BR,município,Fortaleza,BR-CE,2428708,bq://jansetu.reference.br_admin_boundaries/municipio/fortaleza,-3.7319,-38.5267
+IN-DL,IN,state,Delhi,IN,16787941,bq://pramaan.reference.in_admin_boundaries/state/DL,28.7041,77.1025
+IN-MH,IN,state,Maharashtra,IN,112374333,bq://pramaan.reference.in_admin_boundaries/state/MH,19.7515,75.7139
+IN-KA,IN,state,Karnataka,IN,61095297,bq://pramaan.reference.in_admin_boundaries/state/KA,15.3173,75.7139
+dl-central-delhi,IN,district,Central Delhi,IN-DL,582320,bq://pramaan.reference.in_admin_boundaries/district/dl-central-delhi,28.6519,77.2315
+dl-south-delhi,IN,district,South Delhi,IN-DL,2731929,bq://pramaan.reference.in_admin_boundaries/district/dl-south-delhi,28.5245,77.2066
+mh-mumbai-city,IN,district,Mumbai City,IN-MH,3145966,bq://pramaan.reference.in_admin_boundaries/district/mh-mumbai-city,18.9388,72.8354
+mh-pune,IN,district,Pune,IN-MH,9426959,bq://pramaan.reference.in_admin_boundaries/district/mh-pune,18.5204,73.8567
+ka-bengaluru-urban,IN,district,Bengaluru Urban,IN-KA,9621551,bq://pramaan.reference.in_admin_boundaries/district/ka-bengaluru-urban,12.9716,77.5946
+ka-mysuru,IN,district,Mysuru,IN-KA,3001127,bq://pramaan.reference.in_admin_boundaries/district/ka-mysuru,12.2958,76.6394
+BR-SP,BR,estado,São Paulo,BR,46024937,bq://pramaan.reference.br_admin_boundaries/estado/SP,-23.5505,-46.6333
+br-sao-paulo,BR,município,São Paulo,BR-SP,12325232,bq://pramaan.reference.br_admin_boundaries/municipio/sao-paulo,-23.5505,-46.6333
+br-campinas,BR,município,Campinas,BR-SP,1223237,bq://pramaan.reference.br_admin_boundaries/municipio/campinas,-22.9099,-47.0626
+br-santos,BR,município,Santos,BR-SP,433991,bq://pramaan.reference.br_admin_boundaries/municipio/santos,-23.9608,-46.3339
+IN,IN,country,India,,1210854977,bq://pramaan.reference.in_admin_boundaries/country/IN,22.9734,78.6569
+BR,BR,country,Brasil,,203062512,bq://pramaan.reference.br_admin_boundaries/country/BR,-14.235,-51.9253
+IN-AN,IN,state,Andaman and Nicobar Islands,IN,380581,bq://pramaan.reference.in_admin_boundaries/state/AN,11.7401,92.6586
+IN-AP,IN,state,Andhra Pradesh,IN,49577103,bq://pramaan.reference.in_admin_boundaries/state/AP,15.9129,79.74
+IN-AR,IN,state,Arunachal Pradesh,IN,1383727,bq://pramaan.reference.in_admin_boundaries/state/AR,28.218,94.7278
+IN-AS,IN,state,Assam,IN,31205576,bq://pramaan.reference.in_admin_boundaries/state/AS,26.2006,92.9376
+IN-BR,IN,state,Bihar,IN,104099452,bq://pramaan.reference.in_admin_boundaries/state/BR,25.0961,85.3131
+IN-CH,IN,state,Chandigarh,IN,1055450,bq://pramaan.reference.in_admin_boundaries/state/CH,30.7333,76.7794
+IN-CT,IN,state,Chhattisgarh,IN,25545198,bq://pramaan.reference.in_admin_boundaries/state/CT,21.2787,81.8661
+IN-DN,IN,state,Dadra and Nagar Haveli and Daman and Diu,IN,585764,bq://pramaan.reference.in_admin_boundaries/state/DN,20.3974,72.8328
+IN-GA,IN,state,Goa,IN,1458545,bq://pramaan.reference.in_admin_boundaries/state/GA,15.2993,74.124
+IN-GJ,IN,state,Gujarat,IN,60439692,bq://pramaan.reference.in_admin_boundaries/state/GJ,22.2587,71.1924
+IN-HR,IN,state,Haryana,IN,25351462,bq://pramaan.reference.in_admin_boundaries/state/HR,29.0588,76.0856
+IN-HP,IN,state,Himachal Pradesh,IN,6864602,bq://pramaan.reference.in_admin_boundaries/state/HP,31.1048,77.1734
+IN-JK,IN,state,Jammu and Kashmir,IN,12541302,bq://pramaan.reference.in_admin_boundaries/state/JK,33.7782,76.5762
+IN-JH,IN,state,Jharkhand,IN,32988134,bq://pramaan.reference.in_admin_boundaries/state/JH,23.6102,85.2799
+IN-KL,IN,state,Kerala,IN,33406061,bq://pramaan.reference.in_admin_boundaries/state/KL,10.8505,76.2711
+IN-LA,IN,state,Ladakh,IN,274289,bq://pramaan.reference.in_admin_boundaries/state/LA,34.1526,77.577
+IN-LD,IN,state,Lakshadweep,IN,64473,bq://pramaan.reference.in_admin_boundaries/state/LD,10.5667,72.6417
+IN-MP,IN,state,Madhya Pradesh,IN,72626809,bq://pramaan.reference.in_admin_boundaries/state/MP,22.9734,78.6569
+IN-MN,IN,state,Manipur,IN,2855794,bq://pramaan.reference.in_admin_boundaries/state/MN,24.6637,93.9063
+IN-ML,IN,state,Meghalaya,IN,2966889,bq://pramaan.reference.in_admin_boundaries/state/ML,25.467,91.3662
+IN-MZ,IN,state,Mizoram,IN,1097206,bq://pramaan.reference.in_admin_boundaries/state/MZ,23.1645,92.9376
+IN-NL,IN,state,Nagaland,IN,1978502,bq://pramaan.reference.in_admin_boundaries/state/NL,26.1584,94.5624
+IN-OD,IN,state,Odisha,IN,41974218,bq://pramaan.reference.in_admin_boundaries/state/OD,20.9517,85.0985
+IN-PY,IN,state,Puducherry,IN,1247953,bq://pramaan.reference.in_admin_boundaries/state/PY,11.9416,79.8083
+IN-PB,IN,state,Punjab,IN,27743338,bq://pramaan.reference.in_admin_boundaries/state/PB,31.1471,75.3412
+IN-RJ,IN,state,Rajasthan,IN,68548437,bq://pramaan.reference.in_admin_boundaries/state/RJ,27.0238,74.2179
+IN-SK,IN,state,Sikkim,IN,610577,bq://pramaan.reference.in_admin_boundaries/state/SK,27.533,88.5122
+IN-TN,IN,state,Tamil Nadu,IN,72147030,bq://pramaan.reference.in_admin_boundaries/state/TN,11.1271,78.6569
+IN-TS,IN,state,Telangana,IN,35193978,bq://pramaan.reference.in_admin_boundaries/state/TS,18.1124,79.0193
+IN-TR,IN,state,Tripura,IN,3673917,bq://pramaan.reference.in_admin_boundaries/state/TR,23.9408,91.9882
+IN-UP,IN,state,Uttar Pradesh,IN,199812341,bq://pramaan.reference.in_admin_boundaries/state/UP,26.8467,80.9462
+IN-UK,IN,state,Uttarakhand,IN,10086292,bq://pramaan.reference.in_admin_boundaries/state/UK,30.0668,79.0193
+IN-WB,IN,state,West Bengal,IN,91276115,bq://pramaan.reference.in_admin_boundaries/state/WB,22.9868,87.855
+tn-chennai,IN,district,Chennai,IN-TN,4646732,bq://pramaan.reference.in_admin_boundaries/district/tn-chennai,13.0827,80.2707
+tn-coimbatore,IN,district,Coimbatore,IN-TN,3458045,bq://pramaan.reference.in_admin_boundaries/district/tn-coimbatore,11.0168,76.9558
+tn-madurai,IN,district,Madurai,IN-TN,3038252,bq://pramaan.reference.in_admin_boundaries/district/tn-madurai,9.9252,78.1198
+wb-kolkata,IN,district,Kolkata,IN-WB,4496694,bq://pramaan.reference.in_admin_boundaries/district/wb-kolkata,22.5726,88.3639
+wb-howrah,IN,district,Howrah,IN-WB,4850029,bq://pramaan.reference.in_admin_boundaries/district/wb-howrah,22.5958,88.2636
+ts-hyderabad,IN,district,Hyderabad,IN-TS,3943323,bq://pramaan.reference.in_admin_boundaries/district/ts-hyderabad,17.385,78.4867
+ts-warangal,IN,district,Warangal,IN-TS,3512576,bq://pramaan.reference.in_admin_boundaries/district/ts-warangal,17.9689,79.5941
+gj-ahmedabad,IN,district,Ahmedabad,IN-GJ,7214225,bq://pramaan.reference.in_admin_boundaries/district/gj-ahmedabad,23.0225,72.5714
+gj-surat,IN,district,Surat,IN-GJ,6081322,bq://pramaan.reference.in_admin_boundaries/district/gj-surat,21.1702,72.8311
+rj-jaipur,IN,district,Jaipur,IN-RJ,6626178,bq://pramaan.reference.in_admin_boundaries/district/rj-jaipur,26.9124,75.7873
+rj-jodhpur,IN,district,Jodhpur,IN-RJ,3685681,bq://pramaan.reference.in_admin_boundaries/district/rj-jodhpur,26.2389,73.0243
+up-lucknow,IN,district,Lucknow,IN-UP,4589838,bq://pramaan.reference.in_admin_boundaries/district/up-lucknow,26.8467,80.9462
+up-varanasi,IN,district,Varanasi,IN-UP,3676841,bq://pramaan.reference.in_admin_boundaries/district/up-varanasi,25.3176,82.9739
+up-kanpur-nagar,IN,district,Kanpur Nagar,IN-UP,4581268,bq://pramaan.reference.in_admin_boundaries/district/up-kanpur-nagar,26.4499,80.3319
+br-patna,IN,district,Patna,IN-BR,5838465,bq://pramaan.reference.in_admin_boundaries/district/br-patna,25.5941,85.1376
+br-gaya,IN,district,Gaya,IN-BR,4391418,bq://pramaan.reference.in_admin_boundaries/district/br-gaya,24.7914,85.0002
+mp-bhopal,IN,district,Bhopal,IN-MP,2371061,bq://pramaan.reference.in_admin_boundaries/district/mp-bhopal,23.2599,77.4126
+mp-indore,IN,district,Indore,IN-MP,3276697,bq://pramaan.reference.in_admin_boundaries/district/mp-indore,22.7196,75.8577
+kl-thiruvananthapuram,IN,district,Thiruvananthapuram,IN-KL,3301427,bq://pramaan.reference.in_admin_boundaries/district/kl-thiruvananthapuram,8.5241,76.9366
+kl-ernakulam,IN,district,Ernakulam,IN-KL,3282388,bq://pramaan.reference.in_admin_boundaries/district/kl-ernakulam,9.9816,76.2999
+od-khordha,IN,district,Khordha,IN-OD,2251673,bq://pramaan.reference.in_admin_boundaries/district/od-khordha,20.2961,85.8245
+od-cuttack,IN,district,Cuttack,IN-OD,2618708,bq://pramaan.reference.in_admin_boundaries/district/od-cuttack,20.4625,85.883
+jh-ranchi,IN,district,Ranchi,IN-JH,2914253,bq://pramaan.reference.in_admin_boundaries/district/jh-ranchi,23.3441,85.3096
+as-kamrup-metropolitan,IN,district,Kamrup Metropolitan,IN-AS,1253938,bq://pramaan.reference.in_admin_boundaries/district/as-kamrup-metropolitan,26.1445,91.7362
+uk-dehradun,IN,district,Dehradun,IN-UK,1696694,bq://pramaan.reference.in_admin_boundaries/district/uk-dehradun,30.3165,78.0322
+ct-raipur,IN,district,Raipur,IN-CT,4063872,bq://pramaan.reference.in_admin_boundaries/district/ct-raipur,21.2514,81.6296
+ap-visakhapatnam,IN,district,Visakhapatnam,IN-AP,4288113,bq://pramaan.reference.in_admin_boundaries/district/ap-visakhapatnam,17.6868,83.2185
+pb-ludhiana,IN,district,Ludhiana,IN-PB,3498739,bq://pramaan.reference.in_admin_boundaries/district/pb-ludhiana,30.901,75.8573
+hr-gurugram,IN,district,Gurugram,IN-HR,1514432,bq://pramaan.reference.in_admin_boundaries/district/hr-gurugram,28.4595,77.0266
+hp-shimla,IN,district,Shimla,IN-HP,813384,bq://pramaan.reference.in_admin_boundaries/district/hp-shimla,31.1048,77.1734
+ga-north-goa,IN,district,North Goa,IN-GA,818008,bq://pramaan.reference.in_admin_boundaries/district/ga-north-goa,15.4909,73.8278
+jk-srinagar,IN,district,Srinagar,IN-JK,1269751,bq://pramaan.reference.in_admin_boundaries/district/jk-srinagar,34.0837,74.7973
+mn-imphal-west,IN,district,Imphal West,IN-MN,517992,bq://pramaan.reference.in_admin_boundaries/district/mn-imphal-west,24.817,93.9368
+BR-MG,BR,estado,Minas Gerais,BR,20539989,bq://pramaan.reference.br_admin_boundaries/estado/MG,-18.5122,-44.555
+BR-RJ,BR,estado,Rio de Janeiro,BR,16055174,bq://pramaan.reference.br_admin_boundaries/estado/RJ,-22.9068,-43.1729
+BR-BA,BR,estado,Bahia,BR,14136417,bq://pramaan.reference.br_admin_boundaries/estado/BA,-12.5797,-41.7007
+BR-PE,BR,estado,Pernambuco,BR,9058931,bq://pramaan.reference.br_admin_boundaries/estado/PE,-8.0476,-34.877
+BR-RS,BR,estado,Rio Grande do Sul,BR,10882965,bq://pramaan.reference.br_admin_boundaries/estado/RS,-30.0346,-51.2177
+BR-CE,BR,estado,Ceará,BR,8794957,bq://pramaan.reference.br_admin_boundaries/estado/CE,-3.7319,-38.5267
+br-belo-horizonte,BR,município,Belo Horizonte,BR-MG,2315560,bq://pramaan.reference.br_admin_boundaries/municipio/belo-horizonte,-19.9167,-43.9345
+br-rio-de-janeiro,BR,município,Rio de Janeiro,BR-RJ,6211423,bq://pramaan.reference.br_admin_boundaries/municipio/rio-de-janeiro,-22.9068,-43.1729
+br-salvador,BR,município,Salvador,BR-BA,2418005,bq://pramaan.reference.br_admin_boundaries/municipio/salvador,-12.9714,-38.5014
+br-recife,BR,município,Recife,BR-PE,1488920,bq://pramaan.reference.br_admin_boundaries/municipio/recife,-8.0476,-34.877
+br-porto-alegre,BR,município,Porto Alegre,BR-RS,1332570,bq://pramaan.reference.br_admin_boundaries/municipio/porto-alegre,-30.0346,-51.2177
+br-fortaleza,BR,município,Fortaleza,BR-CE,2428708,bq://pramaan.reference.br_admin_boundaries/municipio/fortaleza,-3.7319,-38.5267

@@ -1,4 +1,4 @@
-import type { EquityAuditReport, RiskForecast } from "@jansetu/shared-types";
+import type { EquityAuditReport, RiskForecast } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { computeEquityAudit } from "./equity.js";
 import {

@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
-import type { ConsentRecord, Submission, SubmissionChannel } from "@jansetu/shared-types";
-import { isWithinCountryBoundingBox, scrubPii } from "@jansetu/shared-utils";
+import type { ConsentRecord, Submission, SubmissionChannel } from "@pramaan/shared-types";
+import { isWithinCountryBoundingBox, scrubPii } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { newTrackingCode } from "../lib/trackingCode.js";
 

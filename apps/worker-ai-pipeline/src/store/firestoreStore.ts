@@ -1,5 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
-import type { Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type { Issue, PriorityScore, Submission } from "@pramaan/shared-types";
 import type { CandidateQuery, Store } from "./types.js";
 
 export function createFirestoreStore(db: Firestore): Store {

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
-import type { Issue, Submission } from "@jansetu/shared-types";
-import { CATEGORIZATION_PROMPT_VERSION, type CategorizationResult } from "@jansetu/ai-prompts";
+import type { Issue, Submission } from "@pramaan/shared-types";
+import { CATEGORIZATION_PROMPT_VERSION, type CategorizationResult } from "@pramaan/ai-prompts";
 import {
   cosine,
   densityClass,
@@ -10,7 +10,7 @@ import {
   haversineMeters,
   RADIUS_M,
   scrubPii,
-} from "@jansetu/shared-utils";
+} from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { mergeSubmissionIntoIssue, updateRunningEmbedding } from "./issueMerge.js";
 import { resolveLocation } from "./regionResolution.js";

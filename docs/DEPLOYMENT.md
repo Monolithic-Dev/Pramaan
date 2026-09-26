@@ -1,4 +1,4 @@
-# Deployment: JanSetu
+# Deployment: Pramaan
 
 ## 1. Environments
 - **dev** — local + a shared GCP dev project, used during the hackathon build.

@@ -4,8 +4,8 @@ RUN corepack enable
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
 COPY packages ./packages
 COPY apps/api-gateway ./apps/api-gateway
-RUN pnpm install --frozen-lockfile --filter @jansetu/api-gateway...
-RUN pnpm --filter @jansetu/api-gateway build
+RUN pnpm install --frozen-lockfile --filter @pramaan/api-gateway...
+RUN pnpm --filter @pramaan/api-gateway build
 
 FROM node:20-slim
 WORKDIR /app

@@ -1,4 +1,4 @@
-import type { CategorizationResult } from "@jansetu/ai-prompts";
+import type { CategorizationResult } from "@pramaan/ai-prompts";
 import type { Deps } from "../deps.js";
 import type { CategorizationClient } from "../lib/gemini.js";
 import type { EmbeddingClient } from "../lib/embeddings.js";

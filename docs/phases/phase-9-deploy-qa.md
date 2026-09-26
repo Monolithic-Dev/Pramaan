@@ -108,7 +108,7 @@ Open the repo as a stranger would:
 - [ ] Fallback screenshots stored locally on at least two devices
 
 ## Definition of done
-You could hand the URL to a stranger with no explanation and they would understand what JanSetu does within two minutes.
+You could hand the URL to a stranger with no explanation and they would understand what Pramaan does within two minutes.
 
 ## Traps
 - Firestore emulator behaviour differs from production on composite indexes and transactions. Anything you only tested against the emulator is untested.

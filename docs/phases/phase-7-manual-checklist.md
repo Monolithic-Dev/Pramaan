@@ -8,7 +8,7 @@ infrastructure/devices:
 
 1. **Run against a real backend**:
    ```bash
-   VITE_API_BASE_URL=https://<your-api-gateway-url>/v1 pnpm --filter @jansetu/web dev
+   VITE_API_BASE_URL=https://<your-api-gateway-url>/v1 pnpm --filter @pramaan/web dev
    ```
 2. **Real officer auth**: the officer login screen takes a pasted Bearer JWT — get one by completing Phase 3's OTP-equivalent for officers (Identity Platform SSO isn't wired anywhere yet, frontend included) or by minting a test JWT with `role`/`region_id`/`country_code` claims via the Firebase Admin SDK for manual testing.
 3. **Device testing** (per the phase doc's acceptance criteria — none of this can be verified from a sandbox):

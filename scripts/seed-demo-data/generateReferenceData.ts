@@ -1,13 +1,13 @@
 // Reproducible reference-data load: reads scripts/seed-demo-data/source/*.csv and
-// loads them into BigQuery's jansetu_reference.{admin_regions} and
-// jansetu_analytics.{infra_index,investment_record} tables. Source CSVs are
+// loads them into BigQuery's pramaan_reference.{admin_regions} and
+// pramaan_analytics.{infra_index,investment_record} tables. Source CSVs are
 // clearly-labeled realistic sample data (per PRD.md §8), covering 3 states/6
 // districts across 2 fiscal years — not live government data, and region_id values
 // are placeholder district slugs, not yet real LGD codes (see docs/DATA_MODEL.md's
 // AdminRegion entity and docs/BUILD_PLAN.md Day-1 task to source real LGD codes).
 // Re-running this script is safe: each table is truncated before reload.
 //
-// Run: GOOGLE_CLOUD_PROJECT=<project-id> pnpm --filter @jansetu/scripts generate-reference-data
+// Run: GOOGLE_CLOUD_PROJECT=<project-id> pnpm --filter @pramaan/scripts generate-reference-data
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,8 +15,8 @@ import { BigQuery } from "@google-cloud/bigquery";
 import { loadReferenceRows } from "./referenceCsv.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REFERENCE_DATASET = "jansetu_reference";
-const ANALYTICS_DATASET = "jansetu_analytics";
+const REFERENCE_DATASET = "pramaan_reference";
+const ANALYTICS_DATASET = "pramaan_analytics";
 
 async function loadTable(
   bq: BigQuery,

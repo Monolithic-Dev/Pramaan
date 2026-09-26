@@ -1,4 +1,4 @@
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 
 // Category -> the department that would own the fix, and an indicative budget. Both are labelled
 // as indicative in the UI: they seed a project brief and a plan, they are not a sanctioned estimate.

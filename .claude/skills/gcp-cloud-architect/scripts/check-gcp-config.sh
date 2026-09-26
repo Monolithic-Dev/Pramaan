@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies required GCP resources for JanSetu exist. Safe to re-run.
+# Verifies required GCP resources for Pramaan exist. Safe to re-run.
 set -euo pipefail
 
 echo "== Checking required APIs =="
@@ -29,8 +29,8 @@ gcloud pubsub subscriptions describe raw-submissions-worker-sub >/dev/null 2>&1 
   || echo "  [MISSING] subscription raw-submissions-worker-sub"
 
 echo "== Checking BigQuery dataset =="
-bq show jansetu_analytics >/dev/null 2>&1 \
-  && echo "  [ok] dataset jansetu_analytics exists" \
-  || echo "  [MISSING] dataset jansetu_analytics -> bq mk --dataset --location=asia-south1 jansetu_analytics"
+bq show pramaan_analytics >/dev/null 2>&1 \
+  && echo "  [ok] dataset pramaan_analytics exists" \
+  || echo "  [MISSING] dataset pramaan_analytics -> bq mk --dataset --location=asia-south1 pramaan_analytics"
 
 echo "Done. Re-run any time — this script only reports, never mutates."

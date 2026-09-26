@@ -1,4 +1,4 @@
-import type { ScoreWeights } from "@jansetu/shared-utils";
+import type { ScoreWeights } from "@pramaan/shared-utils";
 
 // docs/phases/phase-5-scoring.md §5.1 calls for weights sourced from
 // CountryProfile rather than a code constant, so a state admin can tune them

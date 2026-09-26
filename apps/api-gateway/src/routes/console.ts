@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { getCountryProfile, type Issue, type IssueStatus, type Project } from "@jansetu/shared-types";
+import { getCountryProfile, type Issue, type IssueStatus, type Project } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { audit, bad, forbidden, issueInScope, outside } from "./helpers.js";
 import { generateBrief } from "../agent/tools.js";

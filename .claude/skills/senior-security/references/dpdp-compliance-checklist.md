@@ -1,4 +1,4 @@
-# DPDP Act 2023 Practical Checklist — JanSetu
+# DPDP Act 2023 Practical Checklist — Pramaan
 
 Expanded from `docs/SECURITY_PRIVACY.md` §3. Walk this for any feature touching citizen data.
 
