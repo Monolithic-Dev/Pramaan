@@ -41,7 +41,7 @@ export function buildApp(deps: Deps) {
   // The web app is served from a different origin than the API. Auth is by Bearer token
   // (never cookies), so an open origin list is safe; set CORS_ORIGINS to lock it down.
   const origins = (process.env.CORS_ORIGINS ?? "").split(",").map((o) => o.trim()).filter(Boolean);
-  void app.register(cors, { origin: origins.length > 0 ? origins : true, exposedHeaders: ["x-request-id"] });
+  void app.register(cors, { origin: origins.length > 0 ? origins : true, methods: ["GET", "HEAD", "POST", "PATCH"], exposedHeaders: ["x-request-id"] });
 
   app.addHook("onSend", async (request, reply) => {
     reply.header("x-request-id", request.id);
