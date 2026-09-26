@@ -38,8 +38,33 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
       region_id: officer?.regionId ?? null,
       country_code: officer?.countryCode ?? citizen?.country_code ?? null,
       preferred_language: citizen?.preferred_language ?? null,
+      member_since: citizen?.created_at ?? null,
       permissions: permissionsFor(officer?.role ?? null),
     });
+  });
+
+  // A citizen changes the language their status updates and notifications are written in. The web
+  // app switches its own language locally; without this the server kept writing in the old one.
+  app.patch("/me", { preHandler: [requireAuth(deps.authVerifier)] }, async (request, reply) => {
+    if (request.officer) return reply.code(403).send(forbidden("Officer settings are managed by an administrator."));
+    const body = z
+      .object({ preferred_language: z.string().regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, "Use a language tag like hi-IN.") })
+      .safeParse(request.body ?? {});
+    if (!body.success) return reply.code(400).send(bad(body.error.issues[0]?.message));
+
+    const existing = await deps.store.getCitizen(request.citizenId!);
+    const citizen = existing
+      ? { ...existing, preferred_language: body.data.preferred_language }
+      : {
+          citizen_id: request.citizenId!,
+          phone_hash: "none",
+          preferred_language: body.data.preferred_language,
+          country_code: getCountryProfile(body.data.preferred_language.split("-")[1]).country_code,
+          created_at: new Date().toISOString(),
+          erasure_requested_at: null,
+        };
+    await deps.store.putCitizen(citizen);
+    return reply.code(200).send({ preferred_language: citizen.preferred_language });
   });
 
   // Email/password (and any non-OTP) citizens have no Citizen record until they first sign in.

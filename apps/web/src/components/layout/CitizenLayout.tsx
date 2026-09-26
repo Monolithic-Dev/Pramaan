@@ -1,8 +1,10 @@
+import { useEffect, useRef } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
+import { api } from "../../api/api.js";
 import { useAuth } from "../../auth/AuthContext.js";
-import { useLanguage } from "../../i18n/LanguageProvider.js";
+import { SUPPORTED_LANGUAGES, useLanguage } from "../../i18n/LanguageProvider.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
-import { Button, cx } from "../../ui/kit.js";
+import { Button, cx, useToast } from "../../ui/kit.js";
 import { NotificationBell } from "../NotificationBell.js";
 import { MAIN_ID } from "./A11y.js";
 import { Brand, LanguageMenu } from "./Brand.js";
@@ -14,9 +16,33 @@ const ITEMS: { to: string; key: string; icon: IconName; end?: boolean }[] = [
   { to: "/my/profile", key: "citizen.nav.profile", icon: "settings" },
 ];
 
+/**
+ * Status updates and notifications are written server-side in the citizen's saved language. Whenever
+ * the app language changes (header menu or profile), save it, so the two never drift apart.
+ */
+function useSaveLanguageChoice() {
+  const { t, language } = useLanguage();
+  const { me } = useAuth();
+  const { toast } = useToast();
+  const saved = useRef<string | null>(null);
+  useEffect(() => {
+    if (me?.kind !== "citizen") return;
+    saved.current ??= me.preferred_language?.split("-")[0] ?? null;
+    if (saved.current === language) return;
+    const tag = SUPPORTED_LANGUAGES.find((l) => l.code === language);
+    if (!tag) return;
+    saved.current = language;
+    api.updateMe({ preferred_language: `${tag.code}-${tag.countryCode}` }).catch(() => {
+      saved.current = null;
+      toast("error", t("profile.languageSaveFailed"));
+    });
+  }, [me, language, t, toast]);
+}
+
 export function CitizenLayout() {
   const { t } = useLanguage();
   const { signOut, email } = useAuth();
+  useSaveLanguageChoice();
   const link = ({ isActive }: { isActive: boolean }) =>
     cx("flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition", isActive ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-100");
 

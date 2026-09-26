@@ -60,6 +60,13 @@ body {
   outline-offset: 2px;
 }
 
+/* ...except containers focused by script (the page after each navigation, so screen readers start
+   there). This rule is unlayered, so it beats Tailwind's focus:outline-none and drew a frame round
+   the whole page. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
 .tricolour {
   height: 4px;
   background: linear-gradient(90deg, #ff9933 0 33.3%, #ffffff 33.3% 66.6%, #138808 66.6% 100%);
