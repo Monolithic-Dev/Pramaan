@@ -1,6 +1,7 @@
 # Replaces Cloud Scheduler + Pub/Sub on the free (no GCP billing) deployment: every 15 minutes,
 # process any submissions the worker has not picked up yet, then re-score. Also keeps the free
-# Render worker warm-ish. Needs repo secrets WORKER_URL and WORKER_SHARED_SECRET.
+# Render worker warm-ish. Needs repo secrets WORKER_URL and WORKER_SHARED_SECRET; with API_URL (the
+# gateway's /v1 base) also set, it escalates overdue issues to the responsible officers.
 name: scheduled-jobs
 on:
   schedule:
@@ -19,3 +20,10 @@ jobs:
               "${{ secrets.WORKER_URL }}/jobs/$job"
             echo
           done
+      - name: Escalate overdue issues
+        env:
+          API_URL: ${{ secrets.API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then echo "API_URL not set; skipping"; exit 0; fi
+          curl --fail --silent --show-error --max-time 120 --retry 2 --retry-delay 20 \
+            -X POST -H "x-worker-secret: ${{ secrets.WORKER_SHARED_SECRET }}" "$API_URL/jobs/escalations"
