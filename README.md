@@ -1,6 +1,6 @@
-# JanSetu
+# Pramaan
 
-**Citizen voice to public investment.** A citizen reports a problem by voice, text or photo in their own language. JanSetu understands it, merges it with what their neighbours reported, scores it in the open, matches it to the national scheme that can pay for the fix, helps an officer decide what to fund, and then asks the citizens whether it really got fixed.
+**Citizen voice to public investment.** A citizen reports a problem by voice, text or photo in their own language. Pramaan understands it, merges it with what their neighbours reported, scores it in the open, matches it to the national scheme that can pay for the fix, helps an officer decide what to fund, and then asks the citizens whether it really got fixed.
 
 Built for the Google Cloud *Build with AI: Code for Communities* hackathon. One codebase, India and Brazil already running side by side, designed as a Digital Public Good.
 
@@ -48,7 +48,7 @@ pnpm install
 # 3. open http://localhost:5173
 ```
 
-Demo logins (password `DemoAdmin!2026` for officers): `national@jansetu.demo` (whole India), `admin@jansetu.demo` (Delhi state admin), `collector@jansetu.demo` (district collector), `field@jansetu.demo` (field officer), `brasil@jansetu.demo` (Brazil). Citizen: `citizen@jansetu.demo` / `DemoCitizen!2026`. Try the tracking code `JS-K7M3P9QD` on `/track`.
+Demo logins (password `DemoAdmin!2026` for officers): `national@pramaan.demo` (whole India), `admin@pramaan.demo` (Delhi state admin), `collector@pramaan.demo` (district collector), `field@pramaan.demo` (field officer), `brasil@pramaan.demo` (Brazil). Citizen: `citizen@pramaan.demo` / `DemoCitizen!2026`. Try the tracking code `JS-K7M3P9QD` on `/track`.
 
 ## Tests
 

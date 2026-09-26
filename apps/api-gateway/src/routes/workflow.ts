@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import type { IssueComment, OfficerRole } from "@jansetu/shared-types";
+import type { IssueComment, OfficerRole } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { requireAuth, requireOfficer } from "../middleware/auth.js";

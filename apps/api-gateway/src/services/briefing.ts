@@ -1,4 +1,4 @@
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { stripUngroundedSentences } from "../agent/groundedness.js";
 import { getForecasts } from "../insights/service.js";

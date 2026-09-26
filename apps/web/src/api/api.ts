@@ -1,5 +1,5 @@
 import { http, httpBlob, httpBlobUrl } from "./http.js";
-import type { PriorityScore, Project, ImpactRecord } from "@jansetu/shared-types";
+import type { PriorityScore, Project, ImpactRecord } from "@pramaan/shared-types";
 
 // ---- Types (mirror the gateway's console routes) -------------------------------------------
 

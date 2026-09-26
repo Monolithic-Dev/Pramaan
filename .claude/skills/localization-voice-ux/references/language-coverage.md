@@ -1,4 +1,4 @@
-# Language Coverage — JanSetu
+# Language Coverage — Pramaan
 
 Update this table every time a language is added. "Fixture coverage" means entries exist in
 `senior-prompt-engineer/references/prompt-templates.md`'s regression set — not just a

@@ -1,5 +1,5 @@
 {
-  "name": "@jansetu/scripts",
+  "name": "@pramaan/scripts",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -17,8 +17,8 @@
     "tune-threshold": "tsx tune-threshold.ts"
   },
   "dependencies": {
-    "@jansetu/shared-types": "workspace:*",
-    "@jansetu/shared-utils": "workspace:*",
+    "@pramaan/shared-types": "workspace:*",
+    "@pramaan/shared-utils": "workspace:*",
     "firebase-admin": "^12.7.0",
     "@google-cloud/bigquery": "^7.9.0"
   },

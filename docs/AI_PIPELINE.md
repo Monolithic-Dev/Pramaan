@@ -1,4 +1,4 @@
-# AI Pipeline: JanSetu
+# AI Pipeline: Pramaan
 
 **v2 — corrected 15 Sep 2026.** This is the core technical differentiator of the submission — judges scoring "AI/Technical Execution" (25%, the heaviest criterion) should be able to see Google AI doing real, verifiable work at each stage below, not one Gemini call wrapping a form.
 

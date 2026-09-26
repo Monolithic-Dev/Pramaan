@@ -8,7 +8,7 @@ description: >
   text", "what data are we sending to the AI pipeline", "prompt injection".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 Every citizen submission is untrusted input fed into an LLM prompt. This project's AI pipeline
 needs to be robust against both malicious content and accidental over-sharing of PII to a
 third-party API — this skill owns that specific boundary, distinct from general app security

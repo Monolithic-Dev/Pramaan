@@ -1,13 +1,13 @@
 ---
 name: senior-qa
 description: >
-  Use for test strategy, writing new tests, or the demo-readiness QA pass across JanSetu —
+  Use for test strategy, writing new tests, or the demo-readiness QA pass across Pramaan —
   unit tests, integration tests, the prompt-regression suite, and the manual demo-day
   checklist. Trigger on "write tests for X", "is this ready to demo", "what should we test
   here", "run the QA checklist", "how do we know this actually works".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 Testing follows `docs/TESTING.md`'s layers: unit tests per function, integration tests per
 pipeline stage, a prompt-regression fixture set (LLM behavior can silently drift), a synthetic
 demo dataset, and a manual pre-demo checklist. Tests are written alongside the code, not after.

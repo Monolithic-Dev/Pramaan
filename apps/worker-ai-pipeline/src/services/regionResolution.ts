@@ -1,4 +1,4 @@
-import { geohashEncode, haversineMeters } from "@jansetu/shared-utils";
+import { geohashEncode, haversineMeters } from "@pramaan/shared-utils";
 import type { ReferenceDataClient, RegionCentroid } from "../lib/bigquery.js";
 
 export interface ResolvedLocation {

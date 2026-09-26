@@ -8,8 +8,8 @@ description: >
   suspicious", "prevent double funding", "someone is spamming the platform".
 ---
 
-## What this covers for JanSetu specifically
-JanSetu's core output is a ranked list that influences real government funding — that makes it
+## What this covers for Pramaan specifically
+Pramaan's core output is a ranked list that influences real government funding — that makes it
 a genuine target for gaming (inflating demand for one's own area, discrediting a rival area, or
 defrauding the impact-confirmation loop). Every defense here is deliberately soft/advisory,
 flagging for officer review rather than auto-rejecting, because falsely blocking a real citizen

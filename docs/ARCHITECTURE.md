@@ -1,4 +1,4 @@
-# Architecture: JanSetu
+# Architecture: Pramaan
 
 **v2 — corrected 15 Sep 2026.** The v1 Mermaid diagram did not render on GitHub (unquoted parentheses in a node label is a parse error), had an undefined `BQ` node, and left `SCORE` and `VERIFY` as dead ends with no path from Firestore to BigQuery.
 

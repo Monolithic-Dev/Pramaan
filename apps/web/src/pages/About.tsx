@@ -19,7 +19,7 @@ const Arrow = ({ d }: { d: string }) => <path d={d} fill="none" stroke="#94a3b8"
 
 function Architecture() {
   return (
-    <svg viewBox="0 0 920 400" className="w-full" role="img" aria-label="JanSetu architecture: citizens, API gateway, AI pipeline, data stores, officer console and public ledger">
+    <svg viewBox="0 0 920 400" className="w-full" role="img" aria-label="Pramaan architecture: citizens, API gateway, AI pipeline, data stores, officer console and public ledger">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#94a3b8" /></marker>
       </defs>

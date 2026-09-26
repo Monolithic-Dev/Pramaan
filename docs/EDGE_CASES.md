@@ -1,4 +1,4 @@
-# Edge Cases: JanSetu
+# Edge Cases: Pramaan
 
 Judges evaluating "AI/Technical Execution" and "Deployability" will probe exactly these kinds of scenarios. Having explicit, documented answers — even if only partially implemented in the hackathon build — is itself a differentiator.
 

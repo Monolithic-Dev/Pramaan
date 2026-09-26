@@ -32,10 +32,10 @@ importers:
       '@google/genai':
         specifier: ^2.23.0
         version: 2.23.0(@modelcontextprotocol/sdk@1.30.0(zod@3.25.76))
-      '@jansetu/shared-types':
+      '@pramaan/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
-      '@jansetu/shared-utils':
+      '@pramaan/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
       dotenv:
@@ -63,7 +63,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@jansetu/shared-types':
+      '@pramaan/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
       leaflet:
@@ -133,13 +133,13 @@ importers:
       '@google/genai':
         specifier: ^2.23.0
         version: 2.23.0(@modelcontextprotocol/sdk@1.30.0(zod@3.25.76))
-      '@jansetu/ai-prompts':
+      '@pramaan/ai-prompts':
         specifier: workspace:*
         version: link:../../packages/ai-prompts
-      '@jansetu/shared-types':
+      '@pramaan/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
-      '@jansetu/shared-utils':
+      '@pramaan/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
       dotenv:
@@ -204,10 +204,10 @@ importers:
       '@google-cloud/bigquery':
         specifier: ^7.9.0
         version: 7.9.4
-      '@jansetu/shared-types':
+      '@pramaan/shared-types':
         specifier: workspace:*
         version: link:../packages/shared-types
-      '@jansetu/shared-utils':
+      '@pramaan/shared-utils':
         specifier: workspace:*
         version: link:../packages/shared-utils
       firebase-admin:

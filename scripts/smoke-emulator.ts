@@ -119,13 +119,13 @@ async function main() {
   check("scoring job runs", scoring.ok);
 
   // ---- 3. Officers work the issue ----------------------------------------------------------------------------
-  const collector = await identity("signInWithPassword", "collector@jansetu.demo", OFFICER_PASSWORD);
-  const field = await identity("signInWithPassword", "field@jansetu.demo", OFFICER_PASSWORD);
+  const collector = await identity("signInWithPassword", "collector@pramaan.demo", OFFICER_PASSWORD);
+  const field = await identity("signInWithPassword", "field@pramaan.demo", OFFICER_PASSWORD);
   const detail = await call(collector.token, "GET", `/issues/${issueId}`);
   check("collector can open the issue with 3 reports and a score", detail.status === 200 && detail.json?.reports?.length === 3 && detail.json?.score?.composite_score > 0, `score ${detail.json?.score?.composite_score?.toFixed?.(2)}`);
   check("the Hindi report carries an English translation", (detail.json?.reports ?? []).some((r: any) => r.translated_text));
 
-  const outsider = await identity("signInWithPassword", "maharashtra@jansetu.demo", OFFICER_PASSWORD);
+  const outsider = await identity("signInWithPassword", "maharashtra@pramaan.demo", OFFICER_PASSWORD);
   check("an officer from another state is refused (jurisdiction)", (await call(outsider.token, "GET", `/issues/${issueId}`)).status === 403);
   check("a field officer cannot change status (role)", (await call(field.token, "POST", `/issues/${issueId}/status`, { status: "verified", justification: "smoke test" })).status === 403);
 
@@ -177,7 +177,7 @@ async function main() {
   check("citizens are told it is resolved", (await call(citizens[0].token, "GET", "/notifications")).json?.notifications?.some((n: any) => n.kind === "issue.status_changed" && n.params?.status === "resolved"));
   const impact = await call(collector.token, "GET", "/analytics/impact");
   check("impact ledger reflects real resolutions", impact.json?.resolved > 0 && impact.json?.people_benefited > 0, `${impact.json?.people_benefited} people`);
-  check("audit log records the officer actions", (await call((await identity("signInWithPassword", "admin@jansetu.demo", OFFICER_PASSWORD)).token, "GET", "/admin/audit")).json?.entries?.some((e: any) => e.target_id === issueId));
+  check("audit log records the officer actions", (await call((await identity("signInWithPassword", "admin@pramaan.demo", OFFICER_PASSWORD)).token, "GET", "/admin/audit")).json?.entries?.some((e: any) => e.target_id === issueId));
 
   // ---- cleanup ---------------------------------------------------------------------------------------------------
   console.log("Cleaning up test data...");

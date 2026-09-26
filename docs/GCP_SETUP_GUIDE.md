@@ -1,4 +1,4 @@
-# GCP Setup Guide: from zero to a live JanSetu
+# GCP Setup Guide: from zero to a live Pramaan
 
 For someone with **no Google Cloud account yet**. Follow the parts in order. Every command is
 copy-paste; replace anything in `<angle brackets>`. Budget about 2-3 hours the first time.
@@ -15,7 +15,7 @@ when the trial ends: you must click "Activate full account" to keep paying resou
 
 ## Staying inside the free tier
 
-| Product | Free allowance | How JanSetu stays under it |
+| Product | Free allowance | How Pramaan stays under it |
 |---|---|---|
 | Cloud Run | 2M requests, 180k vCPU-seconds, 360k GiB-seconds / month | Scale to zero (default); never set min instances |
 | Firestore | 1 GiB storage, 50k reads / 20k writes per day (1 database per project) | Demo data is tiny; use one database |
@@ -105,16 +105,16 @@ bash infra/gcp/setup.sh $PROJECT_ID
 
 `setup.sh` enables the APIs (enabling one costs nothing; only usage does), creates the two BigQuery datasets
 and tables, and tries to create two buckets in Mumbai. **Ignore those two buckets** (Mumbai storage is not in
-the free tier, and `jansetu-media` is a global name someone else likely owns). Create your own free-tier bucket
+the free tier, and `pramaan-media` is a global name someone else likely owns). Create your own free-tier bucket
 in a US region instead and remember it:
 
 ```bash
-export MEDIA_BUCKET=jansetu-media-$PROJECT_ID
+export MEDIA_BUCKET=pramaan-media-$PROJECT_ID
 gcloud storage buckets create gs://$MEDIA_BUCKET --location=us-central1 --uniform-bucket-level-access
 ```
 
-If `setup.sh` created `jansetu-audio`/`jansetu-media` in Mumbai, delete any you don't use:
-`gcloud storage buckets delete gs://jansetu-audio`.
+If `setup.sh` created `pramaan-audio`/`pramaan-media` in Mumbai, delete any you don't use:
+`gcloud storage buckets delete gs://pramaan-audio`.
 
 The app writes **both photos and audio** to the single bucket named in `MEDIA_BUCKET`. Cloud Storage is
 free only up to 5 GB, so for a demo keep uploads small (the app already caps photos at 8 MB, audio at 10 MB).
@@ -140,8 +140,8 @@ gcloud pubsub topics create raw-submissions
 Two identities, one per service, each with only what it needs.
 
 ```bash
-gcloud iam service-accounts create api-gateway-sa --display-name="JanSetu api-gateway"
-gcloud iam service-accounts create worker-sa --display-name="JanSetu worker"
+gcloud iam service-accounts create api-gateway-sa --display-name="Pramaan api-gateway"
+gcloud iam service-accounts create worker-sa --display-name="Pramaan worker"
 
 for SA in api-gateway-sa worker-sa; do
   for ROLE in roles/datastore.user roles/bigquery.dataViewer roles/bigquery.jobUser \
@@ -185,12 +185,12 @@ both cheaper and safer. Leave `GEMINI_API_KEY` set on both services so they neve
 ## Part 8: Build and deploy the two services
 
 Artifact Registry's free allowance is only 0.5 GB, so after each successful deploy delete old image versions
-(console: **Artifact Registry, jansetu, select images, Delete**) or the small monthly charge starts.
+(console: **Artifact Registry, pramaan, select images, Delete**) or the small monthly charge starts.
 
 Create an image repository once:
 
 ```bash
-gcloud artifacts repositories create jansetu --repository-format=docker --location=$REGION
+gcloud artifacts repositories create pramaan --repository-format=docker --location=$REGION
 ```
 
 Build (from the repo root; each takes a few minutes):
@@ -198,7 +198,7 @@ Build (from the repo root; each takes a few minutes):
 ```bash
 for SVC in api-gateway worker-ai-pipeline; do
   gcloud builds submit --config infra/gcp/cloudbuild.yaml \
-    --substitutions=_SERVICE=$SVC,_IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/jansetu/$SVC .
+    --substitutions=_SERVICE=$SVC,_IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/pramaan/$SVC .
 done
 ```
 
@@ -206,7 +206,7 @@ Deploy the **worker** first (it is private; only Pub/Sub and Scheduler call it):
 
 ```bash
 gcloud run deploy worker-ai-pipeline \
-  --image=$REGION-docker.pkg.dev/$PROJECT_ID/jansetu/worker-ai-pipeline \
+  --image=$REGION-docker.pkg.dev/$PROJECT_ID/pramaan/worker-ai-pipeline \
   --region=$REGION --service-account=worker-sa@$PROJECT_ID.iam.gserviceaccount.com \
   --no-allow-unauthenticated \
   --set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,MEDIA_BUCKET=$MEDIA_BUCKET \
@@ -217,7 +217,7 @@ Then the **api-gateway** (public: citizens and the web app call it):
 
 ```bash
 gcloud run deploy api-gateway \
-  --image=$REGION-docker.pkg.dev/$PROJECT_ID/jansetu/api-gateway \
+  --image=$REGION-docker.pkg.dev/$PROJECT_ID/pramaan/api-gateway \
   --region=$REGION --service-account=api-gateway-sa@$PROJECT_ID.iam.gserviceaccount.com \
   --allow-unauthenticated \
   --set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,FIREBASE_PROJECT_ID=$PROJECT_ID,MEDIA_BUCKET=$MEDIA_BUCKET,PUBSUB_RAW_SUBMISSIONS_TOPIC=raw-submissions \
@@ -257,11 +257,11 @@ gcloud scheduler jobs create http score-batch --location=$REGION --schedule="*/1
 From the repo root, with `gcloud auth application-default login` done (Part 4):
 
 ```bash
-GOOGLE_CLOUD_PROJECT=$PROJECT_ID pnpm --filter @jansetu/scripts generate-reference-data
+GOOGLE_CLOUD_PROJECT=$PROJECT_ID pnpm --filter @pramaan/scripts generate-reference-data
 ```
 
 This loads the India and Brazil sample regions into BigQuery. Check in the console: **BigQuery**,
-`jansetu_reference.admin_regions` should have 13 rows.
+`pramaan_reference.admin_regions` should have 13 rows.
 
 ## Part 10: Firebase console steps
 
@@ -303,7 +303,7 @@ VITE_API_BASE_URL=<API_URL>/v1
 2. Build and host on Firebase Hosting:
 
 ```bash
-pnpm --filter @jansetu/web build
+pnpm --filter @pramaan/web build
 firebase login
 firebase init hosting     # choose your project; public directory: apps/web/dist; single-page app: Yes
 firebase deploy --only hosting
@@ -349,7 +349,7 @@ a missing Firestore index (click the link in the log), or a wrong env var.
 - **The Dockerfiles have not been run.** They copy the workspace packages but the shared packages'
   `package.json` points at TypeScript source (`src/index.ts`), which plain `node` cannot run in the final
   image. If the deployed service crashes on start with an "unknown file extension .ts" or "cannot find module
-  @jansetu/..." error, that is this issue. The fix is to bundle each service with a bundler (esbuild) or build
+  @pramaan/..." error, that is this issue. The fix is to bundle each service with a bundler (esbuild) or build
   the shared packages to `dist`. Tell me and I will fix it and re-verify locally; do not spend time debugging it
   yourself.
 - Firestore composite indexes are created on demand (Part 5), not from a checked-in file.

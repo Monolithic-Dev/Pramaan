@@ -8,13 +8,13 @@ See `apps/worker-ai-pipeline/.env.example`. These steps need real credentials/da
 2. **Run the worker against a real project**:
    ```bash
    gcloud auth application-default login
-   GCP_PROJECT_ID=<project-id> pnpm --filter @jansetu/worker-ai-pipeline dev
+   GCP_PROJECT_ID=<project-id> pnpm --filter @pramaan/worker-ai-pipeline dev
    ```
 3. **Manual end-to-end check**: submit via `api-gateway` (Phase 3), then confirm:
    - The `raw-submissions` Pub/Sub subscription delivers to the worker's `/pubsub-push`.
    - The `submissions/{id}` doc transitions `queued` → `processing` → `processed`, with `issue_id` set.
    - A new `issues/{id}` doc exists with a real 768-dim `embedding` from `text-embedding-005`.
-4. **Real threshold tuning** (§4.5 of `phase-4-extraction-dedup.md`): build a labelled set of 120 real submission pairs (60 true duplicates, 60 near-misses) once real/seed submissions exist, replace `scripts/dedup-tuning/pairs.json`, re-run `pnpm --filter @jansetu/scripts tune-threshold`, and update `DEDUP_SIMILARITY_THRESHOLD` from the result. The current `docs/DEDUP-TUNING.md` is a placeholder run against 10 illustrative pairs — say so explicitly if asked in a demo, don't present it as the real evaluation.
+4. **Real threshold tuning** (§4.5 of `phase-4-extraction-dedup.md`): build a labelled set of 120 real submission pairs (60 true duplicates, 60 near-misses) once real/seed submissions exist, replace `scripts/dedup-tuning/pairs.json`, re-run `pnpm --filter @pramaan/scripts tune-threshold`, and update `DEDUP_SIMILARITY_THRESHOLD` from the result. The current `docs/DEDUP-TUNING.md` is a placeholder run against 10 illustrative pairs — say so explicitly if asked in a demo, don't present it as the real evaluation.
 
 ## Deferred (documented, not built)
 - **Point-in-polygon `admin_region_id` resolution** (§4.6): true polygon `ST_CONTAINS` against real LGD ward/district boundary geometries still isn't built (no boundary dataset exists). **Update**: `apps/worker-ai-pipeline/src/services/regionResolution.ts` now does real nearest-centroid matching against the seeded `AdminRegion` rows (`scripts/seed-demo-data/source/admin_regions.csv`) instead of leaving everything `"UNRESOLVED"` — a submission inside one of the 3 seeded states now gets a real `admin_region_id` and `state_id`, with real `population`-based `densityClass`. Ceiling: wrong right at a district boundary, and any point outside the seeded states still resolves to "nearest anyway" rather than refusing — documented in code with a `ponytail:` comment. Upgrade path: swap `findNearestRegion`'s body for a BigQuery `ST_CONTAINS` join once real boundary polygons are loaded; callers don't change.

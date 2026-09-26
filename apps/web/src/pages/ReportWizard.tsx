@@ -213,7 +213,7 @@ export default function ReportWizard() {
               <CopyButton text={done.code} label={t("common.copy")} copiedLabel={t("common.copied")} />
               <Link to={`/track/${done.code}`} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100"><Icon name="search" size={14} />{t("report.trackNow")}</Link>
               {"share" in navigator && (
-                <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" onClick={() => void navigator.share({ title: "JanSetu", text: t("report.shareText", { code: done.code ?? "" }), url: `${location.origin}/track/${done.code}` }).catch(() => undefined)}>
+                <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" onClick={() => void navigator.share({ title: "Pramaan", text: t("report.shareText", { code: done.code ?? "" }), url: `${location.origin}/track/${done.code}` }).catch(() => undefined)}>
                   <Icon name="send" size={14} />{t("report.share")}
                 </button>
               )}

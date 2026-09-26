@@ -7,7 +7,7 @@ description: >
   this screen", "add a route to apps/web", "the voice recorder isn't working".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 `apps/web` is one React 18 + Vite + Tailwind PWA serving two very different users — a citizen
 on a basic phone, possibly with limited literacy, and an officer at a desk — via role-based
 routing, not two separate apps. Every decision here should account for both audiences without

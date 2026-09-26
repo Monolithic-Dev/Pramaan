@@ -1,7 +1,7 @@
 # Feature 1: Predictive Early-Warning Engine
 
 ## Why this is unique
-Every competing team will build a system that reacts to citizen reports. This makes JanSetu
+Every competing team will build a system that reacts to citizen reports. This makes Pramaan
 predict *before* the reports arrive — the pitch line changes from "we collect complaints
 efficiently" to "we told the district a water crisis was coming before it happened." It also
 directly uses "predictive modelling," a category the hackathon brief names explicitly alongside

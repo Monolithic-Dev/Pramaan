@@ -1,4 +1,4 @@
-# GCP Command Reference — JanSetu
+# GCP Command Reference — Pramaan
 
 Condensed from `docs/DEPLOYMENT.md` and the phase runbooks. One place to look these up instead
 of re-deriving them.
@@ -29,9 +29,9 @@ gcloud pubsub subscriptions update raw-submissions-worker-sub --push-endpoint=<n
 
 ## BigQuery
 ```bash
-bq mk --dataset --location=asia-south1 jansetu_analytics
-bq mk --table jansetu_analytics.infra_index infra/gcp/bigquery-schemas/infra_index.json
-bq load --source_format=CSV jansetu_analytics.infra_index path/to/data.csv
+bq mk --dataset --location=asia-south1 pramaan_analytics
+bq mk --table pramaan_analytics.infra_index infra/gcp/bigquery-schemas/infra_index.json
+bq load --source_format=CSV pramaan_analytics.infra_index path/to/data.csv
 ```
 
 ## Cloud Run

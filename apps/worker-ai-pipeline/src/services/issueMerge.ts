@@ -1,4 +1,4 @@
-import type { Issue, Submission } from "@jansetu/shared-types";
+import type { Issue, Submission } from "@pramaan/shared-types";
 
 function normalise(vec: number[]): number[] {
   const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));

@@ -12,7 +12,7 @@ import type {
   Project,
   StateRecord,
   Submission,
-} from "@jansetu/shared-types";
+} from "@pramaan/shared-types";
 
 export interface IdempotencyRecord {
   submissionId: string;

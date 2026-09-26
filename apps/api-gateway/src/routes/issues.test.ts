@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Issue, PriorityScore } from "@jansetu/shared-types";
+import type { Issue, PriorityScore } from "@pramaan/shared-types";
 import { buildApp } from "../app.js";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 

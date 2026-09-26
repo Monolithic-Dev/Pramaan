@@ -12,7 +12,7 @@ import type {
   Project,
   StateRecord,
   Submission,
-} from "@jansetu/shared-types";
+} from "@pramaan/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
 // Used by tests, and as a same-process fallback if no Firestore project is

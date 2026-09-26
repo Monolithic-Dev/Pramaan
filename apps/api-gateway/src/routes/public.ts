@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { normalizeTrackingCode } from "../lib/trackingCode.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -116,7 +116,7 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
     return reply
       .code(200)
       .header("content-type", "text/csv; charset=utf-8")
-      .header("content-disposition", 'attachment; filename="jansetu-open-data.csv"')
+      .header("content-disposition", 'attachment; filename="pramaan-open-data.csv"')
       .send(toCsv(rows));
   });
 

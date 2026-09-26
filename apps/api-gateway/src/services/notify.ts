@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Issue, Notification, NotificationKind } from "@jansetu/shared-types";
+import type { Issue, Notification, NotificationKind } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 
 type Params = Record<string, string | number>;

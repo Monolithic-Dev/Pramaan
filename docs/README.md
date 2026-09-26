@@ -1,11 +1,11 @@
-# JanSetu — AI-Powered Citizen Demand → Infrastructure Priority Platform
+# Pramaan — AI-Powered Citizen Demand → Infrastructure Priority Platform
 
 **Track:** AI for Digital Public Infrastructure & Governance
 **Hackathon:** Build with AI: Code for Communities — Second Edition (Google Cloud)
 **Status:** Core platform (Phases 1-9) implemented; advanced-feature phases in progress — see `docs/advanced-features/`.
 
 ## One-line pitch
-JanSetu turns millions of raw, multilingual citizen infrastructure complaints into a small number of deduplicated, verified, and explainable "priority projects" that a state government can actually fund and track to completion — closing the loop the original problem statement calls out ("no way to measure the impact of large-scale digital public infrastructure initiatives").
+Pramaan turns millions of raw, multilingual citizen infrastructure complaints into a small number of deduplicated, verified, and explainable "priority projects" that a state government can actually fund and track to completion — closing the loop the original problem statement calls out ("no way to measure the impact of large-scale digital public infrastructure initiatives").
 
 ## The gap in the obvious solution
 The default approach to this problem statement is: citizen complaint form → Gemini tags it → heatmap. That solves *intake*, but skips the two hardest and most valuable parts of the brief:
@@ -13,7 +13,7 @@ The default approach to this problem statement is: citizen complaint form → Ge
 1. The same real-world issue gets reported dozens of times, in different words, different languages, different channels. Something has to resolve that into *one issue* before "demand" means anything — otherwise your "hotspots" are just noise plus population density.
 2. The brief explicitly names impact measurement as unsolved today. A system that only ingests and never verifies outcomes hasn't actually solved the stated problem — it's just a nicer complaint box.
 
-JanSetu is architected around those two gaps, not around the complaint form.
+Pramaan is architected around those two gaps, not around the complaint form.
 
 ## Core differentiators
 - **Multi-channel ingestion** — web, voice, WhatsApp/SMS — normalized into one schema before anything else happens.

@@ -7,7 +7,7 @@ description: >
   generated brief looks off", "tune the similarity threshold", "the AI hallucinated a number".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 This project's core differentiator is that its AI does real, structured work across three
 chained stages — categorize, dedup via embeddings, grounded generation — each with an
 explicit, tested fallback, not one clever prompt wrapping a form. This skill is the permanent

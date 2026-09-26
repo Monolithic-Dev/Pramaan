@@ -1,4 +1,4 @@
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 
 export const FORECAST_MODEL_VERSION = "seasonal-heuristic-v1";
 export const RISK_WINDOW_DAYS = 45;

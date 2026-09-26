@@ -2,14 +2,14 @@
 name: gcp-cloud-architect
 description: >
   Use for anything touching Cloud Run configs, Firestore/BigQuery/Pub/Sub provisioning,
-  IAM/service accounts, CI/CD deploy pipelines, or scaling/cost questions for JanSetu's
+  IAM/service accounts, CI/CD deploy pipelines, or scaling/cost questions for Pramaan's
   all-GCP stack. Trigger on "how do I deploy this", "what Cloud Run settings", "IAM
   permissions for X", "why is this Cloud Run service cold-starting", "CI/CD pipeline",
   "how much will this cost at national scale".
 ---
 
-## What this covers for JanSetu specifically
-JanSetu is 100% GCP-native: Cloud Run for all compute, Firestore + BigQuery as the split
+## What this covers for Pramaan specifically
+Pramaan is 100% GCP-native: Cloud Run for all compute, Firestore + BigQuery as the split
 datastore, Pub/Sub as the decoupling layer between ingestion and the AI pipeline, per
 `docs/DEPLOYMENT.md` and `docs/ARCHITECTURE.md`. This skill owns getting that stack actually
 deployed, scoped, and affordable — not just described.
@@ -48,7 +48,7 @@ the demo dataset?
 
 ## Scripts
 `scripts/check-gcp-config.sh` — verifies the required GCP APIs are enabled and expected
-resources (Firestore DB, `raw-submissions` Pub/Sub topic/subscription, `jansetu_analytics`
+resources (Firestore DB, `raw-submissions` Pub/Sub topic/subscription, `pramaan_analytics`
 BigQuery dataset) exist. Safe to re-run at any point.
 
 ## References

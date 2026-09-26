@@ -1,6 +1,6 @@
 {
-  "name": "JanSetu: citizen voice to public investment",
-  "short_name": "JanSetu",
+  "name": "Pramaan: citizen voice to public investment",
+  "short_name": "Pramaan",
   "description": "Report a local problem by voice, text or photo in your language, and follow it to a verified fix.",
   "start_url": "/?source=pwa",
   "scope": "/",

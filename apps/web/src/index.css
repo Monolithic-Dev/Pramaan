@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-/* JanSetu design tokens. Deep civic blue as the primary, saffron as the accent and India green for
+/* Pramaan design tokens. Deep civic blue as the primary, saffron as the accent and India green for
    "resolved" states: a nod to the tricolour without using the emblem. Noto fallbacks make sure
    Devanagari and Tamil never render as boxes (docs/phases/phase-7-frontend.md "Traps"). */
 @theme {

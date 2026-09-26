@@ -1,4 +1,4 @@
-import { computeCompositeScore, type ScoreWeights } from "@jansetu/shared-utils";
+import { computeCompositeScore, type ScoreWeights } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { verifyGrounded } from "./groundedness.js";
 import { getEquityAudit, getForecasts } from "../insights/service.js";

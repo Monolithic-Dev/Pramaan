@@ -1,6 +1,6 @@
-# JanSetu Claude Code Skills
+# Pramaan Claude Code Skills
 
-Project-specific skills for coding agents working on JanSetu, generated from the spec set in `/docs`.
+Project-specific skills for coding agents working on Pramaan, generated from the spec set in `/docs`.
 
 ## Portability note
 `.claude/skills/` with `SKILL.md` YAML frontmatter is Claude Code's specific auto-discovery convention — Claude Code reads a skill's `description` automatically and pulls in the rest of the file (and its `references/`) only when relevant. A few other agent tools are adopting compatible conventions, but most won't auto-trigger on this folder as-is. That said, every file here is plain, well-organized markdown: point any other agent, or a human teammate, directly at the relevant `SKILL.md` and it's just as useful as prose documentation — nothing here depends on the auto-discovery mechanism to be readable or correct.

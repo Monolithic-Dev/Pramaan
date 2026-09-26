@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 import { runScoringBatch } from "./scoring.js";
 

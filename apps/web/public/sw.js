@@ -1,7 +1,7 @@
-// JanSetu service worker: makes the app installable and keeps the shell available with no connection, so a
+// Pramaan service worker: makes the app installable and keeps the shell available with no connection, so a
 // citizen can still open the report form and have the report queued for later (see hooks/useOfflineQueue).
 // Deliberately small: it never touches API calls (they are cross-origin and must always be live).
-const CACHE = "jansetu-shell-v1";
+const CACHE = "pramaan-shell-v1";
 const SHELL = ["/", "/favicon.svg", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

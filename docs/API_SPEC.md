@@ -1,8 +1,8 @@
-# API Spec: JanSetu
+# API Spec: Pramaan
 
 **v2 — corrected 15 Sep 2026.** The major addition is §5, the agent surface — entirely missing from v1 despite the conversational agent being PRD goals G4/G5 and the headline 25%-weighted "AI/Technical Execution" criterion.
 
-Base URL: `https://api.jansetu.example/v1`
+Base URL: `https://api.pramaan.example/v1`
 All authenticated endpoints require `Authorization: Bearer <token>`.
 All mutating endpoints accept an optional `Idempotency-Key` header; on `POST /submissions` it is **required**.
 

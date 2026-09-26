@@ -1,6 +1,6 @@
 // docs/phases/phase-4-extraction-dedup.md §4.5: sweep the similarity threshold
 // against a labelled set of submission pairs, record precision/recall/F1 at
-// each point. Run: pnpm --filter @jansetu/scripts tune-threshold
+// each point. Run: pnpm --filter @pramaan/scripts tune-threshold
 //
 // Input format (scripts/dedup-tuning/pairs.json): an array of
 // { scoreA: number[], scoreB: number[], isDuplicate: boolean } — two
@@ -10,7 +10,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { cosine } from "@jansetu/shared-utils";
+import { cosine } from "@pramaan/shared-utils";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

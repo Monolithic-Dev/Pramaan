@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ImpactRecord } from "@jansetu/shared-types";
+import type { ImpactRecord } from "@pramaan/shared-types";
 import { issue, setup } from "../testUtils/fixtures.js";
 
 const j = (r: { json: () => any }) => r.json();
