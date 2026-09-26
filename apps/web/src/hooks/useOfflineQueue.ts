@@ -3,19 +3,30 @@ import { submitReportAuthed, uploadMediaAuthed } from "../api/api.js";
 import { ApiClientError, type CreateSubmissionInput } from "../api/client.js";
 import { deleteOfflineMedia, loadOfflineMedia, saveOfflineMedia } from "../utils/offlineMedia.js";
 
+type MediaKind = "photo" | "audio";
+const URL_FIELD = { photo: "photo_url", audio: "audio_url" } as const;
+
 interface QueuedSubmission {
   idempotencyKey: string;
   input: CreateSubmissionInput;
   queuedAt: string;
-  /** A photo taken offline, waiting in IndexedDB under this key until it can be uploaded. */
+  /** Media captured offline, waiting in IndexedDB under these keys until it can be uploaded. */
+  mediaKeys?: Partial<Record<MediaKind, string>>;
+  /** Written by an earlier version of this queue (photo only). */
   photoKey?: string;
+}
+
+export interface OfflineMedia {
+  photo?: Blob | null;
+  audio?: Blob | null;
 }
 
 const STORAGE_KEY = "pramaan.offlineQueue";
 
-// The queue itself is small JSON, so it lives in localStorage; photos taken offline are Blobs and
-// wait in IndexedDB (utils/offlineMedia.ts). It replays on the browser's `online` event and on the
-// next visit rather than through Background Sync, which iOS Safari does not support.
+// The queue itself is small JSON, so it lives in localStorage; photos and voice notes captured
+// offline are Blobs and wait in IndexedDB (utils/offlineMedia.ts). It replays on the browser's
+// `online` event and on the next visit rather than through Background Sync, which iOS Safari
+// does not support.
 function readQueue(): QueuedSubmission[] {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
@@ -45,18 +56,22 @@ export function useOfflineQueue(authReady: boolean) {
     const queue = readQueue();
     if (queue.length === 0) return;
     const remaining: QueuedSubmission[] = [];
-    for (const item of queue) {
+    for (const [index, item] of queue.entries()) {
       try {
-        if (item.photoKey) {
-          const blob = await loadOfflineMedia(item.photoKey);
+        const keys = { ...item.mediaKeys, ...(item.photoKey ? { photo: item.photoKey } : {}) };
+        for (const kind of Object.keys(keys) as MediaKind[]) {
+          const key = keys[kind]!;
+          const blob = await loadOfflineMedia(key);
           if (blob) {
-            item.input = { ...item.input, photo_url: await uploadMediaAuthed("photo", blob) };
-            // Persist the uploaded URL before submitting: a retry must resend the identical body,
-            // or the server rejects the reused Idempotency-Key as a conflict.
-            writeQueue([...remaining, item, ...queue.slice(queue.indexOf(item) + 1)]);
+            item.input = { ...item.input, [URL_FIELD[kind]]: await uploadMediaAuthed(kind, blob) };
           }
-          await deleteOfflineMedia(item.photoKey).catch(() => undefined);
+          // Persist each uploaded URL before going on: a retry must resend the identical body, or
+          // the server rejects the reused Idempotency-Key as a conflict.
+          delete keys[kind];
+          item.mediaKeys = keys;
           item.photoKey = undefined;
+          writeQueue([...remaining, item, ...queue.slice(index + 1)]);
+          await deleteOfflineMedia(key).catch(() => undefined);
         }
         await submitReportAuthed(item.input, item.idempotencyKey);
       } catch (err) {
@@ -74,18 +89,20 @@ export function useOfflineQueue(authReady: boolean) {
     return () => window.removeEventListener("online", flush);
   }, [flush, authReady]);
 
-  const enqueue = useCallback(async (input: CreateSubmissionInput, idempotencyKey: string, photo?: Blob | null) => {
-    let photoKey: string | undefined;
-    if (photo) {
+  const enqueue = useCallback(async (input: CreateSubmissionInput, idempotencyKey: string, media: OfflineMedia = {}) => {
+    const mediaKeys: Partial<Record<MediaKind, string>> = {};
+    for (const kind of ["photo", "audio"] as const) {
+      const blob = media[kind];
+      if (!blob) continue;
       try {
-        await saveOfflineMedia(idempotencyKey, photo);
-        photoKey = idempotencyKey;
+        await saveOfflineMedia(`${idempotencyKey}:${kind}`, blob);
+        mediaKeys[kind] = `${idempotencyKey}:${kind}`;
       } catch {
-        // No IndexedDB (private mode): the report still goes, just without the photo.
+        // No IndexedDB (private mode): the report still goes, just without this attachment.
       }
     }
     const queue = readQueue();
-    queue.push({ idempotencyKey, input, queuedAt: new Date().toISOString(), photoKey });
+    queue.push({ idempotencyKey, input, queuedAt: new Date().toISOString(), mediaKeys });
     writeQueue(queue);
     setPendingCount(queue.length);
   }, []);

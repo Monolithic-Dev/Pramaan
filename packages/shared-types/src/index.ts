@@ -371,6 +371,8 @@ export interface AgentTurn {
   citations: AgentCitation[];
   refused: boolean;
   refusal_reason: string | null;
+  /** Figures the model stated that no tool result contained (why a draft was rejected), for the audit trail. */
+  unverified_claims?: string[];
   prompt_version: string;
   total_latency_ms: number;
   timestamp: string;

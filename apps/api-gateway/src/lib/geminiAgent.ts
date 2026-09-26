@@ -29,13 +29,19 @@ export function createGeminiAgentClient(): GeminiAgentClient {
 
   return {
     async generateTurn(systemInstruction, contents) {
-      const response = await generateWithFallback(ai, parseModelList(env.geminiAgentModel), {
+      // An officer is waiting on the other end: fail over fast rather than sit on a hung model.
+      const response = await generateWithFallback(
+        ai,
+        parseModelList(env.geminiAgentModel),
+        {
           contents: contents as never,
           config: {
             systemInstruction,
             tools: [{ functionDeclarations: TOOL_DECLARATIONS as never }],
           },
-      });
+        },
+        { timeoutMs: 12_000, deadlineMs: 40_000 },
+      );
 
       const parts = response.candidates?.[0]?.content?.parts ?? [];
       const functionCalls: FunctionCall[] = parts

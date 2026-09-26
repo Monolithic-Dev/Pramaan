@@ -53,6 +53,8 @@ export interface IssueSummary {
   assigned_to_uid: string | null;
   assigned_to_label: string | null;
   sla: Sla;
+  /** Detail view only: the embedding model that placed this issue for duplicate matching. */
+  embedding_model?: string | null;
 }
 
 export interface Sla {

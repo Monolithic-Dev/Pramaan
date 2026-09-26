@@ -6,9 +6,11 @@ import { executeTool, extractScopeTarget, type ToolName } from "./tools.js";
 import { isWithinScope } from "./scopeGuard.js";
 import { extractNumerals, stripUngroundedSentences, verifyGrounded } from "./groundedness.js";
 
-export const AGENT_PROMPT_VERSION = "agent-v1";
+export const AGENT_PROMPT_VERSION = "agent-v2";
 const MAX_TOOL_ROUNDS = 5;
-const TURN_BUDGET_MS = 30_000;
+// Longer than one model call's own deadline (lib/geminiAgent.ts), so a slow first call on a
+// congested model does not by itself turn a good question into a refusal.
+const TURN_BUDGET_MS = 55_000;
 
 const SYSTEM_INSTRUCTION = `You answer questions from government officers about infrastructure
 demand in their jurisdiction.
@@ -20,7 +22,16 @@ Rules:
   (a wider region, a different timeframe, or demand data without investment data).
 - When data is marked data_origin=synthetic_demo, say so in your answer.
 - When a score used a fallback data level, mention it.
-- Prefer three sourced sentences over a paragraph of context.`;
+- Prefer three sourced sentences over a paragraph of context.
+
+How to answer well:
+- For "top", "most urgent" or "what first" questions, call get_priority_scores once, with the
+  category the officer named and only_unaddressed=true when they ask about unaddressed or
+  pending work. Its rows already say whether each issue is funded; do not look issues up one by one.
+- Name issues by their description and area (e.g. "the pothole on Main Market Road, Central
+  Delhi"), not by internal ids or region codes. Put an issue id in brackets only if the officer
+  asked for ids.
+- Answer in the language the officer wrote in.`;
 
 function hashResult(result: unknown): string {
   return createHash("sha256").update(JSON.stringify(result)).digest("hex").slice(0, 16);
@@ -148,9 +159,11 @@ This session is scoped to region_id "${session.region_scope}". ` +
     refusalReason = "max_tool_rounds_exceeded";
   }
 
+  let unverifiedClaims: string[] = [];
   if (!refused && finalText) {
     const verification = verifyGrounded(finalText, toolResultsForVerification);
     if (!verification.passed) {
+      unverifiedClaims = verification.unverifiedClaims;
       const retryInstruction = `${systemInstruction}\n\nYour previous answer contained numbers that don't appear in the tool results: ${verification.unverifiedClaims.join(", ")}. Regenerate using ONLY numbers present in the tool results above, or say you don't have enough data.`;
       const retry = await deps.geminiAgent.generateTurn(retryInstruction, contents);
       const reverified = retry.text ? verifyGrounded(retry.text, toolResultsForVerification) : null;
@@ -159,6 +172,7 @@ This session is scoped to region_id "${session.region_scope}". ` +
       if (retry.functionCalls.length === 0 && reverified?.passed) {
         finalText = retry.text;
       } else {
+        unverifiedClaims = [...new Set([...unverifiedClaims, ...(reverified?.unverifiedClaims ?? [])])];
         refused = true;
         refusalReason = "ungrounded_claims_after_regeneration";
         finalText = null;
@@ -195,6 +209,7 @@ This session is scoped to region_id "${session.region_scope}". ` +
     citations,
     refused,
     refusal_reason: refused ? refusalReason : null,
+    ...(unverifiedClaims.length ? { unverified_claims: unverifiedClaims } : {}),
     prompt_version: AGENT_PROMPT_VERSION,
     total_latency_ms: Date.now() - start,
     timestamp: new Date().toISOString(),

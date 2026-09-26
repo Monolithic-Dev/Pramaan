@@ -25,7 +25,7 @@ export function CitizenLayout() {
       <div className="tricolour" />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <Brand to="/my" />
+          <Brand to="/my" compactTagline />
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
             {ITEMS.map((i) => (
               <NavLink key={i.to} to={i.to} end={i.end} className={link}>

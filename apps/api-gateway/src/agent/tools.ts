@@ -2,6 +2,7 @@ import { computeCompositeScore, type ScoreWeights } from "@pramaan/shared-utils"
 import type { Deps } from "../deps.js";
 import { verifyGrounded } from "./groundedness.js";
 import { getEquityAudit, getForecasts } from "../insights/service.js";
+import { getIssuesInScope, regionNameMap } from "../services/consoleData.js";
 
 // docs/AI_PIPELINE.md Stage 5 refusal guardrail, layer 1: an explicit
 // no-data envelope, never an empty array — models narrate empty arrays away,
@@ -22,12 +23,15 @@ function noData(reason: string, availableInstead: string[] = []): NoDataResult {
 export const TOOL_DECLARATIONS = [
   {
     name: "query_fused_data",
-    description: "Demand records (Issues) for a region, optionally filtered by category.",
+    description:
+      "Citizen-reported issues in a region (and every district inside it), highest priority first. Each row has a plain description, the area name, report counts, status and whether it is already funded.",
     parameters: {
       type: "object",
       properties: {
         region_id: { type: "string" },
-        category: { type: "string" },
+        category: { type: "string", description: "One of roads, water, electricity, sanitation, health_infra, education_infra, other" },
+        only_unaddressed: { type: "boolean", description: "Only issues not yet funded, in progress or resolved" },
+        limit: { type: "integer" },
       },
       required: ["region_id"],
     },
@@ -46,11 +50,14 @@ export const TOOL_DECLARATIONS = [
   },
   {
     name: "get_priority_scores",
-    description: "Canonical PriorityScores (with full breakdowns) for a region, ranked.",
+    description:
+      "The highest-priority issues in a region, ranked by composite score, with the score breakdown (demand, vulnerability, gap), description, area, status and funding. Use this for 'top', 'most urgent' or 'what should we fix first'.",
     parameters: {
       type: "object",
       properties: {
         region_id: { type: "string" },
+        category: { type: "string", description: "One of roads, water, electricity, sanitation, health_infra, education_infra, other" },
+        only_unaddressed: { type: "boolean", description: "Only issues not yet funded, in progress or resolved" },
         limit: { type: "integer" },
       },
       required: ["region_id"],
@@ -119,24 +126,56 @@ export const TOOL_DECLARATIONS = [
 
 export type ToolName = (typeof TOOL_DECLARATIONS)[number]["name"];
 
-async function queryFusedData(deps: Deps, regionId: string, category?: string) {
-  const issues = await deps.store.getIssuesByRegion(regionId, category);
-  if (issues.length === 0) {
-    const available = await deps.bigqueryAgent.getAvailableData(regionId);
+const ADDRESSED = new Set(["funded", "in_progress", "resolved"]);
+const FUNDED_PROJECT = new Set(["funded", "in_progress", "completed"]);
+const round = (n: number, digits: number) => Number(n.toFixed(digits));
+
+interface IssueQuery {
+  regionId: string;
+  category?: string;
+  onlyUnaddressed?: boolean;
+}
+
+/** Issues the officer can see for `regionId` — a state or country includes every district inside it,
+ *  exactly as the console does — ranked by priority, with the human-readable context an answer needs. */
+async function rankedIssues(deps: Deps, { regionId, category, onlyUnaddressed }: IssueQuery) {
+  const [issues, regions, projects] = await Promise.all([getIssuesInScope(deps, regionId), regionNameMap(deps), deps.store.listProjects()]);
+  const projectByIssue = new Map(projects.map((p) => [p.issue_id, p]));
+  return issues
+    .filter((i) => !category || i.category === category)
+    .filter((i) => !onlyUnaddressed || !ADDRESSED.has(i.status))
+    .sort((a, b) => (b.composite_score ?? -1) - (a.composite_score ?? -1) || b.report_count - a.report_count)
+    .map((issue) => {
+      const project = projectByIssue.get(issue.issue_id);
+      return {
+        issue,
+        row: {
+          issue_id: issue.issue_id,
+          description: issue.canonical_description,
+          area: (issue.admin_region_id && regions.get(issue.admin_region_id)?.name) || "unresolved location",
+          category: issue.category,
+          subcategory: issue.subcategory,
+          status: issue.status,
+          report_count: issue.report_count,
+          distinct_reporter_count: issue.distinct_reporter_count,
+          composite_score: issue.composite_score === null ? null : round(issue.composite_score, 2),
+          funded: project ? FUNDED_PROJECT.has(project.status) : false,
+          project_status: project?.status ?? "no project",
+        },
+      };
+    });
+}
+
+async function queryFusedData(deps: Deps, q: IssueQuery, limit = 15) {
+  const ranked = await rankedIssues(deps, q);
+  if (ranked.length === 0) {
+    const available = await deps.bigqueryAgent.getAvailableData(q.regionId);
     return noData(
-      `no demand data for region ${regionId}${category ? ` in category "${category}"` : ""}`,
+      `no demand data for region ${q.regionId}${q.category ? ` in category "${q.category}"` : ""}${q.onlyUnaddressed ? " that is still unaddressed" : ""}`,
       available.infraIndexTypes.map((t) => `InfraIndex: ${t}`),
     );
   }
-  return issues.map((issue) => ({
-    issue_id: issue.issue_id,
-    category: issue.category,
-    subcategory: issue.subcategory,
-    status: issue.status,
-    report_count: issue.report_count,
-    distinct_reporter_count: issue.distinct_reporter_count,
-    composite_score: issue.composite_score,
-  }));
+  return ranked.slice(0, limit).map((r) => r.row);
 }
 
 async function checkInvestmentStatus(deps: Deps, regionId: string, category: string) {
@@ -150,22 +189,26 @@ async function checkInvestmentStatus(deps: Deps, regionId: string, category: str
   return records;
 }
 
-async function getPriorityScores(deps: Deps, regionId: string, limit = 5) {
-  const issues = await deps.store.getIssuesByRegion(regionId);
-  const scored = issues.filter((i) => i.composite_score !== null);
-  if (scored.length === 0) {
-    return noData(`no scored issues for region ${regionId}`, [
+async function getPriorityScores(deps: Deps, q: IssueQuery, limit = 5) {
+  const ranked = (await rankedIssues(deps, q)).filter((r) => r.issue.composite_score !== null).slice(0, limit);
+  if (ranked.length === 0) {
+    return noData(`no scored issues for region ${q.regionId}${q.category ? ` in category "${q.category}"` : ""}`, [
       "unscored demand data via query_fused_data",
     ]);
   }
-  const ranked = scored.sort((a, b) => (b.composite_score ?? 0) - (a.composite_score ?? 0)).slice(0, limit);
-  const withScores = await Promise.all(
-    ranked.map(async (issue) => ({
-      issue_id: issue.issue_id,
-      score: await deps.store.getCanonicalScore(issue.issue_id),
-    })),
+  return Promise.all(
+    ranked.map(async ({ issue, row }) => {
+      const score = await deps.store.getCanonicalScore(issue.issue_id);
+      return {
+        ...row,
+        demand_score: score ? round(score.demand_score, 2) : null,
+        vulnerability_score: score ? round(score.vulnerability_score, 2) : null,
+        gap_score: score ? round(score.gap_score, 2) : null,
+        estimated_people_affected: score?.estimated_impact_population ?? null,
+        data_fallbacks: score?.data_fallbacks.map((f) => f.reason) ?? [],
+      };
+    }),
   );
-  return withScores;
 }
 
 async function simulatePriority(
@@ -173,7 +216,7 @@ async function simulatePriority(
   regionId: string,
   weightOverrides: Partial<ScoreWeights> = {},
 ) {
-  const issues = await deps.store.getIssuesByRegion(regionId);
+  const issues = await getIssuesInScope(deps, regionId);
   const results = [];
   for (const issue of issues) {
     const canonical = await deps.store.getCanonicalScore(issue.issue_id);
@@ -252,7 +295,7 @@ export async function generateBrief(deps: Deps, issueId: string) {
 async function listAvailableData(deps: Deps, regionId: string) {
   const [available, issues] = await Promise.all([
     deps.bigqueryAgent.getAvailableData(regionId),
-    deps.store.getIssuesByRegion(regionId),
+    getIssuesInScope(deps, regionId),
   ]);
   return {
     region_id: regionId,
@@ -262,6 +305,12 @@ async function listAvailableData(deps: Deps, regionId: string) {
   };
 }
 
+const issueQuery = (args: Record<string, unknown>): IssueQuery => ({
+  regionId: args.region_id as string,
+  category: (args.category as string | undefined) || undefined,
+  onlyUnaddressed: args.only_unaddressed === true,
+});
+
 export async function executeTool(
   deps: Deps,
   name: ToolName,
@@ -269,11 +318,11 @@ export async function executeTool(
 ): Promise<unknown> {
   switch (name) {
     case "query_fused_data":
-      return queryFusedData(deps, args.region_id as string, args.category as string | undefined);
+      return queryFusedData(deps, issueQuery(args), (args.limit as number | undefined) ?? 15);
     case "check_investment_status":
       return checkInvestmentStatus(deps, args.region_id as string, args.category as string);
     case "get_priority_scores":
-      return getPriorityScores(deps, args.region_id as string, args.limit as number | undefined);
+      return getPriorityScores(deps, issueQuery(args), (args.limit as number | undefined) ?? 5);
     case "simulate_priority":
       return simulatePriority(
         deps,
