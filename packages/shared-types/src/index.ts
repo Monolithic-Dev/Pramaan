@@ -176,6 +176,8 @@ export interface Issue {
   assigned_at?: string | null;
   /** Set only when an officer overrides the default SLA for the issue's priority band. */
   sla_due_at?: string | null;
+  /** Highest escalation level already notified (services/sla.ts), so each level alerts only once. */
+  escalation_notified?: number;
   submission_ids: string[];
   report_count: number;
   /** Distinct citizen_ids behind report_count — this, not report_count, feeds demand_score. */
@@ -313,6 +315,8 @@ export interface ImpactRecord {
   /** Citizen ids that have already responded, so the threshold counts distinct reporters, not calls.
    *  Optional because records written before this field existed lack it. */
   confirmed_by?: string[];
+  /** How many times citizens rejected the fix and sent the work back. */
+  reopened_count?: number;
   resolution_photo_url: string | null;
   resolved_at: string;
   verified_by: string;
@@ -424,6 +428,8 @@ export type NotificationKind =
   | "issue.assigned"
   | "issue.emergency"
   | "issue.comment"
+  | "issue.reopened"
+  | "issue.escalated"
   | "plan.approved";
 
 /** In-app inbox entry. The client renders the text from kind + params in the reader's language,

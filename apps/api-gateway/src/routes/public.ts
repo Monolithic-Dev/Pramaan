@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import type { Issue } from "@pramaan/shared-types";
+import type { Issue, Submission } from "@pramaan/shared-types";
+import { haversineMeters } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { normalizeTrackingCode } from "../lib/trackingCode.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -9,7 +10,14 @@ import { SCHEMES } from "../data/schemes.js";
 import { computeImpact, computeScorecards, GRADE_FORMULA } from "../services/analytics.js";
 import { issueLocation, regionNameMap } from "../services/consoleData.js";
 import { bad, notFound, publicRateLimit } from "./helpers.js";
+import { sendResolutionOutcome } from "./projects.js";
 import { toCsv } from "./reports.js";
+import { recordResolutionResponse } from "../services/impactLoop.js";
+
+/** Who is answering, as identifiedReporters() counts them: the account for a signed-in reporter
+ *  (so keeping the code never buys a second vote), the report itself for an anonymous one. */
+const responderOf = (s: Pick<Submission, "citizen_id" | "submission_id">) =>
+  s.citizen_id !== "anonymous" ? s.citizen_id : `sub:${s.submission_id}`;
 
 const STAGES = ["received", "understood", "verified", "funded", "fixed"] as const;
 const BEYOND_OPEN = new Set(["verified", "prioritized", "funded", "in_progress", "resolved"]);
@@ -42,7 +50,12 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
     const issue = submission.issue_id ? await deps.store.getIssue(submission.issue_id) : null;
     const live = issue && issue.status !== "tombstoned" ? issue : null;
     const project = live ? await deps.store.getProjectByIssue(live.issue_id) : null;
+    const impact = project?.marked_complete_at ? await deps.store.getImpactRecord(project.project_id) : null;
     return reply.code(200).send({
+      // The code holder is an original reporter: ask them, like a signed-in citizen, whether it was fixed.
+      awaiting_confirmation:
+        Boolean(project?.marked_complete_at) && project?.status !== "completed" && !(impact?.confirmed_by ?? []).includes(responderOf(submission)),
+      reopened_count: impact?.reopened_count ?? 0,
       tracking_code: submission.tracking_code,
       submitted_at: submission.submitted_at,
       channel: submission.channel,
@@ -55,6 +68,21 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
       other_reporters: live ? Math.max(0, live.distinct_reporter_count - 1) : 0,
       project_stage: project?.status ?? null,
     });
+  });
+
+  // "Was it really fixed?" for people who reported without an account. The tracking code is the
+  // credential; each report gets one answer per round, whether the reporter answers here or signed in.
+  app.post("/public/track/:code/confirm", async (request, reply) => {
+    if (!(await publicRateLimit(deps, request, reply, "track", 20))) return;
+    const body = z.object({ confirmed: z.boolean() }).safeParse(request.body);
+    if (!body.success) return reply.code(400).send(bad(body.error.issues[0]?.message));
+    const code = normalizeTrackingCode((request.params as { code: string }).code);
+    const submission = code ? await deps.store.getSubmissionByTrackingCode(code) : null;
+    if (!submission || submission.status === "tombstoned" || !submission.issue_id) return reply.code(404).send(notFound("Report"));
+    const project = await deps.store.getProjectByIssue(submission.issue_id);
+    if (!project) return reply.code(409).send({ error: { code: "NOT_MARKED_COMPLETE", message: "This project hasn't been marked complete yet." } });
+
+    return sendResolutionOutcome(reply, await recordResolutionResponse(deps, project, responderOf(submission), body.data.confirmed));
   });
 
   // ---- Accountability -----------------------------------------------------------------------------------------
@@ -152,6 +180,41 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
           is_synthetic: i.is_synthetic === true,
         }];
       }),
+    });
+  });
+
+  // "Is this already reported?" (the FixMyStreet pattern): before filing, a citizen sees open issues
+  // right around the spot they picked and can add their voice to one instead of starting a duplicate.
+  // Same fields as the community map; the distance is rounded so it never pinpoints a reporter.
+  app.get("/public/nearby", async (request, reply) => {
+    if (!(await publicRateLimit(deps, request, reply, "public-nearby"))) return;
+    const q = z
+      .object({ lat: z.coerce.number().min(-90).max(90), lng: z.coerce.number().min(-180).max(180), radius: z.coerce.number().int().min(50).max(2000).default(500) })
+      .safeParse(request.query);
+    if (!q.success) return reply.code(400).send(bad(q.error.issues[0]?.message));
+    const here = { lat: q.data.lat, lng: q.data.lng };
+    const nearby = (await publicIssues())
+      .filter((i) => i.fraud_flags.length === 0 && !["resolved", "disputed"].includes(i.status))
+      .flatMap((i) => {
+        const loc = issueLocation(i);
+        if (!loc) return [];
+        const distance = haversineMeters(here, loc);
+        return distance <= q.data.radius ? [{ issue: i, distance }] : [];
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5);
+    return reply.code(200).send({
+      radius_m: q.data.radius,
+      issues: nearby.map(({ issue: i, distance }) => ({
+        issue_id: i.issue_id,
+        category: i.category,
+        subcategory: i.subcategory,
+        status: i.status,
+        report_count: i.report_count,
+        support_count: i.support_count ?? 0,
+        distance_m: Math.max(50, Math.round(distance / 50) * 50),
+        first_reported_at: i.first_reported_at,
+      })),
     });
   });
 

@@ -256,6 +256,13 @@ export function createInMemoryStore(): Store & {
     async hasSupport(issueId, citizenId) {
       return supports.has(`${issueId}:${citizenId}`);
     },
+    async listSupporters(issueId) {
+      const prefix = `${issueId}:`;
+      return [...supports].filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+    },
+    async getSubmissionByMediaUrl(url) {
+      return [...submissions.values()].find((s) => s.photo_url === url || s.raw_audio_url === url) ?? null;
+    },
     issues,
     priorityScores,
     auditLog,

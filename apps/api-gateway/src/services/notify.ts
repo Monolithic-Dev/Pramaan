@@ -27,23 +27,29 @@ export async function notify(
 }
 
 /** Tells every distinct citizen who reported an issue, each linked to their *own* report so the
- *  page they land on is one they are allowed to open. Anonymous reporters have no inbox. */
+ *  page they land on is one they are allowed to open, and everyone who pressed "I'm affected too"
+ *  (they follow the issue without having filed it). Anonymous reporters have no inbox; they see
+ *  progress through their tracking code. */
 export async function notifyReporters(
   deps: Deps,
   issue: Pick<Issue, "issue_id" | "category">,
   kind: NotificationKind,
   params: Params = {},
 ): Promise<number> {
-  const submissions = await deps.store.getSubmissionsByIssue(issue.issue_id);
+  const [submissions, supporters] = await Promise.all([
+    deps.store.getSubmissionsByIssue(issue.issue_id),
+    deps.store.listSupporters(issue.issue_id),
+  ]);
   const firstByCitizen = new Map<string, string>();
   for (const s of submissions) {
     if (s.status === "tombstoned" || s.citizen_id === "anonymous" || firstByCitizen.has(s.citizen_id)) continue;
     firstByCitizen.set(s.citizen_id, s.submission_id);
   }
-  await Promise.all(
-    [...firstByCitizen].map(([citizenId, submissionId]) =>
-      notify(deps, [citizenId], { kind, params: { category: issue.category, ...params }, link: `/my/${submissionId}` }),
-    ),
-  );
-  return firstByCitizen.size;
+  const followers = supporters.filter((id) => !firstByCitizen.has(id));
+  const payload = { category: issue.category, ...params };
+  await Promise.all([
+    ...[...firstByCitizen].map(([citizenId, submissionId]) => notify(deps, [citizenId], { kind, params: payload, link: `/my/${submissionId}` })),
+    notify(deps, followers, { kind, params: payload, link: `/community?issue=${issue.issue_id}` }),
+  ]);
+  return firstByCitizen.size + followers.length;
 }

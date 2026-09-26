@@ -130,4 +130,8 @@ export interface Store {
   /** Records an "I'm affected too" endorsement. Returns false if this citizen already gave one. */
   putSupport(issueId: string, citizenId: string): Promise<boolean>;
   hasSupport(issueId: string, citizenId: string): Promise<boolean>;
+  /** Citizen ids who endorsed an issue: they follow it and are told when it moves. */
+  listSupporters(issueId: string): Promise<string[]>;
+  /** The submission a stored photo/audio URL belongs to, so media access can be scoped like the issue. */
+  getSubmissionByMediaUrl(url: string): Promise<Submission | null>;
 }
