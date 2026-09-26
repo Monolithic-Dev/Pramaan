@@ -813,6 +813,7 @@
   "report.voiceListening": "Listening… tap again to stop",
   "report.voiceSub": "Speak in your own language",
   "report.voiceUnsupported": "Voice input isn't supported on this device. Please type instead.",
+  "report.micBlocked": "Microphone access is blocked. Allow it in your browser's site settings, or type your report instead.",
   "role.citizen": "Citizen",
   "role.district_collector": "District collector",
   "role.field_officer": "Field officer",

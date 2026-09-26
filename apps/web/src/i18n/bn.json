@@ -813,6 +813,7 @@
   "report.voiceListening": "শোনা হচ্ছে... থামাতে আবার ট্যাপ করুন",
   "report.voiceSub": "আপনার নিজের ভাষায় বলুন",
   "report.voiceUnsupported": "এই ডিভাইসে ভয়েস ইনপুট সমর্থিত নয়। অনুগ্রহ করে টাইপ করুন।",
+  "report.micBlocked": "মাইক্রোফোনের অনুমতি বন্ধ আছে। ব্রাউজারের সাইট সেটিংসে এটি চালু করুন, অথবা আপনার অভিযোগ টাইপ করুন।",
   "role.citizen": "নাগরিক",
   "role.district_collector": "জেলা কালেক্টর",
   "role.field_officer": "ফিল্ড অফিসার",

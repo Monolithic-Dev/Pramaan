@@ -813,6 +813,7 @@
   "report.voiceListening": "सुन रहे हैं… रोकने के लिए फिर दबाएं",
   "report.voiceSub": "अपनी भाषा में बोलें",
   "report.voiceUnsupported": "इस डिवाइस पर आवाज़ इनपुट उपलब्ध नहीं है। कृपया टाइप करें।",
+  "report.micBlocked": "माइक्रोफ़ोन की अनुमति बंद है। ब्राउज़र की साइट सेटिंग में इसे चालू करें, या अपनी शिकायत टाइप करें।",
   "role.citizen": "नागरिक",
   "role.district_collector": "जिला कलेक्टर",
   "role.field_officer": "क्षेत्र अधिकारी",
