@@ -1,6 +1,6 @@
 // Focused check of the officer agent against real Gemini function calling. Seeds one issue with a
 // score, asks grounded / out-of-scope / new-tool questions over SSE, then removes what it seeded.
-//   pnpm --filter @jansetu/scripts exec tsx e2e-agent.ts
+//   pnpm --filter @pramaan/scripts exec tsx e2e-agent.ts
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { applicationDefault, initializeApp } from "firebase-admin/app";

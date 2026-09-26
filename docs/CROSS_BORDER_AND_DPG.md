@@ -1,6 +1,6 @@
 # Cross-Border Applicability & Digital Public Good Positioning
 
-**This document exists because hackathon Rule 04 requires it and no other JanSetu doc addresses it.**
+**This document exists because hackathon Rule 04 requires it and no other Pramaan doc addresses it.**
 
 > Rule 04: *"Solutions should be designed with cross-border applicability in mind — built for one context but scalable to others across BRICS nations."*
 
@@ -8,7 +8,7 @@ The problem statement also specifies the platform be *"designed as a Digital Pub
 
 ---
 
-## 1. What actually has to change to run JanSetu in Brazil
+## 1. What actually has to change to run Pramaan in Brazil
 
 The honest test of a portability claim is: name the file you edit. Here is the list.
 
@@ -43,13 +43,13 @@ Not a stretch — the problem shape genuinely recurs:
 - **South Africa** — municipal service-delivery complaints are a live political issue; existing systems are intake-only.
 - **India** — the stated problem statement.
 
-The common structure: a multilingual population, a federated administrative hierarchy, a public-investment record that exists but is not joined to citizen demand, and no outcome measurement. JanSetu targets the join and the loop, not the complaint form — which is exactly why it ports.
+The common structure: a multilingual population, a federated administrative hierarchy, a public-investment record that exists but is not joined to citizen demand, and no outcome measurement. Pramaan targets the join and the loop, not the complaint form — which is exactly why it ports.
 
-Two-sentence version for the pitch deck: *"JanSetu solves the join between citizen demand and public investment, not the complaint form. Any federated state with multilingual citizens and published investment records has the same gap, which is why adding Brazil is a config file rather than a fork."*
+Two-sentence version for the pitch deck: *"Pramaan solves the join between citizen demand and public investment, not the complaint form. Any federated state with multilingual citizens and published investment records has the same gap, which is why adding Brazil is a config file rather than a fork."*
 
 ## 3. Digital Public Good positioning
 
-The problem statement says "designed as a Digital Public Good." The [DPG Standard](https://digitalpublicgoods.net/standard/) has nine indicators. JanSetu can credibly claim seven within the hackathon:
+The problem statement says "designed as a Digital Public Good." The [DPG Standard](https://digitalpublicgoods.net/standard/) has nine indicators. Pramaan can credibly claim seven within the hackathon:
 
 | # | Indicator | Status | Action |
 |---|---|---|---|

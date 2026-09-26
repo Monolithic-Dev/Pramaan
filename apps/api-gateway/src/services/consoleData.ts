@@ -1,5 +1,5 @@
-import type { Issue } from "@jansetu/shared-types";
-import { geohashDecodeCenter } from "@jansetu/shared-utils";
+import type { Issue } from "@pramaan/shared-types";
+import { geohashDecodeCenter } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import type { RegionInfo } from "../lib/bigquery.js";
 import { priorityBand } from "../insights/transparency.js";

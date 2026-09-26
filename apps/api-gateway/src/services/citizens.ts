@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Citizen } from "@jansetu/shared-types";
-import { hashPhone } from "@jansetu/shared-utils";
+import type { Citizen } from "@pramaan/shared-types";
+import { hashPhone } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 
 // WhatsApp/SMS senders arrive pre-verified by the telecom/provider layer — there

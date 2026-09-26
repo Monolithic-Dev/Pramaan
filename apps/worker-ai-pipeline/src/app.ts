@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import { COUNTRY_PROFILES } from "@jansetu/shared-types";
+import { COUNTRY_PROFILES } from "@pramaan/shared-types";
 import type { Deps } from "./deps.js";
 import { processSubmission } from "./services/processSubmission.js";
 import { runScoringBatch } from "./services/scoring.js";

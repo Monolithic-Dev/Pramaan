@@ -1,4 +1,4 @@
-# Security & Privacy: JanSetu
+# Security & Privacy: Pramaan
 
 A public, government-facing platform handling citizen location and contact data needs to take this seriously even at hackathon scale — this doc is also a strong signal to judges on "Deployability."
 

@@ -1,4 +1,4 @@
-import type { Issue, PriorityScore, Submission } from "@jansetu/shared-types";
+import type { Issue, PriorityScore, Submission } from "@pramaan/shared-types";
 import { buildApp } from "../app.js";
 import { createFakeDeps } from "./fakeDeps.js";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AgentSession, Issue } from "@jansetu/shared-types";
+import type { AgentSession, Issue } from "@pramaan/shared-types";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 import { runAgentTurn, type AgentEvent } from "./orchestrator.js";
 

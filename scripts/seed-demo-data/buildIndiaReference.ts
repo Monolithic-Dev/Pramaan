@@ -136,19 +136,19 @@ function main() {
     rows.push([id, country, level, name, parent, pop, boundary, lat, lng].join(","));
   };
 
-  add("IN", "IN", "country", "India", "", 1210854977, 22.9734, 78.6569, "bq://jansetu.reference.in_admin_boundaries/country/IN");
-  add("BR", "BR", "country", "Brasil", "", 203062512, -14.235, -51.9253, "bq://jansetu.reference.br_admin_boundaries/country/BR");
+  add("IN", "IN", "country", "India", "", 1210854977, 22.9734, 78.6569, "bq://pramaan.reference.in_admin_boundaries/country/IN");
+  add("BR", "BR", "country", "Brasil", "", 203062512, -14.235, -51.9253, "bq://pramaan.reference.br_admin_boundaries/country/BR");
   for (const [iso, name, pop, lat, lng] of STATES) {
-    add(`IN-${iso}`, "IN", "state", name, "IN", pop, lat, lng, `bq://jansetu.reference.in_admin_boundaries/state/${iso}`);
+    add(`IN-${iso}`, "IN", "state", name, "IN", pop, lat, lng, `bq://pramaan.reference.in_admin_boundaries/state/${iso}`);
   }
   for (const [id, name, iso, pop, lat, lng] of DISTRICTS) {
-    add(id, "IN", "district", name, `IN-${iso}`, pop, lat, lng, `bq://jansetu.reference.in_admin_boundaries/district/${id}`);
+    add(id, "IN", "district", name, `IN-${iso}`, pop, lat, lng, `bq://pramaan.reference.in_admin_boundaries/district/${id}`);
   }
   for (const [id, name, pop, lat, lng] of BR_ESTADOS) {
-    add(id, "BR", "estado", name, "BR", pop, lat, lng, `bq://jansetu.reference.br_admin_boundaries/estado/${id.slice(3)}`);
+    add(id, "BR", "estado", name, "BR", pop, lat, lng, `bq://pramaan.reference.br_admin_boundaries/estado/${id.slice(3)}`);
   }
   for (const [id, name, parent, pop, lat, lng] of BR_MUNICIPIOS) {
-    add(id, "BR", "município", name, parent, pop, lat, lng, `bq://jansetu.reference.br_admin_boundaries/municipio/${id.slice(3)}`);
+    add(id, "BR", "município", name, parent, pop, lat, lng, `bq://pramaan.reference.br_admin_boundaries/municipio/${id.slice(3)}`);
   }
 
   // Existing states gain the country as their parent, which is what makes a national jurisdiction possible.

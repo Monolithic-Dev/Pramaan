@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { AgentCitation, AgentSession, AgentToolCall, AgentTurn } from "@jansetu/shared-types";
+import type { AgentCitation, AgentSession, AgentToolCall, AgentTurn } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import type { AgentContent } from "../lib/geminiAgent.js";
 import { executeTool, extractScopeTarget, type ToolName } from "./tools.js";

@@ -7,7 +7,7 @@ description: >
   request fail", "wire up this API route".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 Two Fastify/Node services: `api-gateway` (synchronous, citizen/officer-facing) and
 `worker-ai-pipeline` (Pub/Sub-triggered, does the AI work). They're deliberately decoupled so
 AI latency never blocks a citizen-facing response — every change here should preserve that.

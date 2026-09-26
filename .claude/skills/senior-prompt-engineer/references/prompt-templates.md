@@ -1,4 +1,4 @@
-# Prompt Templates & Regression Fixture Set — JanSetu
+# Prompt Templates & Regression Fixture Set — Pramaan
 
 Single source of truth for production prompts. A prompt change is a diff to this file plus a
 re-run of `scripts/run-prompt-regression.ts`.

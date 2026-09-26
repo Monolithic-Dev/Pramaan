@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
-import type { AgentSession } from "@jansetu/shared-types";
+import type { AgentSession } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { requireOfficer } from "../middleware/auth.js";
 import { createSessionSchema, postMessageSchema } from "../schemas/agent.js";

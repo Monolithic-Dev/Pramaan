@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
-import type { Citizen } from "@jansetu/shared-types";
-import { getCountryProfile } from "@jansetu/shared-types";
-import { hashPhone } from "@jansetu/shared-utils";
+import type { Citizen } from "@pramaan/shared-types";
+import { getCountryProfile } from "@pramaan/shared-types";
+import { hashPhone } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
 import { otpRequestSchema, otpVerifySchema } from "../schemas/auth.js";
 

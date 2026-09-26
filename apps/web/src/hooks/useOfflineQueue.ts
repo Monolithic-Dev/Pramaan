@@ -8,7 +8,7 @@ interface QueuedSubmission {
   queuedAt: string;
 }
 
-const STORAGE_KEY = "jansetu.offlineQueue";
+const STORAGE_KEY = "pramaan.offlineQueue";
 
 // ponytail: localStorage instead of IndexedDB — payloads here are small JSON
 // (no photo/audio blobs are uploaded yet, see docs/phases/phase-7-manual-checklist.md),

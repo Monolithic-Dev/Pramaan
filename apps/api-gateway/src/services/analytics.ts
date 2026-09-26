@@ -1,4 +1,4 @@
-import type { ImpactRecord, Issue, PriorityScore, Project } from "@jansetu/shared-types";
+import type { ImpactRecord, Issue, PriorityScore, Project } from "@pramaan/shared-types";
 import type { RegionInfo } from "../lib/bigquery.js";
 import { MIN_PUBLIC_COUNT } from "../insights/transparency.js";
 import { slaFor } from "./sla.js";

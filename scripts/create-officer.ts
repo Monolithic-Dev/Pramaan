@@ -1,7 +1,7 @@
 // Creates (or updates) an officer login in Firebase Auth and sets the custom claims the API
 // reads. Free on the Spark plan.
 //
-// Run: FIREBASE_SERVICE_ACCOUNT_JSON=<json|base64> pnpm --filter @jansetu/scripts create-officer \
+// Run: FIREBASE_SERVICE_ACCOUNT_JSON=<json|base64> pnpm --filter @pramaan/scripts create-officer \
 //        officer@example.com 'Str0ngPassw0rd' state_admin IN-DL IN
 import { getAuth } from "firebase-admin/auth";
 import { initFirebase } from "./lib/firebase.js";

@@ -3,7 +3,7 @@ import { SUPPORTED_LANGUAGES, useLanguage } from "../../i18n/LanguageProvider.js
 import { Icon } from "../../ui/Icon.js";
 import { cx } from "../../ui/kit.js";
 
-/** The JanSetu mark: a bridge (setu) spanning two banks, in the civic blue with a saffron keystone. */
+/** The Pramaan mark: a bridge (setu) spanning two banks, in the civic blue with a saffron keystone. */
 export function LogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
@@ -19,7 +19,7 @@ export function LogoMark({ size = 36 }: { size?: number }) {
 export function Brand({ dark = false, to = "/" }: { dark?: boolean; to?: string }) {
   const { t } = useLanguage();
   return (
-    <Link to={to} className="flex items-center gap-2.5" aria-label="JanSetu home">
+    <Link to={to} className="flex items-center gap-2.5" aria-label="Pramaan home">
       <LogoMark />
       <span className="leading-tight">
         <span className={cx("block text-lg font-extrabold tracking-tight", dark ? "text-white" : "text-brand-900")}>{t("app.title")}</span>

@@ -1,13 +1,13 @@
 import { BigQuery } from "@google-cloud/bigquery";
-import { withRetry } from "@jansetu/shared-utils";
+import { withRetry } from "@pramaan/shared-utils";
 import { env } from "./env.js";
 
-const DATASET = "jansetu_analytics";
+const DATASET = "pramaan_analytics";
 // admin_regions lives in a separate dataset from infra_index/investment_record
 // (infra/gcp/setup.sh, scripts/seed-demo-data/generateReferenceData.ts) — it's
 // reference/master data, not a per-run analytics table. Querying it from
 // DATASET would 404 against a real project.
-const REFERENCE_DATASET = "jansetu_reference";
+const REFERENCE_DATASET = "pramaan_reference";
 const MAX_ANCESTRY_HOPS = 6; // ward -> block -> district -> state -> country, with headroom
 
 export interface RegionInfraData {

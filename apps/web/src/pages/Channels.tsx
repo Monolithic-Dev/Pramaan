@@ -52,7 +52,7 @@ export default function Channels() {
           <div className="overflow-hidden rounded-[2rem] border-8 border-slate-900 bg-[#e6ddd4] shadow-lift">
             <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20"><Icon name="message" size={18} /></span>
-              <div><p className="text-sm font-semibold">JanSetu</p><p className="text-[11px] text-white/70">{t("ch.demo.online")}</p></div>
+              <div><p className="text-sm font-semibold">Pramaan</p><p className="text-[11px] text-white/70">{t("ch.demo.online")}</p></div>
             </div>
             <div className="space-y-2 p-3 text-[13px]">
               <div className="ml-auto max-w-[80%] rounded-lg rounded-tr-sm bg-[#d9fdd3] px-3 py-2 text-slate-800 shadow-sm">{t("ch.demo.user")}</div>

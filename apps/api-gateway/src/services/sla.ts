@@ -1,4 +1,4 @@
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 import { priorityBand } from "../insights/transparency.js";
 
 // Service-level clock: how long an issue may sit untouched (status "open") before it is overdue.

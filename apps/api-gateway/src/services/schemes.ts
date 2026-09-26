@@ -1,4 +1,4 @@
-import type { Issue } from "@jansetu/shared-types";
+import type { Issue } from "@pramaan/shared-types";
 import { SCHEMES, type Scheme } from "../data/schemes.js";
 import type { RegionInfo } from "../lib/bigquery.js";
 import { estimateBudget } from "./costing.js";

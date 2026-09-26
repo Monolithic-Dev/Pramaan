@@ -1,4 +1,4 @@
-import type { ImpactRecord, Issue } from "@jansetu/shared-types";
+import type { ImpactRecord, Issue } from "@pramaan/shared-types";
 
 // k-anonymity-style floor (docs/06-public-transparency-ledger.md): no stat is
 // published for a state with fewer issues than this.

@@ -2,13 +2,13 @@
 
 **Bug fixed post-merge**: both `apps/worker-ai-pipeline/src/lib/bigquery.ts` and
 `apps/api-gateway/src/lib/bigquery.ts` were querying `admin_regions` from the
-`jansetu_analytics` dataset, but `infra/gcp/setup.sh` and
+`pramaan_analytics` dataset, but `infra/gcp/setup.sh` and
 `scripts/seed-demo-data/generateReferenceData.ts` both load it into
-`jansetu_reference` (a deliberate separate dataset for master/reference data
+`pramaan_reference` (a deliberate separate dataset for master/reference data
 vs. per-run analytics tables). Every `getAncestryChain` call — used by
 scoring's vulnerability fallback chain, the agent's scope guard, and region
 resolution — would have 404'd against a real project. Fixed by querying
-`admin_regions` from `jansetu_reference` in both clients; nothing else changes.
+`admin_regions` from `pramaan_reference` in both clients; nothing else changes.
 
 The scoring formula, BigQuery reference-data joins, batch runner, and score-breakdown
 endpoint are implemented and unit-tested (19/19 worker tests, 29/29 api-gateway tests,
@@ -18,11 +18,11 @@ See `apps/worker-ai-pipeline/.env.example`. These steps need real credentials/da
 1. **Run the batch job against a real project**:
    ```bash
    gcloud auth application-default login
-   GCP_PROJECT_ID=<project-id> pnpm --filter @jansetu/worker-ai-pipeline dev
+   GCP_PROJECT_ID=<project-id> pnpm --filter @pramaan/worker-ai-pipeline dev
    curl -X POST localhost:8081/jobs/score
    ```
 2. **Wire up Cloud Scheduler** to hit `POST /jobs/score` on the deployed Cloud Run service every 15 minutes (§5.4).
-3. **Manual verification**: confirm a `priorityScores/{id}` doc appears in Firestore and a matching row lands in BigQuery's `jansetu_analytics.priority_score_history` (dual-write: Firestore for fast `GET /issues/{id}/score` reads, BigQuery for analytics history per `ARCHITECTURE.md`'s storage split).
+3. **Manual verification**: confirm a `priorityScores/{id}` doc appears in Firestore and a matching row lands in BigQuery's `pramaan_analytics.priority_score_history` (dual-write: Firestore for fast `GET /issues/{id}/score` reads, BigQuery for analytics history per `ARCHITECTURE.md`'s storage split).
 4. **Screenshot the "we don't double-fund" demo moment** (acceptance criteria): score two equivalent issues, one in a ward with a recent matching `InvestmentRecord`, one without — confirm the funded one ranks measurably lower via `duplication_penalty`.
 
 ## Deferred (documented, not built)

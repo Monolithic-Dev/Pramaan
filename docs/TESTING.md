@@ -1,4 +1,4 @@
-# Testing: JanSetu
+# Testing: Pramaan
 
 ## 1. Unit tests
 - Dedup similarity threshold logic (given two embeddings + a distance, does it merge or not, at the boundary values).

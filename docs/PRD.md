@@ -1,4 +1,4 @@
-# PRD: JanSetu
+# PRD: Pramaan
 
 ## 1. Problem statement (recap)
 Governments across India struggle to consolidate citizen feedback and align it with national infrastructure priorities. Development requests live in fragmented systems, leading to misaligned public spending, unaddressed infrastructure gaps, and no way to measure the impact of large-scale digital public infrastructure initiatives.

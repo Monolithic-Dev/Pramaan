@@ -20,7 +20,7 @@ export default function Briefing() {
   async function exportCsv() {
     setExporting(true);
     try {
-      saveBlob(await api.exportIssuesCsv(regionId), `jansetu-issues-${regionId}.csv`);
+      saveBlob(await api.exportIssuesCsv(regionId), `pramaan-issues-${regionId}.csv`);
     } catch {
       toast("error", t("report.errorGeneric"));
     } finally {

@@ -78,7 +78,7 @@ export default function Priorities() {
     const url = URL.createObjectURL(new Blob([toCsv(issues)], { type: "text/csv" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `jansetu-priorities-${regionId}.csv`;
+    a.download = `pramaan-priorities-${regionId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

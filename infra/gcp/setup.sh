@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Enables the GCP APIs JanSetu needs. Safe to re-run (enabling an already-enabled
+# Enables the GCP APIs Pramaan needs. Safe to re-run (enabling an already-enabled
 # service is a no-op). Requires: gcloud CLI authenticated, GOOGLE_CLOUD_PROJECT set
 # or passed as $1.
 set -euo pipefail
@@ -28,13 +28,13 @@ gcloud services list --enabled --format="value(config.name)"
 # --- Phase 2: BigQuery dataset/tables + Cloud Storage buckets ---
 # All idempotent: bq/gsutil no-op (with a warning) when the resource already exists.
 
-bq mk --dataset --location=asia-south1 "${PROJECT_ID}:jansetu_analytics" || true
-bq mk --dataset --location=asia-south1 "${PROJECT_ID}:jansetu_reference" || true
+bq mk --dataset --location=asia-south1 "${PROJECT_ID}:pramaan_analytics" || true
+bq mk --dataset --location=asia-south1 "${PROJECT_ID}:pramaan_reference" || true
 
 SCHEMA_DIR="$(dirname "$0")/bigquery-schemas"
 for table in infra_index investment_record priority_score_history; do
   bq mk --table \
-    "${PROJECT_ID}:jansetu_analytics.${table}" \
+    "${PROJECT_ID}:pramaan_analytics.${table}" \
     "${SCHEMA_DIR}/${table}.json" || true
 done
 
@@ -42,20 +42,20 @@ done
 # docs/phases/phase-2-data-layer.md's migration note) — InfraIndex/InvestmentRecord
 # join here, never to a dynamically-created GeoCluster.
 bq mk --table \
-  "${PROJECT_ID}:jansetu_reference.admin_regions" \
+  "${PROJECT_ID}:pramaan_reference.admin_regions" \
   "${SCHEMA_DIR}/admin_regions.json" || true
 
-gcloud storage buckets create "gs://jansetu-media" --location=asia-south1 || true
-gcloud storage buckets create "gs://jansetu-audio" --location=asia-south1 || true
+gcloud storage buckets create "gs://pramaan-media" --location=asia-south1 || true
+gcloud storage buckets create "gs://pramaan-audio" --location=asia-south1 || true
 
 # Voice recordings may contain sensitive citizen speech — auto-delete after 90 days
 # per docs/SECURITY_PRIVACY.md's retention policy.
-cat > /tmp/jansetu-audio-lifecycle.json <<'EOF'
+cat > /tmp/pramaan-audio-lifecycle.json <<'EOF'
 {
   "rule": [
     { "action": { "type": "Delete" }, "condition": { "age": 90 } }
   ]
 }
 EOF
-gcloud storage buckets update "gs://jansetu-audio" \
-  --lifecycle-file=/tmp/jansetu-audio-lifecycle.json
+gcloud storage buckets update "gs://pramaan-audio" \
+  --lifecycle-file=/tmp/pramaan-audio-lifecycle.json

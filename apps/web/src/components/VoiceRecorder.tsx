@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadMediaAuthed } from "../api/api.js";
-import { isSpeechRecognitionSupported, useSpeechRecognition } from "../hooks/useSpeechRecognition.js";
+import { SPEECH_SERVICE_ERRORS, isSpeechRecognitionSupported, useSpeechRecognition } from "../hooks/useSpeechRecognition.js";
 import { useLanguage } from "../i18n/LanguageProvider.js";
 import { Icon } from "../ui/Icon.js";
 import { cx } from "../ui/kit.js";
@@ -33,7 +33,7 @@ function MicButton({ active, onClick, label, sub }: { active: boolean; onClick: 
 function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: string) => void }) {
   const { t } = useLanguage();
   const [recording, setRecording] = useState(false);
-  const [state, setState] = useState<"idle" | "saved" | "error">("idle");
+  const [state, setState] = useState<"idle" | "saved" | "error" | "blocked">("idle");
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
@@ -68,8 +68,8 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
       }, 60_000);
       setRecording(true);
       setState("idle");
-    } catch {
-      setState("error");
+    } catch (err) {
+      setState((err as DOMException)?.name === "NotAllowedError" ? "blocked" : "error");
     }
   }
 
@@ -78,6 +78,7 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
       <MicButton active={recording} onClick={toggle} label={recording ? t("report.audioStop") : t("report.audioRecord")} sub={t("report.voiceSub")} />
       {state === "saved" && <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><Icon name="checkCircle" size={16} />{t("report.audioSaved")}</p>}
       {state === "error" && <p className="text-sm font-medium text-rose-600">{t("report.uploadError")}</p>}
+      {state === "blocked" && <p className="text-sm font-medium text-rose-600">{t("report.micBlocked")}</p>}
     </div>
   );
 }
@@ -90,14 +91,18 @@ export function VoiceRecorder({
   onAudioUploaded: (url: string) => void;
 }) {
   const { speechLang, t } = useLanguage();
-  const { isListening, transcript, start, stop } = useSpeechRecognition(speechLang);
+  const { isListening, transcript, error, start, stop } = useSpeechRecognition(speechLang);
 
   useEffect(() => {
     if (transcript) onTranscript(transcript);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
 
-  if (!isSpeechRecognitionSupported()) {
+  // The browser has the API but its speech service failed: record audio instead, which the
+  // worker transcribes with Gemini, rather than leaving a button that silently does nothing.
+  const serviceFailed = error !== null && SPEECH_SERVICE_ERRORS.has(error);
+
+  if (!isSpeechRecognitionSupported() || serviceFailed) {
     if (typeof MediaRecorder === "undefined") {
       return <p className="rounded-xl bg-slate-100 p-3 text-sm text-slate-600">{t("report.voiceUnsupported")}</p>;
     }
@@ -105,11 +110,16 @@ export function VoiceRecorder({
   }
 
   return (
-    <MicButton
-      active={isListening}
-      onClick={isListening ? stop : start}
-      label={isListening ? t("report.voiceListening") : t("report.voiceButton")}
-      sub={t("report.voiceSub")}
-    />
+    <div className="flex flex-col gap-2">
+      <MicButton
+        active={isListening}
+        onClick={isListening ? stop : start}
+        label={isListening ? t("report.voiceListening") : t("report.voiceButton")}
+        sub={t("report.voiceSub")}
+      />
+      {(error === "not-allowed" || error === "audio-capture") && (
+        <p className="text-sm font-medium text-rose-600">{t("report.micBlocked")}</p>
+      )}
+    </div>
   );
 }

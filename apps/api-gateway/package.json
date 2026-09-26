@@ -1,5 +1,5 @@
 {
-  "name": "@jansetu/api-gateway",
+  "name": "@pramaan/api-gateway",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,8 +16,8 @@
     "@google-cloud/pubsub": "^4.10.0",
     "@google-cloud/storage": "^8.2.0",
     "@google/genai": "^2.23.0",
-    "@jansetu/shared-types": "workspace:*",
-    "@jansetu/shared-utils": "workspace:*",
+    "@pramaan/shared-types": "workspace:*",
+    "@pramaan/shared-utils": "workspace:*",
     "dotenv": "^16.4.5",
     "fastify": "^5.1.0",
     "firebase-admin": "^12.7.0",

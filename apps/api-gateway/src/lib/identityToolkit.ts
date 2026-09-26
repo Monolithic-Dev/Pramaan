@@ -1,4 +1,4 @@
-import { withRetry } from "@jansetu/shared-utils";
+import { withRetry } from "@pramaan/shared-utils";
 import { env } from "./env.js";
 
 // Google Identity Platform's phone-auth REST API — the server-side equivalent

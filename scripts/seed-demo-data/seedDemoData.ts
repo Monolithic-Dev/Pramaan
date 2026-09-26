@@ -16,8 +16,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import type { BudgetPlan, Citizen, ImpactRecord, Issue, IssueComment, Notification, PriorityScore, Project, Submission } from "@jansetu/shared-types";
-import { geohashEncode } from "@jansetu/shared-utils";
+import type { BudgetPlan, Citizen, ImpactRecord, Issue, IssueComment, Notification, PriorityScore, Project, Submission } from "@pramaan/shared-types";
+import { geohashEncode } from "@pramaan/shared-utils";
 import { initFirebase } from "../lib/firebase.js";
 import { AUDIT_REASONS, BRAZIL_LANGUAGES, OFFICER_NOTES, STATE_LANGUAGES, TEMPLATES, TEMPLATES_BY_CATEGORY, type Category, type Template } from "./demoContent.js";
 
@@ -82,15 +82,15 @@ async function deleteWhere(collection: string, match: (id: string) => boolean) {
 
 interface Account { key: string; email: string; role: "state_admin" | "district_collector" | "field_officer"; region: string; country: string }
 const ACCOUNTS: Account[] = [
-  { key: "national", email: "national@jansetu.demo", role: "state_admin", region: "IN", country: "IN" },
-  { key: "delhi", email: "admin@jansetu.demo", role: "state_admin", region: "IN-DL", country: "IN" },
-  { key: "delhiCollector", email: "collector@jansetu.demo", role: "district_collector", region: "dl-central-delhi", country: "IN" },
-  { key: "delhiField", email: "field@jansetu.demo", role: "field_officer", region: "dl-central-delhi", country: "IN" },
-  { key: "maha", email: "maharashtra@jansetu.demo", role: "state_admin", region: "IN-MH", country: "IN" },
-  { key: "mumbai", email: "mumbai@jansetu.demo", role: "district_collector", region: "mh-mumbai-city", country: "IN" },
-  { key: "karnataka", email: "karnataka@jansetu.demo", role: "state_admin", region: "IN-KA", country: "IN" },
-  { key: "tn", email: "tamilnadu@jansetu.demo", role: "state_admin", region: "IN-TN", country: "IN" },
-  { key: "brasil", email: "brasil@jansetu.demo", role: "state_admin", region: "BR-SP", country: "BR" },
+  { key: "national", email: "national@pramaan.demo", role: "state_admin", region: "IN", country: "IN" },
+  { key: "delhi", email: "admin@pramaan.demo", role: "state_admin", region: "IN-DL", country: "IN" },
+  { key: "delhiCollector", email: "collector@pramaan.demo", role: "district_collector", region: "dl-central-delhi", country: "IN" },
+  { key: "delhiField", email: "field@pramaan.demo", role: "field_officer", region: "dl-central-delhi", country: "IN" },
+  { key: "maha", email: "maharashtra@pramaan.demo", role: "state_admin", region: "IN-MH", country: "IN" },
+  { key: "mumbai", email: "mumbai@pramaan.demo", role: "district_collector", region: "mh-mumbai-city", country: "IN" },
+  { key: "karnataka", email: "karnataka@pramaan.demo", role: "state_admin", region: "IN-KA", country: "IN" },
+  { key: "tn", email: "tamilnadu@pramaan.demo", role: "state_admin", region: "IN-TN", country: "IN" },
+  { key: "brasil", email: "brasil@pramaan.demo", role: "state_admin", region: "BR-SP", country: "BR" },
 ];
 
 async function ensureUser(email: string, password: string, claims: Record<string, unknown> | null): Promise<string> {
@@ -154,7 +154,7 @@ async function main() {
   console.log("Creating demo accounts...");
   const uid: Record<string, string> = {};
   for (const a of ACCOUNTS) uid[a.key] = await ensureUser(a.email, PASSWORD, { role: a.role, region_id: a.region, country_code: a.country });
-  const citizenUid = await ensureUser("citizen@jansetu.demo", CITIZEN_PASSWORD, null);
+  const citizenUid = await ensureUser("citizen@pramaan.demo", CITIZEN_PASSWORD, null);
   await clean([...Object.values(uid), citizenUid]);
   if (cleanOnly) return console.log("Clean only: done.");
 
@@ -518,7 +518,7 @@ async function main() {
   console.log("\nDone.", JSON.stringify({ issues: drafts.length, scored: scores.size, projects: projects.length, resolved: impacts.filter((i) => i.resolved_at).length, byStatus }));
   console.log("\nLogins (password for officers: " + PASSWORD + ")");
   for (const a of ACCOUNTS) console.log(`  ${a.email.padEnd(28)} ${a.role.padEnd(20)} ${a.region}`);
-  console.log(`  citizen@jansetu.demo         citizen (password ${CITIZEN_PASSWORD})`);
+  console.log(`  citizen@pramaan.demo         citizen (password ${CITIZEN_PASSWORD})`);
   console.log(`Demo tracking codes: ${DEMO_TRACKING_CODE} (citizen report), JS-M4X8R2WH (anonymous SMS)`);
 }
 

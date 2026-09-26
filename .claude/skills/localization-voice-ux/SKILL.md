@@ -7,7 +7,7 @@ description: >
   translated", "code-mixed input handling", "TTS/STT for a new language".
 ---
 
-## What this covers for JanSetu specifically
+## What this covers for Pramaan specifically
 Multilingual and voice support isn't a UI nice-to-have here — it's a named requirement in the
 hackathon brief and a specific judging criterion, and it's the single requirement most likely
 to quietly erode under an 18-day crunch without something explicitly guarding it. That's this

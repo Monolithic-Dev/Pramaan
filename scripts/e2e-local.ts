@@ -2,7 +2,7 @@
 // with the api-gateway (:8080) and worker (:8081) running locally. Cleans up its own test data.
 //
 // Run: (from repo root, with .env present and the two services started)
-//   pnpm --filter @jansetu/scripts exec tsx e2e-local.ts <path-to-media-dir>
+//   pnpm --filter @pramaan/scripts exec tsx e2e-local.ts <path-to-media-dir>
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { applicationDefault, initializeApp } from "firebase-admin/app";

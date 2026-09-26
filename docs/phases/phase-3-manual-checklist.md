@@ -13,7 +13,7 @@ for the full list of environment variables. These steps need real credentials/ac
    FIREBASE_PROJECT_ID=<project-id> \
    FIREBASE_WEB_API_KEY=<web-api-key> \
    PUBSUB_RAW_SUBMISSIONS_TOPIC=raw-submissions \
-   pnpm --filter @jansetu/api-gateway dev
+   pnpm --filter @pramaan/api-gateway dev
    ```
 4. **Manual end-to-end check**:
    ```bash

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import type { BudgetPlan, Project } from "@jansetu/shared-types";
+import type { BudgetPlan, Project } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { generateBrief } from "../agent/tools.js";
 import { requireOfficer } from "../middleware/auth.js";

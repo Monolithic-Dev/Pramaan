@@ -7,7 +7,7 @@ const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ?? "";
 const EMULATOR_URL = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL ?? "";
 const IDENTITY_BASE = EMULATOR_URL ? `${EMULATOR_URL}/identitytoolkit.googleapis.com` : "https://identitytoolkit.googleapis.com";
 const SECURETOKEN_BASE = EMULATOR_URL ? `${EMULATOR_URL}/securetoken.googleapis.com` : "https://securetoken.googleapis.com";
-const STORAGE_KEY = "jansetu.session";
+const STORAGE_KEY = "pramaan.session";
 
 interface Session {
   idToken: string;

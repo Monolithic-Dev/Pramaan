@@ -27,13 +27,13 @@ The critical path is 1→2→3→4→5→8→9 (17 days). Phases 6 and 7 run on 
 - **Specs implemented:** `TECH_STACK_AND_REPO.md` (all sections), `ARCHITECTURE.md` §1-2 (component list), `DEPLOYMENT.md` §1 (environments).
 
 ## Task breakdown
-1. Create the GitHub repo (`jansetu`). Add `.gitignore` (node, env files, terraform state). Enable branch protection on `main` requiring CI to pass before merge.
-2. Bootstrap the monorepo: `pnpm dlx create-turbo@latest jansetu`. Confirm `turbo.json`, `pnpm-workspace.yaml`, and root `package.json` exist.
+1. Create the GitHub repo (`pramaan`). Add `.gitignore` (node, env files, terraform state). Enable branch protection on `main` requiring CI to pass before merge.
+2. Bootstrap the monorepo: `pnpm dlx create-turbo@latest pramaan`. Confirm `turbo.json`, `pnpm-workspace.yaml`, and root `package.json` exist.
 3. Scaffold `apps/web`: `pnpm create vite apps/web --template react-ts`. Add Tailwind: `pnpm --filter web add -D tailwindcss postcss autoprefixer`, then `npx tailwindcss init -p` inside `apps/web`.
 4. Scaffold `apps/api-gateway`: create `apps/api-gateway/package.json` and `apps/api-gateway/src/index.ts` with a minimal Fastify server and a `GET /healthz` route returning `{status: "ok"}`.
 5. Scaffold `apps/worker-ai-pipeline`: create `apps/worker-ai-pipeline/package.json` and `apps/worker-ai-pipeline/src/index.ts` exposing `POST /pubsub-push`, which for now just logs the payload (real logic arrives in Phase 4).
 6. Scaffold shared packages: `packages/shared-types/src/index.ts`, `packages/shared-utils/src/index.ts`, `packages/ai-prompts/src/index.ts` — each an empty export placeholder for now.
-7. Wire workspace references: add `"@jansetu/shared-types": "workspace:*"` (and the other packages) to each app's `package.json`. Confirm `pnpm install` resolves cleanly at the repo root.
+7. Wire workspace references: add `"@pramaan/shared-types": "workspace:*"` (and the other packages) to each app's `package.json`. Confirm `pnpm install` resolves cleanly at the repo root.
 8. Create `infra/gcp/setup.sh` — a documented shell script that runs, in order: `gcloud services enable aiplatform.googleapis.com run.googleapis.com firestore.googleapis.com bigquery.googleapis.com pubsub.googleapis.com secretmanager.googleapis.com translate.googleapis.com speech.googleapis.com`.
 9. Run `infra/gcp/setup.sh` against the team's GCP project. Confirm every API shows `ENABLED` via `gcloud services list --enabled`.
 10. Create the Firestore database (Native mode, `asia-south1`): `gcloud firestore databases create --location=asia-south1`.
