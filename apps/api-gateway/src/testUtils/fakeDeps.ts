@@ -67,6 +67,7 @@ export function createFakeDeps(): FakeDeps {
   const storedMedia: { kind: string; contentType: string; bytes: number }[] = [];
   const mediaStore: MediaStore = {
     maxBytes: { photo: 8 * 1024 * 1024, audio: 10 * 1024 * 1024 },
+    owns: (url) => url.startsWith("gs://test-bucket/"),
     async put(kind, contentType, data) {
       storedMedia.push({ kind, contentType, bytes: data.length });
       return `gs://test-bucket/${kind}s/${storedMedia.length}`;

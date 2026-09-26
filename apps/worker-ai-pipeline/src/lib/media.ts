@@ -1,5 +1,6 @@
 import type { Storage } from "@google-cloud/storage";
 import type { Firestore } from "firebase-admin/firestore";
+import { env } from "./env.js";
 
 const MIME_BY_EXT: Record<string, string> = {
   webm: "audio/webm", ogg: "audio/ogg", m4a: "audio/mp4", mp3: "audio/mpeg", wav: "audio/wav",
@@ -22,6 +23,9 @@ export async function readMedia(
   }
   const gs = /^gs:\/\/([^/]+)\/(.+)$/.exec(url);
   if (!gs) throw new Error(`unsupported media url: ${url}`);
+  // Only the app's own upload bucket: a submission must never make the worker's service account
+  // read (and forward to Gemini) an object from some other bucket it happens to have access to.
+  if (gs[1] !== env.mediaBucket) throw new Error(`media outside the configured bucket: ${url}`);
   const [data] = await storage.bucket(gs[1]).file(gs[2]).download();
   return { data, mimeType: MIME_BY_EXT[gs[2].split(".").pop() ?? ""] ?? "application/octet-stream" };
 }
