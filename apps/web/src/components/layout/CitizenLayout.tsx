@@ -4,6 +4,7 @@ import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
 import { Button, cx } from "../../ui/kit.js";
 import { NotificationBell } from "../NotificationBell.js";
+import { MAIN_ID } from "./A11y.js";
 import { Brand, LanguageMenu } from "./Brand.js";
 
 const ITEMS: { to: string; key: string; icon: IconName; end?: boolean }[] = [
@@ -44,7 +45,7 @@ export function CitizenLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
+      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 focus:outline-none sm:py-8">
         <Outlet />
       </main>
 

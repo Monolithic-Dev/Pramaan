@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/AuthContext.js";
 import { useLanguage } from "../../i18n/LanguageProvider.js";
 import { Icon } from "../../ui/Icon.js";
 import { Button, cx } from "../../ui/kit.js";
+import { MAIN_ID } from "./A11y.js";
 import { Brand, LanguageMenu } from "./Brand.js";
 
 function AccountButton() {
@@ -40,29 +41,31 @@ export function PublicLayout() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const link = ({ isActive }: { isActive: boolean }) =>
-    cx("rounded-lg px-3 py-2 text-sm font-medium transition", isActive ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900");
+    cx("whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition", isActive ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900");
 
+  // Six links, the language picker and the account button need ~1,200px on one line (more in
+  // Hindi or Tamil), so the full bar starts at xl; below that the menu button keeps it tidy.
   return (
     <div className="flex min-h-screen flex-col">
       <div className="tricolour" />
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Brand />
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+          <Brand compactTagline />
+          <nav className="hidden items-center gap-1 xl:flex" aria-label="Main">
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} className={link}>{t(n.key)}</NavLink>
             ))}
           </nav>
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-2 whitespace-nowrap xl:flex">
             <LanguageMenu />
             <AccountButton />
           </div>
-          <button type="button" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 md:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          <button type="button" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 xl:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
             <Icon name={open ? "x" : "menu"} />
           </button>
         </div>
         {open && (
-          <div className="border-t border-slate-100 bg-white px-4 py-3 md:hidden" onClick={() => setOpen(false)}>
+          <div className="border-t border-slate-100 bg-white px-4 py-3 xl:hidden" onClick={() => setOpen(false)}>
             <nav className="flex flex-col gap-1">
               {NAV.map((n) => (
                 <NavLink key={n.to} to={n.to} className={link}>{t(n.key)}</NavLink>
@@ -76,7 +79,7 @@ export function PublicLayout() {
         )}
       </header>
 
-      <main className="flex-1">
+      <main id={MAIN_ID} tabIndex={-1} className="flex-1 focus:outline-none">
         <Outlet />
       </main>
 

@@ -7,6 +7,7 @@ import { Icon, type IconName } from "../../ui/Icon.js";
 import { Badge, Button, cx, Select, useAsync } from "../../ui/kit.js";
 import { CommandPalette } from "../CommandPalette.js";
 import { NotificationBell } from "../NotificationBell.js";
+import { MAIN_ID } from "./A11y.js";
 import { Brand, LanguageMenu } from "./Brand.js";
 
 // ---- Jurisdiction context: every console page reads the selected region from here -----------
@@ -193,7 +194,7 @@ export function ConsoleLayout() {
               <LanguageMenu />
             </div>
           </header>
-          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+          <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 focus:outline-none sm:px-6">
             <Outlet />
           </main>
         </div>

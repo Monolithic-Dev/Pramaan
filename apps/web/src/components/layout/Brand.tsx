@@ -3,7 +3,7 @@ import { SUPPORTED_LANGUAGES, useLanguage } from "../../i18n/LanguageProvider.js
 import { Icon } from "../../ui/Icon.js";
 import { cx } from "../../ui/kit.js";
 
-/** The Pramaan mark: a bridge (setu) spanning two banks, in the civic blue with a saffron keystone. */
+/** The Pramaan mark: a bridge from what citizens report to what gets funded, in the civic blue with a saffron keystone. */
 export function LogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
@@ -16,14 +16,15 @@ export function LogoMark({ size = 36 }: { size?: number }) {
   );
 }
 
-export function Brand({ dark = false, to = "/" }: { dark?: boolean; to?: string }) {
+/** `compactTagline`: in a crowded header the tagline only shows on wide screens (the footer always has it). */
+export function Brand({ dark = false, to = "/", compactTagline = false }: { dark?: boolean; to?: string; compactTagline?: boolean }) {
   const { t } = useLanguage();
   return (
-    <Link to={to} className="flex items-center gap-2.5" aria-label="Pramaan home">
+    <Link to={to} className="flex shrink-0 items-center gap-2.5" aria-label="Pramaan home">
       <LogoMark />
       <span className="leading-tight">
         <span className={cx("block text-lg font-extrabold tracking-tight", dark ? "text-white" : "text-brand-900")}>{t("app.title")}</span>
-        <span className={cx("block text-[10px] font-semibold uppercase tracking-[0.14em]", dark ? "text-brand-200" : "text-slate-500")}>
+        <span className={cx("text-[10px] font-semibold uppercase tracking-[0.14em]", compactTagline ? "hidden 2xl:block" : "block", dark ? "text-brand-200" : "text-slate-500")}>
           {t("brand.tagline")}
         </span>
       </span>
