@@ -98,8 +98,8 @@ function LiveResult({ submissionId }: { submissionId: string }) {
 export default function ReportWizard() {
   const { t, speechLang, countryCode, language, setLanguage } = useLanguage();
   const { speak } = useSpeechSynthesis(speechLang);
-  const { enqueue } = useOfflineQueue();
   const { status: authStatus, me } = useAuth();
+  const { enqueue } = useOfflineQueue(authStatus !== "loading");
   const signedIn = authStatus === "authenticated" && me?.kind === "citizen";
 
   const [step, setStep] = useState(0);

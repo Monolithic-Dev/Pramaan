@@ -28,8 +28,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          void caches.open(CACHE).then((c) => c.put("/", copy));
+          // Never let an error page (host 5xx, maintenance page) replace the good offline shell.
+          if (res.ok) {
+            const copy = res.clone();
+            void caches.open(CACHE).then((c) => c.put("/", copy));
+          }
           return res;
         })
         .catch(() => caches.match("/").then((hit) => hit ?? Response.error())),
