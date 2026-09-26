@@ -992,5 +992,18 @@
   "queue.empty.escalated.title": "Nothing escalated to you",
   "queue.empty.escalated.body": "Issues that miss their deadline are raised to the district collector, and to the state admin if they stay overdue.",
   "issue.impact.reopened": "Citizens rejected the fix and reopened this work {n} time(s).",
-  "report.photoOffline": "No connection: the photo is saved on this phone and will upload with your report."
+  "report.photoOffline": "No connection: the photo is saved on this phone and will upload with your report.",
+  "issue.ai.title": "How Gemini handled this",
+  "issue.ai.subtitle": "Every step below ran automatically, before any officer saw it.",
+  "issue.ai.merged": "Reports merged into one issue",
+  "issue.ai.languages": "Languages",
+  "issue.ai.translated": "Reports translated for officers",
+  "issue.ai.classified": "Classified as {category} / {sub} from what citizens wrote or said.",
+  "issue.ai.dedup": "Matched {n} reports from {people} people as the same problem by meaning and location, so it is counted once and ranked by real demand.",
+  "issue.ai.media": "Transcribed {voice} voice reports and checked {photos} photos for a genuine infrastructure problem.",
+  "issue.ai.located": "Placed in {area} from the reported location.",
+  "issue.ai.models": "Duplicate matching uses the {model} embedding model. Personal details are removed before any text reaches the model.",
+  "issue.reports.showAll": "Show all {n} reports",
+  "issue.reports.showFewer": "Show fewer",
+  "report.audioOffline": "No connection: your voice note is saved on this phone and will upload with your report."
 }

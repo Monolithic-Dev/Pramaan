@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Issue, PriorityScore } from "@pramaan/shared-types";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
+import { issue as fixtureIssue, setup } from "../testUtils/fixtures.js";
 import { executeTool } from "./tools.js";
 
 function makeIssue(overrides: Partial<Issue> = {}): Issue {
@@ -67,6 +68,28 @@ describe("query_fused_data", () => {
     const result = await executeTool(deps, "query_fused_data", { region_id: "LGD:ward-1" });
     expect(Array.isArray(result)).toBe(true);
     expect((result as unknown[])[0]).toMatchObject({ issue_id: "iss_1", report_count: 14 });
+  });
+});
+
+describe("ranked issue tools (what 'top road issues, are they funded?' needs)", () => {
+  it("covers every district inside a state, filters by category and unaddressed, and says what is funded", async () => {
+    const { deps, put } = setup();
+    put(fixtureIssue({ issue_id: "road_hi", category: "roads", composite_score: 0.9, admin_region_id: "dl-central", canonical_description: "Deep pothole on Main Market Road" }));
+    put(fixtureIssue({ issue_id: "road_funded", category: "roads", composite_score: 0.8, admin_region_id: "dl-south", status: "funded" }));
+    put(fixtureIssue({ issue_id: "road_lo", category: "roads", composite_score: 0.4, admin_region_id: "dl-south" }));
+    put(fixtureIssue({ issue_id: "water", category: "water", composite_score: 0.95, admin_region_id: "dl-central" }));
+    deps.store.projects.set("p1", { project_id: "p1", issue_id: "road_funded", status: "funded" } as never);
+
+    const all = (await executeTool(deps, "get_priority_scores", { region_id: "IN-DL", category: "roads" })) as { issue_id: string; area: string; funded: boolean; description: string }[];
+    expect(all.map((r) => r.issue_id)).toEqual(["road_hi", "road_funded", "road_lo"]);
+    expect(all[0]).toMatchObject({ area: "Central Delhi", description: "Deep pothole on Main Market Road", funded: false });
+    expect(all[1].funded).toBe(true);
+
+    const pending = (await executeTool(deps, "get_priority_scores", { region_id: "IN-DL", category: "roads", only_unaddressed: true })) as { issue_id: string }[];
+    expect(pending.map((r) => r.issue_id)).toEqual(["road_hi", "road_lo"]);
+
+    const fused = (await executeTool(deps, "query_fused_data", { region_id: "dl-central" })) as { issue_id: string }[];
+    expect(fused.map((r) => r.issue_id)).toEqual(["water", "road_hi"]);
   });
 });
 

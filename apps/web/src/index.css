@@ -48,6 +48,12 @@ body {
   background: var(--color-brand-200);
 }
 
+/* Grid children default to min-width:auto, so one wide child (a chart, a long unbroken string) sizes
+   the whole implicit column past the screen on phones, where most grids here have no explicit columns. */
+.grid > * {
+  min-width: 0;
+}
+
 /* Keyboard users always get a visible focus ring (accessibility criterion for a public service). */
 :focus-visible {
   outline: 2px solid var(--color-brand-500);

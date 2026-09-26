@@ -1,4 +1,5 @@
 import { GoogleGenAI, type GenerateContentParameters } from "@google/genai";
+import { ModelPool } from "@pramaan/shared-utils";
 import { env } from "./env.js";
 
 // One place that decides how Gemini is reached: the public Gemini API when
@@ -13,44 +14,32 @@ export function parseModelList(value: string): string[] {
   return value.split(",").map((m) => m.trim()).filter(Boolean);
 }
 
-const FALLBACK_SIGNS = /503|429|500|502|504|404|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timed out|fetch failed|ECONNRESET|no longer available|not found/i;
+/** Process-wide model health: shared by every Gemini call in this service. */
+const defaultPool = new ModelPool();
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Gemini call timed out after ${ms}ms`)), ms);
-    promise.then(
-      (v) => {
-        clearTimeout(timer);
-        resolve(v);
-      },
-      (e) => {
-        clearTimeout(timer);
-        reject(e);
-      },
-    );
-  });
+export interface FallbackOptions {
+  /** Per-model attempt timeout; the request is cancelled when it passes. */
+  timeoutMs?: number;
+  /** Give up after this long overall. */
+  deadlineMs?: number;
+  pool?: ModelPool;
 }
 
 /**
- * Tries each model in order. New Gemini models are frequently overloaded (503) or
- * rate-limited (429) on free tiers, and a hung call would stall the whole pipeline, so
- * every attempt has a timeout and overload/quota/unknown-model errors fall through to the
- * next model. Real request errors (400: bad schema/prompt) are thrown immediately.
+ * Tries the model chain with health tracking (shared-utils ModelPool): a model that just hung or
+ * reported overload is skipped for a cooldown, the one that last worked goes first, and each
+ * attempt is aborted at its timeout. A real request error (400: bad schema/prompt) is thrown
+ * immediately rather than retried on every model.
  */
-export async function generateWithFallback(
+export function generateWithFallback(
   ai: GoogleGenAI,
   models: string[],
   params: Omit<GenerateContentParameters, "model">,
-  timeoutMs = 25_000,
+  { timeoutMs = 25_000, deadlineMs, pool = defaultPool }: FallbackOptions = {},
 ) {
-  let lastError: unknown;
-  for (const model of models) {
-    try {
-      return await withTimeout(ai.models.generateContent({ ...params, model }), timeoutMs);
-    } catch (err) {
-      lastError = err;
-      if (!FALLBACK_SIGNS.test(String((err as Error)?.message ?? err))) throw err;
-    }
-  }
-  throw lastError;
+  return pool.call(
+    models,
+    (model, abortSignal) => ai.models.generateContent({ ...params, model, config: { ...params.config, abortSignal } }),
+    { timeoutMs, deadlineMs },
+  );
 }

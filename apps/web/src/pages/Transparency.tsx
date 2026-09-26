@@ -102,9 +102,9 @@ export default function Transparency() {
       {/* State lens */}
       <div className="mb-4 mt-12 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-900">{t("transparency.byState")}</h2>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          <Icon name="pin" size={16} />
-          <Select aria-label={t("transparency.stateLabel")} value={stateId} onChange={(e) => setStateId(e.target.value)} className="!w-auto">
+        <label className="flex min-w-0 max-w-full items-center gap-2 text-sm text-slate-600">
+          <Icon name="pin" size={16} className="shrink-0" />
+          <Select aria-label={t("transparency.stateLabel")} value={stateId} onChange={(e) => setStateId(e.target.value)} className="min-w-0 w-auto!">
             {states.map((r) => <option key={r.regionId} value={r.regionId}>{r.name}</option>)}
           </Select>
         </label>

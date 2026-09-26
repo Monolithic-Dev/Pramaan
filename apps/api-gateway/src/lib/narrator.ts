@@ -20,7 +20,7 @@ export function createGeminiNarrator(): Narrator {
             "Do not mention data you were not given. Plain sentences, no headings, no bullet points, no markdown.",
           ].join(" "),
         },
-      });
+      }, { timeoutMs: 12_000, deadlineMs: 25_000 }); // the briefing page falls back to a template on failure
       const out = response.text?.trim();
       if (!out) throw new Error("narration returned no text");
       return out;

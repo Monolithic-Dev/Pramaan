@@ -1,4 +1,6 @@
 export { withRetry } from "./withRetry.js";
+export { ModelPool, COOLDOWN_MS } from "./modelFallback.js";
+export type { ModelCallOptions } from "./modelFallback.js";
 export type { WithRetryOptions } from "./withRetry.js";
 export { isWithinIndiaBoundingBox, isWithinCountryBoundingBox } from "./geo.js";
 export { scrubPii } from "./scrubPii.js";

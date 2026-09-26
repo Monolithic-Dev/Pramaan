@@ -8,7 +8,9 @@ const LANGS: Record<string, string> = {
 };
 const placeholders = (text: string) => (text.match(/{[A-Za-z0-9_]+}/g) ?? []).sort().join("|");
 const DIR = "../apps/web/src/i18n";
-const MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash"];
+const MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest", "gemini-3.5-flash", "gemini-3.8-flash"];
+// Individual free-tier models can hang for minutes; give up on one and try the next.
+const ATTEMPT_TIMEOUT_MS = 45_000;
 const BATCH = 60;
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -49,6 +51,7 @@ ${JSON.stringify(source, null, 2)}`;
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
           }),
+          signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
         },
       );
       if (!res.ok) throw new Error(`Gemini ${res.status} (${model}): ${await res.text()}`);

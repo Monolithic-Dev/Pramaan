@@ -11,6 +11,56 @@ import { AssignCard, NotesCard, SchemesCard } from "./issueParts.js";
 import { Alert, Badge, Button, Card, CardTitle, EmptyState, Field, Modal, PriorityBadge, SampleDataBadge, Select, Skeleton, StatusBadge, Textarea, cx, timeAgo, useAsync, useToast } from "../../ui/kit.js";
 
 const NEXT_STATUSES = ["verified", "disputed", "prioritized", "funded", "in_progress"];
+const REPORTS_PREVIEW = 4;
+
+/** What Gemini did before any officer looked, made visible: merging, language understanding,
+ *  translation, channels and classification. Computed from the reports on the page. */
+function AiSummary({ issue, reports }: { issue: Detail["issue"]; reports: Detail["reports"] }) {
+  const { t, language } = useLanguage();
+  if (reports.length === 0) return null;
+  const names = (() => {
+    try {
+      const dn = new Intl.DisplayNames([language], { type: "language" });
+      return (code: string) => dn.of(code) ?? code;
+    } catch {
+      return (code: string) => code;
+    }
+  })();
+  const languages = [...new Set(reports.map((r) => r.language).filter((l): l is string => Boolean(l)))];
+  const translated = reports.filter((r) => r.translated_text).length;
+  const channels = [...new Set(reports.map((r) => r.channel))];
+  const voice = reports.filter((r) => r.has_audio).length;
+  const photos = reports.filter((r) => r.photo).length;
+  const tiles = [
+    { icon: "layers", value: `${issue.report_count} → 1`, label: t("issue.ai.merged") },
+    { icon: "language", value: languages.length, label: languages.map(names).join(", ") || t("issue.ai.languages") },
+    { icon: "sparkles", value: translated, label: t("issue.ai.translated") },
+    { icon: "send", value: channels.length, label: channels.join(" · ") },
+  ] as const;
+
+  return (
+    <Card className="border-violet-200! bg-linear-to-br from-violet-50/70 to-white">
+      <CardTitle title={t("issue.ai.title")} subtitle={t("issue.ai.subtitle")} icon="sparkles" />
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {tiles.map((tile) => (
+          <div key={tile.icon} className="flex flex-col-reverse justify-end rounded-xl bg-white/80 p-3 ring-1 ring-violet-100">
+            <dt className="mt-1 text-xs leading-snug text-slate-500">{tile.label}</dt>
+            <dd className="flex items-center gap-1.5 text-xl font-bold text-slate-900"><Icon name={tile.icon} size={16} className="text-violet-600" />{tile.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <ul className="mt-4 space-y-1.5 text-sm text-slate-700">
+        <li className="flex gap-2"><Icon name="check" size={15} className="mt-0.5 shrink-0 text-violet-600" />{t("issue.ai.classified", { category: t(`category.${issue.category}`), sub: issue.subcategory })}</li>
+        <li className="flex gap-2"><Icon name="check" size={15} className="mt-0.5 shrink-0 text-violet-600" />{t("issue.ai.dedup", { n: issue.report_count, people: issue.distinct_reporter_count })}</li>
+        {(voice > 0 || photos > 0) && (
+          <li className="flex gap-2"><Icon name="check" size={15} className="mt-0.5 shrink-0 text-violet-600" />{t("issue.ai.media", { voice, photos })}</li>
+        )}
+        <li className="flex gap-2"><Icon name="check" size={15} className="mt-0.5 shrink-0 text-violet-600" />{t("issue.ai.located", { area: issue.region_name ?? t("console.unresolved") })}</li>
+      </ul>
+      {issue.embedding_model && <p className="mt-3 text-xs text-slate-500">{t("issue.ai.models", { model: issue.embedding_model })}</p>}
+    </Card>
+  );
+}
 
 function MiniMap({ lat, lng, color }: { lat: number; lng: number; color: string }) {
   const el = useRef<HTMLDivElement>(null);
@@ -87,6 +137,7 @@ export default function IssueDetail() {
   const [status, setStatus] = useState("verified");
   const [justification, setJustification] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showAllReports, setShowAllReports] = useState(false);
 
   if (loading) return <div className="space-y-4"><Skeleton className="h-12 w-96" /><Skeleton className="h-64" /></div>;
   if (error || !data) {
@@ -156,13 +207,15 @@ export default function IssueDetail() {
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
+          <AiSummary issue={issue} reports={reports} />
           <Card>
             <CardTitle title={t("issue.reports")} subtitle={t("issue.reportsSub", { reports: issue.report_count, people: issue.distinct_reporter_count })} icon="users" />
             {reports.length === 0 ? (
               <p className="py-4 text-sm text-slate-500">{t("issue.reports.none")}</p>
             ) : (
+              <>
               <ol className="relative space-y-4 border-l-2 border-slate-100 pl-5">
-                {reports.map((r) => (
+                {(showAllReports ? reports : reports.slice(0, REPORTS_PREVIEW)).map((r) => (
                   <li key={r.submission_id} className="relative">
                     <span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 border-white bg-brand-500 ring-2 ring-brand-100" />
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -182,6 +235,12 @@ export default function IssueDetail() {
                   </li>
                 ))}
               </ol>
+              {reports.length > REPORTS_PREVIEW && (
+                <Button variant="ghost" size="sm" className="mt-3" icon={showAllReports ? undefined : "chevronDown"} onClick={() => setShowAllReports((v) => !v)}>
+                  {showAllReports ? t("issue.reports.showFewer") : t("issue.reports.showAll", { n: reports.length })}
+                </Button>
+              )}
+              </>
             )}
           </Card>
 
