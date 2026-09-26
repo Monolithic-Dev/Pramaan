@@ -16,6 +16,18 @@ export default function Track() {
   const [code, setCode] = useState(param ?? "");
   const [result, setResult] = useState<Tracking | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "notfound" | "limited" | "error">("idle");
+  const [answer, setAnswer] = useState<{ busy: boolean; done: null | "fixed" | "not_fixed" | "reopened"; error: string | null }>({ busy: false, done: null, error: null });
+
+  async function respond(confirmed: boolean) {
+    if (!result) return;
+    setAnswer({ busy: true, done: null, error: null });
+    try {
+      const r = await api.confirmByCode(result.tracking_code, confirmed);
+      setAnswer({ busy: false, done: r.reopened ? "reopened" : confirmed ? "fixed" : "not_fixed", error: null });
+    } catch (e) {
+      setAnswer({ busy: false, done: null, error: e instanceof Error ? e.message : t("report.errorGeneric") });
+    }
+  }
 
   async function lookup(value: string) {
     if (!value.trim()) return;
@@ -87,6 +99,30 @@ export default function Track() {
               <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">{t("my.community")}</dt><dd className="font-semibold text-slate-900">{t("track.others", { n: result.other_reporters })}</dd></div>
               <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">{t("track.project")}</dt><dd className="font-semibold text-slate-900">{result.project_stage ? t(`project.${result.project_stage}`) : "-"}</dd></div>
             </dl>
+
+            {(result.reopened_count ?? 0) > 0 && !answer.done && (
+              <div className="mt-4"><Alert tone="info">{t("track.reopenedBefore")}</Alert></div>
+            )}
+
+            {result.awaiting_confirmation && !answer.done && (
+              <section aria-labelledby="confirm-fix" className="mt-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-4">
+                <h3 id="confirm-fix" className="flex items-center gap-2 font-semibold text-slate-900"><Icon name="checkCircle" size={18} className="text-emerald-600" />{t("my.confirm.title")}</h3>
+                <p className="mt-1 text-sm text-slate-700">{t("my.confirm.body")}</p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Button icon="check" loading={answer.busy} onClick={() => respond(true)}>{t("my.confirm.yes")}</Button>
+                  <Button variant="secondary" loading={answer.busy} onClick={() => respond(false)}>{t("my.confirm.no")}</Button>
+                </div>
+                {answer.error && <p role="alert" className="mt-2 text-sm font-medium text-rose-600">{answer.error}</p>}
+              </section>
+            )}
+            {answer.done && (
+              <div className="mt-6" role="status">
+                <Alert tone={answer.done === "fixed" ? "success" : "info"}>
+                  {t(answer.done === "reopened" ? "track.answer.reopened" : answer.done === "fixed" ? "my.confirm.thanks" : "track.answer.notFixed")}
+                </Alert>
+              </div>
+            )}
+
             <p className="mt-4 flex items-start gap-1.5 text-xs text-slate-500"><Icon name="lock" size={13} className="mt-0.5 shrink-0" />{t("track.privacy")}</p>
           </Card>
         )}

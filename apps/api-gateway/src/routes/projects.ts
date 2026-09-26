@@ -5,11 +5,16 @@ import type { Deps } from "../deps.js";
 import { isWithinScope } from "../agent/scopeGuard.js";
 import { requireAuth, requireOfficer } from "../middleware/auth.js";
 import { confirmResolutionSchema } from "../schemas/projects.js";
-import { completeIfConfirmed } from "../services/impactLoop.js";
+import {
+  completeIfConfirmed,
+  confirmationsRequired,
+  identifiedReporters,
+  recordResolutionResponse,
+  type ResponseOutcome,
+} from "../services/impactLoop.js";
 import { notifyReporters } from "../services/notify.js";
 import { requireRole } from "./helpers.js";
 
-const DEFAULT_CONFIRMATIONS_REQUIRED = 3;
 
 /** Officer-facing project actions are scoped to the underlying issue's region — an
  *  officer from state A must not be able to mark-complete or sign off a project in
@@ -55,6 +60,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
       const reporterIds = [...new Set(submissions.map((s) => s.citizen_id))].filter(
         (id) => id !== "anonymous",
       );
+      const vouchers = identifiedReporters(submissions);
 
       const notifications = await Promise.all(
         reporterIds.map(async (citizenId) => {
@@ -72,7 +78,11 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
 
       await deps.store.updateProject(projectId, { marked_complete_at: new Date().toISOString() });
 
-      if (!(await deps.store.getImpactRecord(projectId))) {
+      const existingImpact = await deps.store.getImpactRecord(projectId);
+      if (existingImpact) {
+        // Marked complete again after citizens reopened it: new reporters may have joined since.
+        await deps.store.putImpactRecord({ ...existingImpact, confirmations_required: confirmationsRequired(vouchers.length) });
+      } else {
         const impactRecord: ImpactRecord = {
           impact_id: `imp_${randomUUID().slice(0, 8)}`,
           project_id: projectId,
@@ -82,9 +92,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
           category: issue?.category ?? "other",
           region_id: issue?.admin_region_id ?? "UNRESOLVED",
           confirmations_received: 0,
-          // Confirmations must come from distinct original reporters, so an issue with fewer
-          // identified reporters than the default could otherwise never close.
-          confirmations_required: Math.max(1, Math.min(DEFAULT_CONFIRMATIONS_REQUIRED, reporterIds.length)),
+          confirmations_required: confirmationsRequired(vouchers.length),
           confirmations_negative: 0,
           confirmed_by: [],
           resolution_photo_url: null,
@@ -186,41 +194,18 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         });
       }
 
-      const impactRecord = await deps.store.getImpactRecord(projectId);
-      if (!impactRecord) {
-        return reply.code(409).send({
-          error: { code: "NOT_MARKED_COMPLETE", message: "This project hasn't been marked complete yet." },
-        });
-      }
-
-      const citizenId = request.citizenId!;
-      const confirmedBy = impactRecord.confirmed_by ?? [];
-      if (confirmedBy.includes(citizenId)) {
-        return reply.code(409).send({
-          error: { code: "ALREADY_CONFIRMED", message: "You have already responded for this project." },
-        });
-      }
-
-      const updated: ImpactRecord = {
-        ...impactRecord,
-        confirmed_by: [...confirmedBy, citizenId],
-        confirmations_received: impactRecord.confirmations_received + (parsed.data.confirmed ? 1 : 0),
-        confirmations_negative: impactRecord.confirmations_negative + (parsed.data.confirmed ? 0 : 1),
-        resolution_photo_url: parsed.data.photo_url ?? impactRecord.resolution_photo_url,
-        verified_by: request.citizenId ?? impactRecord.verified_by,
-      };
-      const total = updated.confirmations_received + updated.confirmations_negative;
-      updated.efficacy = total > 0 ? updated.confirmations_received / total : 0;
-      if (updated.confirmations_received >= updated.confirmations_required && !updated.resolved_at) {
-        updated.resolved_at = new Date().toISOString();
-      }
-      await deps.store.putImpactRecord(updated);
-
-      // Resolution requires the confirmation threshold AND a separate officer
-      // sign-off (docs/EDGE_CASES.md #13) — never flips on citizen input alone.
-      await completeIfConfirmed(deps, projectId);
-
-      return reply.code(200).send({ impact_id: updated.impact_id });
+      const outcome = await recordResolutionResponse(deps, project, request.citizenId!, parsed.data.confirmed, parsed.data.photo_url ?? null);
+      return sendResolutionOutcome(reply, outcome);
     },
   );
+}
+
+export function sendResolutionOutcome(reply: FastifyReply, outcome: ResponseOutcome) {
+  if (outcome.kind === "not_marked") {
+    return reply.code(409).send({ error: { code: "NOT_MARKED_COMPLETE", message: "This project hasn't been marked complete yet." } });
+  }
+  if (outcome.kind === "already") {
+    return reply.code(409).send({ error: { code: "ALREADY_CONFIRMED", message: "You have already responded for this project." } });
+  }
+  return reply.code(200).send({ impact_id: outcome.impact_id, completed: outcome.completed, reopened: outcome.reopened });
 }

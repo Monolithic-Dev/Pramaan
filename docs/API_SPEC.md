@@ -139,6 +139,15 @@ Citizen, OTP-gated, must be an original reporter on the underlying issue.
 
 Does **not** flip the project to resolved on its own. Resolution requires `confirmations_received >= confirmations_required` (default 3) **and** officer sign-off (`EDGE_CASES.md` #13).
 
+Implemented rules (`apps/api-gateway/src/services/impactLoop.ts`):
+- **One answer per reporter per round.** A repeat gets `409 ALREADY_CONFIRMED`. `confirmations_required` is `min(3, identified reporters)`, never below 1. Identified reporters are signed-in reporters plus anonymous reports that carry a tracking code.
+- **Anonymous reporters answer with their tracking code:** `POST /public/track/{code}/confirm` `{ "confirmed": true }`. A signed-in reporter who also holds the code still gets a single vote.
+- **Citizens can reopen (the Swachhata pattern).** When "not fixed" answers reach the threshold *and* outnumber "fixed":
+  - the project returns to `in_progress`, and the sign-off and completion mark are cleared;
+  - the next round of answers starts clean, and `reopened_count` increases by one;
+  - the assigned officer gets an `issue.reopened` notification.
+- `mark-complete` and `officer-signoff` require role ≥ `district_collector`. Officer tokens cannot confirm as citizens.
+
 ## 7. Privacy
 
 ### POST /privacy/erasure-requests
@@ -156,6 +165,8 @@ Returns an `AdminRegion` with its parent chain and available `InfraIndex` types.
 
 ## 9. Channel webhooks
 
+Both webhooks **fail closed**. They return `503 CHANNEL_NOT_CONFIGURED` until `WEBHOOK_SHARED_SECRET` is set, and then require it in `x-webhook-secret` (compared in constant time). Any `photo_url` must be one issued by `POST /media`.
+
 ### POST /webhooks/whatsapp
 Receives WhatsApp Business API payloads, maps to the internal `Submission` schema, calls the same internal ingestion path as `POST /submissions` — not a parallel implementation.
 
@@ -171,7 +182,91 @@ Dialogflow CX fulfillment webhook (stretch goal — see `BUILD_PLAN.md`). Receiv
 { "error": { "code": "RATE_LIMITED", "message": "...", "retry_after_s": 1800 } }
 ```
 
-Codes: `INVALID_LOCATION` · `RATE_LIMITED` · `UNAUTHORIZED` · `JURISDICTION_MISMATCH` · `VALIDATION_ERROR` · `AI_PIPELINE_UNAVAILABLE` (submission accepted, `status: deferred`) · `IDEMPOTENCY_CONFLICT` (same key, different payload) · `REGION_NOT_FOUND` · `AGENT_TOOL_FAILURE` · `INSUFFICIENT_DATA` (agent refusal surfaced as an error on non-streaming callers).
+Codes: `INVALID_LOCATION` · `RATE_LIMITED` · `UNAUTHORIZED` · `FORBIDDEN` (role too low) · `JURISDICTION_MISMATCH` · `VALIDATION_ERROR` · `NOT_FOUND` · `CONFLICT` · `ALREADY_CONFIRMED` · `NOT_MARKED_COMPLETE` · `PAYLOAD_TOO_LARGE` · `UNSUPPORTED_MEDIA_TYPE` · `CHANNEL_NOT_CONFIGURED` · `AI_PIPELINE_UNAVAILABLE` (submission accepted, `status: deferred`) · `IDEMPOTENCY_CONFLICT` (same key, different payload) · `REGION_NOT_FOUND` · `AGENT_TOOL_FAILURE` · `INSUFFICIENT_DATA` (agent refusal surfaced as an error on non-streaming callers) · `UPSTREAM_ERROR` (a dependency failed; carries `request_id`).
+
+Client mistakes that Fastify detects itself (malformed JSON, oversized body, wrong content type) keep their 4xx status. Only genuine server-side failures return `502 UPSTREAM_ERROR`. Unknown routes return a JSON `404 NOT_FOUND`.
+
+**Every response carries:**
+- `x-request-id`: echoes a well-formed caller-supplied id (8–64 chars of `[A-Za-z0-9._-]`), otherwise a fresh UUID. Quote it in support requests; it appears in every gateway log line for that request.
+- Security headers: `x-content-type-options: nosniff`, `x-frame-options: DENY`, `referrer-policy: no-referrer`, `strict-transport-security`, and `content-security-policy: default-src 'none'; frame-ancestors 'none'`.
+- `cache-control: no-store`, unless the route sets its own.
 
 ## 11. Versioning
 `/v1` prefix. Additive fields are safe without a bump. Breaking changes get `/v2`. The federated aggregator (Option B, `ARCHITECTURE.md` §5) and any cross-country deployment depend on this contract being stable — that is the whole point of pinning it now rather than after the hackathon.
+
+## 12. Console, workflow, planning and public APIs
+
+Built after sections 1–9 were written; all live under `/v1`. **Access** column:
+- **Officer:** any officer role, jurisdiction-scoped.
+- **Officer ≥ X:** the role hierarchy `field_officer` < `district_collector` < `state_admin`.
+- **Citizen:** any signed-in user.
+- **Public:** no login, rate-limited per IP, aggregate or coarse data only.
+
+`services/permissions.ts` is the single source of truth for what each role may do. `GET /me` returns it, so the web app hides controls instead of inviting 403s.
+
+### Identity and citizens
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| GET | `/me` | Citizen or officer | Identity, role, region and resolved permission set |
+| POST | `/auth/session` | Citizen | Creates the citizen record on first email sign-in |
+| GET | `/my-reports` | Citizen | The caller's own reports with their issue's progress |
+| GET | `/my-reports/{submission_id}/status` | Citizen (owner) | Journey, priority band, translated brief, and whether a fix confirmation is awaited |
+| GET | `/notifications` · POST `/notifications/read` | Citizen or officer | In-app inbox (text rendered client-side from `kind` + `params`, in the reader's language) |
+
+### Officer console
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| GET | `/issues` | Officer | Filter (`category`, `status`, `q`, `flagged`, `assigned`, `overdue`) and sort (`score`, `reports`, `recent`) within the jurisdiction |
+| GET | `/issues/{id}` | Officer | Detail: score, project, impact record, anonymised reports, audit history |
+| POST | `/issues/{id}/status` | Officer ≥ collector | Verify / dispute / prioritise / fund / in progress, with a justification (audit-logged) |
+| POST | `/issues/{id}/assign` | Officer ≥ collector | Assign to an officer whose jurisdiction covers the issue; optional SLA override |
+| GET, POST | `/issues/{id}/comments` | Officer | Internal notes |
+| POST | `/issues/{id}/project` | Officer ≥ collector | Recommend a project (grounded brief, department, indicative budget) |
+| GET | `/projects` · POST `/projects/{id}/status` | Officer · Officer ≥ collector | Projects in scope; mark funded / in progress |
+| GET | `/media/*` | Officer | A report's photo/audio, only if the officer may see its issue |
+| GET | `/analytics/overview` · `/analytics/impact` | Officer | Dashboard KPIs; the impact ledger (people benefited, spend, confirmation rate) |
+| GET | `/activity` | Officer | Live feed of reports and officer actions in scope |
+| GET | `/regions` · `/officers/directory` | Officer | Regions and assignable officers inside the jurisdiction |
+| GET | `/reports/briefing?lang=` | Officer | Weekly briefing: computed facts, narrated by Gemini, ungrounded sentences stripped |
+| GET | `/export/issues.csv` | Officer | Spreadsheet export (formula-injection-safe); no reporter identity |
+| GET | `/forecasts` · `/map/markers` · `/equity-audit` · `/states` | Officer (equity: ≥ state admin) | Early warning, map layers, fairness audit, onboarded states |
+
+### Funding and planning
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| GET | `/schemes` · `/issues/{id}/schemes` · `/schemes/alignment` | Officer | Scheme catalogue, best-fit schemes for an issue, central-funding alignment for a region |
+| POST | `/planner/optimize` | Officer ≥ collector | Budget knapsack with a vulnerability equity floor, against a "most reports first" baseline |
+| POST | `/planner/plans` · GET `/planner/plans` | Officer ≥ collector · Officer | Save (recomputed server-side) and list plans in scope |
+| POST | `/planner/plans/{id}/approve` | Officer ≥ collector | Funds every still-plannable issue in the plan and notifies reporters |
+| POST | `/planner/simulate-weights` | Officer | Re-rank under different demand/vulnerability/gap weights (nothing persisted) |
+
+### Administration
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| GET, POST | `/admin/officers` | Officer ≥ state admin | Officer accounts inside the admin's jurisdiction |
+| POST | `/admin/officers/{uid}/disabled` | Officer ≥ state admin | Disable/enable; disabling revokes the officer's sessions immediately |
+| GET | `/admin/audit` | Officer ≥ state admin | Audit trail scoped to the admin's jurisdiction |
+| POST | `/admin/states` | Officer ≥ state admin | Onboard a state |
+
+### Public (no login)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/public/track/{code}` | Follow a report by tracking code: stage, priority band, whether a fix confirmation is awaited |
+| POST | `/public/track/{code}/confirm` | Anonymous reporter answers "was it really fixed?" (see §6) |
+| GET | `/public/nearby?lat=&lng=&radius=` | Open issues within `radius` m (default 500), nearest first, distance rounded to 50 m: "already reported?" before filing |
+| GET | `/public/issues` | Community map: category, status, coarse (~1 km) location; no text |
+| POST | `/issues/{id}/support` | Citizen "I'm affected too": follows the issue and gets its notifications; never feeds `demand_score` |
+| GET | `/public/overview` · `/public/impact` · `/public/scorecards` · `/public/transparency` | Aggregates, withheld below the k-anonymity floor |
+| GET | `/public/opendata/issues.csv` · `/public/schemes` · `/public/regions` | Open data (cells under 3 suppressed), scheme catalogue, geography |
+
+### Jobs (scheduler only)
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| POST | `/jobs/escalations` | `x-worker-secret` | CPGRAMS-style escalation (see below) |
+
+**How escalation works:**
+- Level 1: an open issue past its SLA goes to the district collectors covering it.
+- Level 2: once it is overdue by a whole further SLA window, it goes to the state admin.
+- Each level notifies once (`Issue.escalation_notified`).
+- If a district has no collector on the platform, the state admin receives level 1 too.
+- Called every 15 minutes by `.github/workflows/scheduled-jobs.yml` when the `API_URL` secret is set.

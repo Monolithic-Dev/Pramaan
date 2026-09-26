@@ -4,6 +4,7 @@ import { RequireAuth } from "./auth/Guards.js";
 import { CitizenLayout } from "./components/layout/CitizenLayout.js";
 import { ConsoleLayout } from "./components/layout/ConsoleLayout.js";
 import { PublicLayout } from "./components/layout/PublicLayout.js";
+import { RouteAnnouncer, SkipLink } from "./components/layout/A11y.js";
 import { useLanguage } from "./i18n/LanguageProvider.js";
 import { Button, EmptyState, Spinner } from "./ui/kit.js";
 
@@ -57,6 +58,9 @@ function NotFound() {
 
 function App() {
   return (
+    <>
+    <SkipLink />
+    <RouteAnnouncer />
     <Suspense
       fallback={
         <div className="flex min-h-[60vh] items-center justify-center text-brand-700">
@@ -121,6 +125,7 @@ function App() {
         </Route>
       </Routes>
     </Suspense>
+    </>
   );
 }
 

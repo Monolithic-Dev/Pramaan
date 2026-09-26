@@ -8,7 +8,7 @@ import { SlaChip } from "../../ui/extras.js";
 import { CATEGORY_META, Icon } from "../../ui/Icon.js";
 import { Badge, Button, Card, EmptyState, PageHeader, PriorityBadge, Segmented, Skeleton, StatusBadge, timeAgo, useAsync, useToast } from "../../ui/kit.js";
 
-type Tab = "mine" | "overdue" | "emergency" | "unassigned";
+type Tab = "mine" | "escalated" | "overdue" | "emergency" | "unassigned";
 const ACTIVE = new Set(["open", "verified", "prioritized", "funded", "in_progress"]);
 
 export default function Queue() {
@@ -20,16 +20,18 @@ export default function Queue() {
   const [tab, setTab] = useState<Tab>("mine");
   const [busy, setBusy] = useState<string | null>(null);
 
-  const issues = data?.issues ?? [];
+  const issues = useMemo(() => data?.issues ?? [], [data]);
   const buckets = useMemo<Record<Tab, IssueSummary[]>>(() => {
     const active = issues.filter((i) => ACTIVE.has(i.status));
     return {
       mine: active.filter((i) => i.assigned_to_uid === me?.uid),
+      // Missed deadlines that have climbed to this officer's level (services/sla.ts escalation).
+      escalated: active.filter((i) => i.sla.escalated_to && i.sla.escalated_to === me?.role).sort((a, b) => (a.sla.days_left ?? 0) - (b.sla.days_left ?? 0)),
       overdue: active.filter((i) => i.sla.state === "overdue").sort((a, b) => (a.sla.days_left ?? 0) - (b.sla.days_left ?? 0)),
       emergency: active.filter((i) => i.emergency_override),
       unassigned: active.filter((i) => !i.assigned_to_uid && i.status === "open").sort((a, b) => (b.composite_score ?? 0) - (a.composite_score ?? 0)),
     };
-  }, [issues, me?.uid]);
+  }, [issues, me?.uid, me?.role]);
 
   async function claim(issue: IssueSummary) {
     if (!me) return;
@@ -50,7 +52,7 @@ export default function Queue() {
     <span className="inline-flex items-center gap-2">
       <Icon name={icon} size={15} />
       {t(`queue.tab.${key}`)}
-      <span className={`rounded-full px-1.5 text-xs font-bold ${buckets[key].length && key === "overdue" ? "bg-rose-100 text-rose-700" : "bg-slate-200 text-slate-700"}`}>{buckets[key].length}</span>
+      <span className={`rounded-full px-1.5 text-xs font-bold ${buckets[key].length && (key === "overdue" || key === "escalated") ? "bg-rose-100 text-rose-700" : "bg-slate-200 text-slate-700"}`}>{buckets[key].length}</span>
     </span>
   );
 
@@ -63,6 +65,7 @@ export default function Queue() {
         className="mb-5 max-w-full overflow-x-auto"
         options={[
           { value: "mine", label: label("mine", "inbox") },
+          ...(me?.role === "district_collector" || me?.role === "state_admin" ? [{ value: "escalated" as const, label: label("escalated", "alert") }] : []),
           { value: "overdue", label: label("overdue", "clock") },
           { value: "emergency", label: label("emergency", "alert") },
           { value: "unassigned", label: label("unassigned", "userPlus") },

@@ -201,8 +201,13 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
   });
 
   // Photos are stored privately; officers fetch the bytes through the API, not a public URL.
+  // Scoped like the issue it belongs to: an officer may see a photo only if they may see the issue.
   app.get("/media/*", officerOnly, async (request, reply) => {
     const url = decodeURIComponent((request.params as { "*": string })["*"]);
+    const submission = deps.mediaStore.owns(url) ? await deps.store.getSubmissionByMediaUrl(url) : null;
+    const issue = submission?.issue_id ? await deps.store.getIssue(submission.issue_id) : null;
+    if (!issue) return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Media not found." } });
+    if (!(await issueInScope(deps, request, reply, issue))) return;
     const media = await deps.mediaStore.get(url);
     if (!media) return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Media not found." } });
     return reply.code(200).header("content-type", media.contentType).header("cache-control", "private, max-age=300").send(media.data);

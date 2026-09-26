@@ -274,6 +274,12 @@ Notes:
 ```
 `efficacy` = positive confirmations / total responses. Aggregated by `(category, region_id)` this becomes the `impact_efficacy` term that actually closes the loop in the scoring formula — see `AI_PIPELINE.md` Stage 6. In earlier drafts the loop was described in prose but appeared nowhere in the maths.
 
+Two further fields make the counts trustworthy:
+- **`confirmed_by: string[]`** lists who has answered in the current round, so each reporter counts once. An entry is a citizen id, or `sub:<submission_id>` for an anonymous reporter answering with a tracking code.
+- **`reopened_count`** counts how many times citizens rejected the fix. A rejection sends the project back to `in_progress`, and the next round of answers starts empty.
+
+`confirmations_required` = `min(3, identified reporters)` (never below 1). Identified reporters are signed-in reporters plus anonymous reports carrying a tracking code.
+
 ### OfficerUser
 ```json
 {
@@ -316,6 +322,33 @@ A session is a conversation; a turn is one question and its full evidence trace.
 }
 ```
 `result_hash` lets you prove after the fact that the answer matched the data, without storing a duplicate copy of the data.
+
+### Workflow and engagement (added with the RBAC console)
+These collections and fields exist in `packages/shared-types` and both stores, though the entities above predate them.
+
+**New fields on `Issue`:**
+
+| Field | Meaning |
+|---|---|
+| `support_count` | "I'm affected too" endorsements. Shown to officers and the public; never feeds `demand_score` (only distinct reporters do), so it cannot be used to game a ranking |
+| `assigned_to_uid`, `assigned_to_label`, `assigned_at` | The officer accountable for the next step |
+| `sla_due_at` | Officer override of the default SLA. The default comes from the priority band: emergency 2 days, high 7, medium 21, low 45 |
+| `escalation_notified` | Highest escalation level already notified (1: collector, 2: state admin), so each level alerts once |
+| `centroid_lat`, `centroid_lng` | Exact report location, used for dedup and the officer map; the public map rounds it to ~1 km |
+| `is_synthetic` | Illustrative sample data; the UI labels it everywhere |
+
+**New field on `Submission`:** `tracking_code` (`JS-XXXXXXXX`). The only credential an anonymous reporter needs to follow a report and to confirm the fix.
+
+**New collections:**
+
+| Collection | Shape | Notes |
+|---|---|---|
+| `issueSupports` | `{issue_id, citizen_id, created_at}`, doc id `<issue>_<citizen>` | One endorsement per citizen (idempotent `create`). Supporters receive the issue's notifications |
+| `issueComments` | `{comment_id, issue_id, author_id, author_label, author_role, body, created_at}` | Officer-only internal notes |
+| `notifications` | `{notification_id, recipient_id, kind, params, link, created_at, read_at}` | In-app inbox. Stored as `kind` + `params` and rendered in the reader's language, never pre-translated |
+| `budgetPlans` | `{plan_id, name, region_id, created_by, status, params, items[], totals, approved_at}` | Items are recomputed server-side on save; approval funds them |
+| `auditLog` | `{audit_id, actor_id, action, target_id, before, after, justification, timestamp}` | Every officer action and every citizen reopen (`actor_id: "citizens"`) |
+| `media` | `{kind, contentType, data, size, created_at}` | Free-plan photo/audio store (Firestore, ≤ ~900 KB). On GCP this is Cloud Storage. Only URLs minted by `POST /media` are accepted anywhere |
 
 ## 3. Storage mapping
 

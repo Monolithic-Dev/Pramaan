@@ -308,5 +308,16 @@ export function createFirestoreStore(db: Firestore): Store {
     async hasSupport(issueId, citizenId) {
       return (await db.collection("issueSupports").doc(`${issueId}_${citizenId}`).get()).exists;
     },
+    async listSupporters(issueId) {
+      const snapshot = await db.collection("issueSupports").where("issue_id", "==", issueId).get();
+      return snapshot.docs.map((d) => d.data().citizen_id as string);
+    },
+    async getSubmissionByMediaUrl(url) {
+      for (const field of ["photo_url", "raw_audio_url"]) {
+        const snapshot = await db.collection("submissions").where(field, "==", url).limit(1).get();
+        if (!snapshot.empty) return snapshot.docs[0].data() as Submission;
+      }
+      return null;
+    },
   };
 }

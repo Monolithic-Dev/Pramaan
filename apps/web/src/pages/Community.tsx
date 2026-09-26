@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import L from "leaflet";
 import { api, type PublicIssue } from "../api/api.js";
 import { useAuth } from "../auth/AuthContext.js";
@@ -24,7 +24,9 @@ export default function Community() {
   const [category, setCategory] = useState("");
   const { data, loading, error } = useAsync(() => api.publicIssues({ country: countryCode, category: category || undefined }), [countryCode, category]);
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  // A follower's notification links here with ?issue=<id>: open straight onto that issue.
+  const [params] = useSearchParams();
+  const [selected, setSelected] = useState<string | null>(params.get("issue"));
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [done, setDone] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
@@ -36,8 +38,11 @@ export default function Community() {
     const list = data?.issues ?? [];
     return [...list]
       .map((i) => ({ ...i, km: here ? distanceKm(here, i) : null }))
-      .sort((a, b) => (a.km !== null && b.km !== null ? a.km - b.km : b.support_count + b.report_count - (a.support_count + a.report_count)));
-  }, [data, here]);
+      .sort((a, b) =>
+        a.issue_id === selected ? -1 : b.issue_id === selected ? 1
+        : a.km !== null && b.km !== null ? a.km - b.km : b.support_count + b.report_count - (a.support_count + a.report_count),
+      );
+  }, [data, here, selected]);
 
   useEffect(() => {
     if (!el.current) return;
@@ -62,9 +67,11 @@ export default function Community() {
       pts.push([i.lat, i.lng]);
     }
     if (here) L.circleMarker([here.lat, here.lng], { radius: 9, color: "#fff", weight: 3, fillColor: "#1d3f97", fillOpacity: 1 }).bindTooltip(t("community.you")).addTo(g);
-    if (here) map.current.setView([here.lat, here.lng], 11);
+    const focus = issues.find((i) => i.issue_id === selected);
+    if (focus) map.current.setView([focus.lat, focus.lng], 13);
+    else if (here) map.current.setView([here.lat, here.lng], 11);
     else if (pts.length) map.current.fitBounds(L.latLngBounds(pts).pad(0.15));
-  }, [issues, here, t]);
+  }, [issues, here, selected, t]);
 
   function locate() {
     if (!("geolocation" in navigator)) return toast("error", t("report.locationError"));

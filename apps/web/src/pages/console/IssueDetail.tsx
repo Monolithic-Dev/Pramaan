@@ -201,6 +201,9 @@ export default function IssueDetail() {
                   <p className="font-medium text-slate-800">{t("issue.impact.title")}</p>
                   <div className="mt-2"><Meter value={impact.confirmations_received / Math.max(1, impact.confirmations_required)} color="#16a34a" /></div>
                   <p className="mt-1 text-slate-600">{t("issue.impact.body", { got: impact.confirmations_received, need: impact.confirmations_required, no: impact.confirmations_negative })}</p>
+                  {(impact.reopened_count ?? 0) > 0 && (
+                    <p className="mt-2 flex items-center gap-1.5 font-medium text-amber-700"><Icon name="alert" size={14} />{t("issue.impact.reopened", { n: impact.reopened_count ?? 0 })}</p>
+                  )}
                 </div>
               )}
               {can("manage_projects") && project.status !== "completed" && (
