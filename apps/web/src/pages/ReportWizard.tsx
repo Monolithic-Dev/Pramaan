@@ -174,6 +174,7 @@ export default function ReportWizard() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoOffline, setPhotoOffline] = useState<Blob | null>(null);
+  const [audioOffline, setAudioOffline] = useState<Blob | null>(null);
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [locationText, setLocationText] = useState("");
   const [locating, setLocating] = useState(false);
@@ -227,7 +228,7 @@ export default function ReportWizard() {
     }
   }
 
-  const hasContent = Boolean(text.trim() || audioUrl || photoUrl || photoOffline);
+  const hasContent = Boolean(text.trim() || audioUrl || photoUrl || photoOffline || audioOffline);
   const hasLocation = Boolean(coords || locationText.trim());
 
   function next() {
@@ -253,13 +254,17 @@ export default function ReportWizard() {
     try {
       if (!navigator.onLine) throw new TypeError("offline");
       // A photo taken while offline: the connection is back, so upload it now.
-      const body = photoOffline ? { ...input, photo_url: await uploadMediaAuthed("photo", photoOffline) } : input;
+      const body = {
+        ...input,
+        ...(photoOffline ? { photo_url: await uploadMediaAuthed("photo", photoOffline) } : {}),
+        ...(audioOffline ? { audio_url: await uploadMediaAuthed("audio", audioOffline) } : {}),
+      };
       const result = await submitReportAuthed(body, idempotencyKey.current);
       setDone({ id: result.submission_id, queued: false, code: result.tracking_code ?? null });
       speak(t("report.confirmationBody", { id: result.submission_id }));
     } catch (err) {
       if (!navigator.onLine || err instanceof TypeError) {
-        await enqueue(input, idempotencyKey.current, photoOffline);
+        await enqueue(input, idempotencyKey.current, { photo: photoOffline, audio: audioOffline });
         setDone({ id: idempotencyKey.current, queued: true, code: null });
       } else if (err instanceof ApiClientError && err.status === 429) {
         setError(t("report.errorRate"));
@@ -361,7 +366,7 @@ export default function ReportWizard() {
       <Card className="fade-up !p-5 sm:!p-8" key={step}>
         {step === 0 && (
           <div className="flex flex-col gap-6">
-            <VoiceRecorder onTranscript={(v) => setText((prev) => (prev ? `${prev} ${v}` : v))} onAudioUploaded={setAudioUrl} />
+            <VoiceRecorder onTranscript={(v) => setText((prev) => (prev ? `${prev} ${v}` : v))} onAudioUploaded={setAudioUrl} onAudioOffline={setAudioOffline} />
             <Field label={t("report.textLabel")} htmlFor="report-text" hint={t("report.textHint")}>
               <Textarea id="report-text" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={t("report.textPlaceholder")} />
             </Field>
@@ -421,7 +426,7 @@ export default function ReportWizard() {
                 <dd className="text-slate-900">
                   {text.trim() || <span className="text-slate-400">{t("report.review.noText")}</span>}
                   <div className="mt-1.5 flex gap-1.5">
-                    {audioUrl && <Badge tone="blue"><Icon name="mic" size={12} /> {t("report.audioSaved")}</Badge>}
+                    {(audioUrl || audioOffline) && <Badge tone="blue"><Icon name="mic" size={12} /> {t("report.audioSaved")}</Badge>}
                     {(photoUrl || photoOffline) && <Badge tone="blue"><Icon name="camera" size={12} /> {t("report.photoAttached")}</Badge>}
                   </div>
                 </dd>

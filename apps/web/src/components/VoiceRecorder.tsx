@@ -30,10 +30,10 @@ function MicButton({ active, onClick, label, sub }: { active: boolean; onClick: 
 
 // Browsers without the Web Speech API (iOS Safari, Firefox) record audio with MediaRecorder and
 // upload it; the worker transcribes it server-side with Gemini.
-function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: string) => void }) {
+function AudioUploadRecorder({ onAudioUploaded, onAudioOffline }: { onAudioUploaded: (url: string) => void; onAudioOffline: (blob: Blob) => void }) {
   const { t } = useLanguage();
   const [recording, setRecording] = useState(false);
-  const [state, setState] = useState<"idle" | "saved" | "error" | "blocked">("idle");
+  const [state, setState] = useState<"idle" | "saved" | "offline" | "error" | "blocked">("idle");
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
@@ -50,11 +50,18 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
       rec.ondataavailable = (e) => chunks.current.push(e.data);
       rec.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(chunks.current, { type: rec.mimeType });
         try {
-          onAudioUploaded(await uploadMediaAuthed("audio", new Blob(chunks.current, { type: rec.mimeType })));
+          onAudioUploaded(await uploadMediaAuthed("audio", blob));
           setState("saved");
-        } catch {
-          setState("error");
+        } catch (err) {
+          // No connection: keep the recording on the device; the offline queue uploads it later.
+          if (!navigator.onLine || err instanceof TypeError) {
+            onAudioOffline(blob);
+            setState("offline");
+          } else {
+            setState("error");
+          }
         }
       };
       recorder.current = rec;
@@ -77,6 +84,7 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
     <div className="flex flex-col gap-2">
       <MicButton active={recording} onClick={toggle} label={recording ? t("report.audioStop") : t("report.audioRecord")} sub={t("report.voiceSub")} />
       {state === "saved" && <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><Icon name="checkCircle" size={16} />{t("report.audioSaved")}</p>}
+      {state === "offline" && <p className="flex items-center gap-1.5 text-sm font-medium text-amber-700"><Icon name="clock" size={16} />{t("report.audioOffline")}</p>}
       {state === "error" && <p className="text-sm font-medium text-rose-600">{t("report.uploadError")}</p>}
       {state === "blocked" && <p className="text-sm font-medium text-rose-600">{t("report.micBlocked")}</p>}
     </div>
@@ -86,9 +94,12 @@ function AudioUploadRecorder({ onAudioUploaded }: { onAudioUploaded: (url: strin
 export function VoiceRecorder({
   onTranscript,
   onAudioUploaded,
+  onAudioOffline,
 }: {
   onTranscript: (text: string) => void;
   onAudioUploaded: (url: string) => void;
+  /** A recording made with no connection, to be uploaded later by the offline queue. */
+  onAudioOffline: (blob: Blob) => void;
 }) {
   const { speechLang, t } = useLanguage();
   const { isListening, transcript, error, start, stop } = useSpeechRecognition(speechLang);
@@ -101,12 +112,14 @@ export function VoiceRecorder({
   // The browser has the API but its speech service failed: record audio instead, which the
   // worker transcribes with Gemini, rather than leaving a button that silently does nothing.
   const serviceFailed = error !== null && SPEECH_SERVICE_ERRORS.has(error);
+  // Browser speech recognition needs the network too; offline, record now and transcribe later.
+  const offline = typeof navigator !== "undefined" && !navigator.onLine;
 
-  if (!isSpeechRecognitionSupported() || serviceFailed) {
+  if (!isSpeechRecognitionSupported() || serviceFailed || offline) {
     if (typeof MediaRecorder === "undefined") {
       return <p className="rounded-xl bg-slate-100 p-3 text-sm text-slate-600">{t("report.voiceUnsupported")}</p>;
     }
-    return <AudioUploadRecorder onAudioUploaded={onAudioUploaded} />;
+    return <AudioUploadRecorder onAudioUploaded={onAudioUploaded} onAudioOffline={onAudioOffline} />;
   }
 
   return (

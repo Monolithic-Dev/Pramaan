@@ -1004,5 +1004,6 @@
   "issue.ai.located": "Placed in {area} from the reported location.",
   "issue.ai.models": "Duplicate matching uses the {model} embedding model. Personal details are removed before any text reaches the model.",
   "issue.reports.showAll": "Show all {n} reports",
-  "issue.reports.showFewer": "Show fewer"
+  "issue.reports.showFewer": "Show fewer",
+  "report.audioOffline": "No connection: your voice note is saved on this phone and will upload with your report."
 }

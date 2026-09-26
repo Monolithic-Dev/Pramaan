@@ -777,6 +777,7 @@
   "report.anon.hint": "Você está enviando o relato anonimamente. Entre na sua conta primeiro se quiser acompanhar.",
   "report.anon.title": "Deseja acompanhar este relato?",
   "report.another": "Relatar outro problema",
+  "report.audioOffline": "Sem conexão: sua nota de voz foi salva neste aparelho e será enviada junto com sua denúncia.",
   "report.audioRecord": "Gravar mensagem de voz",
   "report.audioSaved": "Mensagem de voz salva",
   "report.audioStop": "Gravando… toque para parar",
