@@ -200,6 +200,24 @@ describe("officer accounts (state_admin only)", () => {
     expect((await app.inject({ method: "GET", url: "/v1/admin/audit", headers: collector })).statusCode).toBe(403);
     expect((await app.inject({ method: "GET", url: "/v1/admin/audit", headers: admin })).json().entries.length).toBeGreaterThan(0);
   });
+
+  it("shows a state admin only the audit trail for their own jurisdiction", async () => {
+    const { app, deps, admin } = setup();
+    put(deps, issue({ issue_id: "iss_home" }));
+    put(deps, issue({ issue_id: "iss_away", state_id: "IN-MH", admin_region_id: "mh-pune" }));
+    const entry = (target: string, actor: string) => ({
+      audit_id: `a_${target}`, actor_id: actor, action: "issue_status_change", target_id: target,
+      before: null, after: null, justification: null, timestamp: "2026-09-01T00:00:00Z",
+    });
+    await deps.store.putAuditLogEntry(entry("iss_home", "u_someone"));
+    await deps.store.putAuditLogEntry(entry("iss_away", "u_pune_officer"));
+
+    const targets = (await app.inject({ method: "GET", url: "/v1/admin/audit", headers: admin }))
+      .json()
+      .entries.map((e: { target_id: string }) => e.target_id);
+    expect(targets).toContain("iss_home");
+    expect(targets).not.toContain("iss_away");
+  });
 });
 
 describe("public endpoints", () => {
