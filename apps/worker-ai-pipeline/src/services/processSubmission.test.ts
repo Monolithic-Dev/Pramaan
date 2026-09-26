@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import pino from "pino";
 import type { CategorizationResult } from "@jansetu/ai-prompts";
 import type { Submission } from "@jansetu/shared-types";
+import { buildApp } from "../app.js";
 import { createFakeDeps } from "../testUtils/fakeDeps.js";
 import { processSubmission } from "./processSubmission.js";
 
@@ -404,7 +405,6 @@ describe("stale processing recovery", () => {
 
 describe("concurrent duplicate reports", () => {
   it("merges two near-simultaneous reports of the same problem when processed through the serial queue", async () => {
-    const { buildApp } = await import("../app.js");
     const deps = createFakeDeps();
     deps.regionCentroids.push(
       { regionId: "IN-DL", level: "state", parentRegionId: null, lat: 28.7, lng: 77.1, population: 1000000 },

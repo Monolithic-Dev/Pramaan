@@ -20,6 +20,7 @@ if (existsSync(envFile)) {
 const API = "http://localhost:8080/v1";
 const WORKER = "http://localhost:8081";
 const WORKER_SECRET = process.env.WORKER_SHARED_SECRET ?? "localsecret";
+const WEBHOOK_SECRET = process.env.WEBHOOK_SHARED_SECRET ?? "localsecret";
 const KEY = process.env.FIREBASE_WEB_API_KEY!;
 const MEDIA_DIR = process.argv[2];
 const PASSWORD = process.env.E2E_OFFICER_PASSWORD ?? "";
@@ -223,7 +224,7 @@ async function main() {
   check("BR issue categorised as water", brIssue?.category === "water", brIssue?.category);
 
   console.log("\n=== 7. WhatsApp webhook ===");
-  const wa = await api("/webhooks/whatsapp", { method: "POST", json: { from: "+919812345678", message_id: `wa-${Date.now()}`, text: "streetlight not working for a week in our lane", lat: 28.53, lng: 77.21 } });
+  const wa = await api("/webhooks/whatsapp", { method: "POST", headers: { "x-webhook-secret": WEBHOOK_SECRET }, json: { from: "+919812345678", message_id: `wa-${Date.now()}`, text: "streetlight not working for a week in our lane", lat: 28.53, lng: 77.21 } });
   check("WhatsApp webhook accepted (202)", wa.status === 202, wa.text.slice(0, 100));
   const wad = await processed(wa.json?.submission_id);
   check("WhatsApp report processed", wad?.status === "processed", `status=${wad?.status}`);

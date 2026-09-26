@@ -7,6 +7,7 @@ import { requireAuth, requireOfficer } from "../middleware/auth.js";
 import { confirmResolutionSchema } from "../schemas/projects.js";
 import { completeIfConfirmed } from "../services/impactLoop.js";
 import { notifyReporters } from "../services/notify.js";
+import { requireRole } from "./helpers.js";
 
 const DEFAULT_CONFIRMATIONS_REQUIRED = 3;
 
@@ -41,6 +42,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
     "/projects/:projectId/mark-complete",
     { preHandler: [requireOfficer(deps.authVerifier)] },
     async (request, reply) => {
+      if (!requireRole(request, reply, "district_collector", "Marking a project complete")) return;
       const { projectId } = request.params as { projectId: string };
       const project = await deps.store.getProject(projectId);
       if (!project) {
@@ -80,8 +82,11 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
           category: issue?.category ?? "other",
           region_id: issue?.admin_region_id ?? "UNRESOLVED",
           confirmations_received: 0,
-          confirmations_required: DEFAULT_CONFIRMATIONS_REQUIRED,
+          // Confirmations must come from distinct original reporters, so an issue with fewer
+          // identified reporters than the default could otherwise never close.
+          confirmations_required: Math.max(1, Math.min(DEFAULT_CONFIRMATIONS_REQUIRED, reporterIds.length)),
           confirmations_negative: 0,
+          confirmed_by: [],
           resolution_photo_url: null,
           resolved_at: "",
           verified_by: "",
@@ -94,6 +99,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         audit_id: randomUUID(),
         actor_id: request.citizenId ?? "unknown-officer",
         action: "mark_complete",
+        target_id: projectId,
         before: { marked_complete_at: project.marked_complete_at },
         after: { marked_complete_at: new Date().toISOString() },
         justification: null,
@@ -113,6 +119,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
     "/projects/:projectId/officer-signoff",
     { preHandler: [requireOfficer(deps.authVerifier)] },
     async (request, reply) => {
+      if (!requireRole(request, reply, "district_collector", "Signing off a project")) return;
       const { projectId } = request.params as { projectId: string };
       const project = await deps.store.getProject(projectId);
       if (!project) {
@@ -132,6 +139,7 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         audit_id: randomUUID(),
         actor_id: request.citizenId ?? "unknown-officer",
         action: "officer_signoff",
+        target_id: projectId,
         before: { officer_signed_off_at: project.officer_signed_off_at },
         after: { officer_signed_off_at: updated.officer_signed_off_at },
         justification: null,
@@ -146,11 +154,19 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
     "/projects/:projectId/confirm-resolution",
     { preHandler: [requireAuth(deps.authVerifier)] },
     async (request, reply) => {
+      if (request.officer) {
+        return reply.code(403).send({ error: { code: "FORBIDDEN", message: "Officers cannot confirm a resolution as a citizen." } });
+      }
       const { projectId } = request.params as { projectId: string };
       const parsed = confirmResolutionSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.code(400).send({
           error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message },
+        });
+      }
+      if (parsed.data.photo_url && !deps.mediaStore.owns(parsed.data.photo_url)) {
+        return reply.code(400).send({
+          error: { code: "VALIDATION_ERROR", message: "photo_url must be a URL returned by POST /media." },
         });
       }
 
@@ -177,8 +193,17 @@ export function registerProjectRoutes(app: FastifyInstance, deps: Deps) {
         });
       }
 
+      const citizenId = request.citizenId!;
+      const confirmedBy = impactRecord.confirmed_by ?? [];
+      if (confirmedBy.includes(citizenId)) {
+        return reply.code(409).send({
+          error: { code: "ALREADY_CONFIRMED", message: "You have already responded for this project." },
+        });
+      }
+
       const updated: ImpactRecord = {
         ...impactRecord,
+        confirmed_by: [...confirmedBy, citizenId],
         confirmations_received: impactRecord.confirmations_received + (parsed.data.confirmed ? 1 : 0),
         confirmations_negative: impactRecord.confirmations_negative + (parsed.data.confirmed ? 0 : 1),
         resolution_photo_url: parsed.data.photo_url ?? impactRecord.resolution_photo_url,

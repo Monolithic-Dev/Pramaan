@@ -43,6 +43,29 @@ describe("POST /submissions", () => {
     expect(response.json().error.code).toBe("VALIDATION_ERROR");
   });
 
+  it("rejects media URLs that were not issued by POST /media (arbitrary bucket reads)", async () => {
+    const deps = createFakeDeps();
+    const app = buildApp(deps);
+    for (const field of ["photo_url", "audio_url"]) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/submissions",
+        payload: { ...validPayload, [field]: "gs://another-projects-bucket/private/export.json" },
+        headers: idempotencyHeaders(),
+      });
+      expect(response.statusCode).toBe(400);
+    }
+    expect(await deps.store.getSubmissionsByCitizen("anonymous")).toHaveLength(0);
+
+    const ok = await app.inject({
+      method: "POST",
+      url: "/v1/submissions",
+      payload: { ...validPayload, photo_url: "gs://test-bucket/photos/1" },
+      headers: idempotencyHeaders(),
+    });
+    expect(ok.statusCode).toBe(202);
+  });
+
   it("with no text/audio/photo returns 400 VALIDATION_ERROR", async () => {
     const app = buildApp(createFakeDeps());
     const response = await app.inject({

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { submitReport, type CreateSubmissionInput } from "../api/client.js";
+import { submitReportAuthed } from "../api/api.js";
+import { ApiClientError, type CreateSubmissionInput } from "../api/client.js";
 
 interface QueuedSubmission {
   idempotencyKey: string;
@@ -32,7 +33,13 @@ function writeQueue(queue: QueuedSubmission[]) {
   }
 }
 
-export function useOfflineQueue() {
+/** A 4xx other than timeout/rate-limit will fail identically on every retry. */
+const isPermanent = (err: unknown) =>
+  err instanceof ApiClientError && err.status >= 400 && err.status < 500 && err.status !== 408 && err.status !== 429;
+
+/** `authReady`: replay only once sign-in state is known, so a signed-in citizen's queued report is
+ *  sent with their token (and lands in their account) rather than anonymously. */
+export function useOfflineQueue(authReady: boolean) {
   const [pendingCount, setPendingCount] = useState(() => readQueue().length);
 
   const flush = useCallback(async () => {
@@ -41,9 +48,9 @@ export function useOfflineQueue() {
     const remaining: QueuedSubmission[] = [];
     for (const item of queue) {
       try {
-        await submitReport(item.input, item.idempotencyKey);
-      } catch {
-        remaining.push(item); // still offline or the server rejected it — keep for next try
+        await submitReportAuthed(item.input, item.idempotencyKey);
+      } catch (err) {
+        if (!isPermanent(err)) remaining.push(item); // still offline or throttled: keep for next try
       }
     }
     writeQueue(remaining);
@@ -51,10 +58,11 @@ export function useOfflineQueue() {
   }, []);
 
   useEffect(() => {
+    if (!authReady) return;
     window.addEventListener("online", flush);
     if (navigator.onLine) flush();
     return () => window.removeEventListener("online", flush);
-  }, [flush]);
+  }, [flush, authReady]);
 
   const enqueue = useCallback((input: CreateSubmissionInput, idempotencyKey: string) => {
     const queue = readQueue();

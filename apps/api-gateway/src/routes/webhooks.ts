@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { SubmissionChannel } from "@jansetu/shared-types";
 import type { Deps } from "../deps.js";
@@ -6,9 +7,17 @@ import { getOrCreateCitizenByPhone } from "../services/citizens.js";
 import { ingestSubmission } from "../services/ingestSubmission.js";
 import { channelWebhookSchema } from "../schemas/webhooks.js";
 
+const digest = (s: string) => createHash("sha256").update(s).digest();
+
+// Fails closed: these endpoints bypass the per-citizen submission rate limiter and let the caller
+// pick any phone number as the reporter, so an unconfigured deployment must not accept them.
 function verifySharedSecret(request: FastifyRequest, reply: FastifyReply): boolean {
-  if (!env.webhookSharedSecret) return true; // unset in dev/tests — provider not configured yet
-  if (request.headers["x-webhook-secret"] === env.webhookSharedSecret) return true;
+  if (!env.webhookSharedSecret) {
+    reply.code(503).send({ error: { code: "CHANNEL_NOT_CONFIGURED", message: "Messaging webhooks are not enabled on this deployment." } });
+    return false;
+  }
+  const given = request.headers["x-webhook-secret"];
+  if (typeof given === "string" && timingSafeEqual(digest(given), digest(env.webhookSharedSecret))) return true;
   reply.code(401).send({ error: { code: "UNAUTHORIZED", message: "Invalid webhook signature." } });
   return false;
 }
@@ -30,6 +39,11 @@ function registerChannelWebhook(
       });
     }
     const body = parsed.data;
+    if (body.photo_url && !deps.mediaStore.owns(body.photo_url)) {
+      return reply.code(400).send({
+        error: { code: "VALIDATION_ERROR", message: "photo_url must be a URL returned by POST /media." },
+      });
+    }
 
     const citizen = await getOrCreateCitizenByPhone(deps, body.from);
     // The provider's message_id is already a stable per-attempt identifier —

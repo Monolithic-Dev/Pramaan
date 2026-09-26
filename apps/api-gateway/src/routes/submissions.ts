@@ -27,6 +27,11 @@ export function registerSubmissionRoutes(app: FastifyInstance, deps: Deps) {
         });
       }
       const body = parsed.data;
+      if ([body.audio_url, body.photo_url].some((url) => url && !deps.mediaStore.owns(url))) {
+        return reply.code(400).send({
+          error: { code: "VALIDATION_ERROR", message: "Media must be uploaded through POST /media first." },
+        });
+      }
 
       const { result, conflict } = await ingestSubmission(
         deps,

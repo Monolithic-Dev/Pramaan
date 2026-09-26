@@ -70,6 +70,7 @@ export function createFirebaseOfficerAdmin(): OfficerAdmin {
     },
     async setDisabled(uid, disabled) {
       await auth().updateUser(uid, { disabled });
+      if (disabled) await auth().revokeRefreshTokens(uid);
       return toAccount(await auth().getUser(uid));
     },
   };

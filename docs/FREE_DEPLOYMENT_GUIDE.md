@@ -101,6 +101,7 @@ jurisdiction, e.g. `IN-DL` (Delhi), `IN-MH`, `IN-KA`, `dl-central-delhi`, `BR-SP
 | `GEMINI_API_KEY` | your key | your key | |
 | `WORKER_SHARED_SECRET` | any long random string | **same string** | |
 | `WORKER_URL` | `https://jansetu-worker.onrender.com` (worker's URL) | | |
+| `WEBHOOK_SHARED_SECRET` | optional: only to enable the WhatsApp/SMS webhooks (they return 503 without it) | | |
 | `VITE_API_BASE_URL` | | | `https://jansetu-api.onrender.com/v1` |
 | `VITE_FIREBASE_API_KEY` | | | web API key |
 
@@ -127,9 +128,10 @@ Reports are handed to the worker immediately; this cron catches anything missed 
 2. Firestore: `submissions` gets a document that moves `queued` to `processed` (within a minute); `issues`
    gets an issue. File the same problem twice: `report_count` goes up, no duplicate issue.
 3. Try a voice note (works in Chrome via browser speech, or as an uploaded recording elsewhere) and a photo-only report.
-4. Open `/officer`, sign in with the officer email/password, look at the map, forecasts, equity tabs and ask the agent a question.
-5. `/status`: enter a test phone number, code `123456`, and the tracking id.
-6. `/transparency`: works in a private window with no login.
+4. Open `/login`, sign in with the officer email/password: you land in `/console`. Look at the map, forecasts,
+   equity tabs and ask the co-pilot a question.
+5. `/track`: enter the tracking code shown after filing (`JS-XXXXXXXX`). A signed-in citizen sees the same report under `/my`.
+6. `/transparency` and `/accountability`: work in a private window with no login.
 
 Scoring needs 3 distinct reporters on an issue (or emergency override). Use three test phones / different
 browsers, or run more submissions, before expecting scores.

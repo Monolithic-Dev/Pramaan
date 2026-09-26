@@ -94,12 +94,12 @@ function makeCitizen(overrides: Partial<Citizen> = {}): Citizen {
 // Matches makeIssue()/makeProject()'s default state_id — the jurisdiction check
 // resolves to admin_region_id ?? state_id, and these fixtures don't set
 // admin_region_id, so "UNRESOLVED" is what an in-jurisdiction officer needs.
-function officerHeaders(deps: ReturnType<typeof createFakeDeps>, regionId = "UNRESOLVED") {
-  deps.tokens.set(`officer-token-${regionId}`, {
+function officerHeaders(deps: ReturnType<typeof createFakeDeps>, regionId = "UNRESOLVED", role = "district_collector") {
+  deps.tokens.set(`officer-token-${regionId}-${role}`, {
     uid: "officer_1",
-    claims: { role: "district_collector", region_id: regionId, country_code: "IN" },
+    claims: { role, region_id: regionId, country_code: "IN" },
   });
-  return { authorization: `Bearer officer-token-${regionId}` };
+  return { authorization: `Bearer officer-token-${regionId}-${role}` };
 }
 
 function citizenHeaders(deps: ReturnType<typeof createFakeDeps>, uid = "cit_reporter") {
@@ -135,7 +135,34 @@ describe("POST /projects/:id/mark-complete", () => {
     const project = await deps.store.getProject("proj_test");
     expect(project?.marked_complete_at).toBeTruthy();
     const impact = await deps.store.getImpactRecord("proj_test");
-    expect(impact?.confirmations_required).toBe(3);
+    // One identified reporter: requiring three distinct confirmations could never be met.
+    expect(impact?.confirmations_required).toBe(1);
+  });
+
+  it("caps required confirmations at 3 when there are more identified reporters", async () => {
+    const deps = createFakeDeps();
+    deps.store.projects.set("proj_test", makeProject());
+    deps.store.issues.set("iss_test", makeIssue());
+    for (const [i, uid] of ["a", "b", "c", "d"].entries()) {
+      await deps.store.putSubmission(makeSubmission({ submission_id: `sub_${i}`, citizen_id: `cit_${uid}` }));
+    }
+    const app = buildApp(deps);
+    await app.inject({ method: "POST", url: "/v1/projects/proj_test/mark-complete", headers: officerHeaders(deps) });
+    expect((await deps.store.getImpactRecord("proj_test"))?.confirmations_required).toBe(3);
+  });
+
+  it("returns 403 for a field officer (project actions need district_collector)", async () => {
+    const deps = createFakeDeps();
+    deps.store.projects.set("proj_test", makeProject());
+    deps.store.issues.set("iss_test", makeIssue());
+    const app = buildApp(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/proj_test/mark-complete",
+      headers: officerHeaders(deps, "UNRESOLVED", "field_officer"),
+    });
+    expect(response.statusCode).toBe(403);
+    expect((await deps.store.getProject("proj_test"))?.marked_complete_at).toBeNull();
   });
 
   it("returns 403 JURISDICTION_MISMATCH for an officer outside the project's region", async () => {
@@ -226,9 +253,10 @@ describe("POST /projects/:id/confirm-resolution", () => {
     const deps = createFakeDeps();
     // Three original reporters so 2 confirmations is genuinely short of 3.
     await deps.store.putSubmission(makeSubmission({ submission_id: "sub_2", citizen_id: "cit_b" }));
+    await deps.store.putSubmission(makeSubmission({ submission_id: "sub_3", citizen_id: "cit_c" }));
     deps.store.issues.set(
       "iss_test",
-      makeIssue({ submission_ids: ["sub_1", "sub_2"], distinct_reporter_count: 2 }),
+      makeIssue({ submission_ids: ["sub_1", "sub_2", "sub_3"], distinct_reporter_count: 3 }),
     );
     const app = await setupMarkedCompleteProject(deps);
     await deps.store.putCitizen(makeCitizen({ citizen_id: "cit_b" }));
@@ -256,18 +284,69 @@ describe("POST /projects/:id/confirm-resolution", () => {
     expect(project?.status).not.toBe("completed");
   });
 
-  it("flips to completed once confirmations reach the threshold AND the officer has signed off", async () => {
+  it("counts each reporter once: repeat confirmations are rejected and do not add up", async () => {
     const deps = createFakeDeps();
+    for (const [i, uid] of ["cit_b", "cit_c"].entries()) {
+      await deps.store.putSubmission(makeSubmission({ submission_id: `sub_x${i}`, citizen_id: uid }));
+    }
     const app = await setupMarkedCompleteProject(deps);
 
-    // Fake 3 confirmations by calling confirm-resolution 3 times as the one
-    // real original reporter (the check is per-call, not per-unique-citizen).
+    const responses = [];
     for (let i = 0; i < 3; i++) {
+      responses.push(
+        await app.inject({
+          method: "POST",
+          url: "/v1/projects/proj_test/confirm-resolution",
+          payload: { confirmed: true },
+          headers: citizenHeaders(deps, "cit_reporter"),
+        }),
+      );
+    }
+    expect(responses.map((r) => r.statusCode)).toEqual([200, 409, 409]);
+    expect((await deps.store.getImpactRecord("proj_test"))?.confirmations_received).toBe(1);
+
+    await app.inject({ method: "POST", url: "/v1/projects/proj_test/officer-signoff", headers: officerHeaders(deps) });
+    expect((await deps.store.getProject("proj_test"))?.status).not.toBe("completed");
+  });
+
+  it("rejects an officer token on the citizen confirmation endpoint", async () => {
+    const deps = createFakeDeps();
+    const app = await setupMarkedCompleteProject(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/proj_test/confirm-resolution",
+      payload: { confirmed: true },
+      headers: officerHeaders(deps),
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("rejects a resolution photo that was not uploaded through /media", async () => {
+    const deps = createFakeDeps();
+    const app = await setupMarkedCompleteProject(deps);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/proj_test/confirm-resolution",
+      payload: { confirmed: true, photo_url: "gs://someone-elses-bucket/secret.jpg" },
+      headers: citizenHeaders(deps),
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("flips to completed once confirmations reach the threshold AND the officer has signed off", async () => {
+    const deps = createFakeDeps();
+    const reporters = ["cit_reporter", "cit_b", "cit_c"];
+    for (const [i, uid] of reporters.slice(1).entries()) {
+      await deps.store.putSubmission(makeSubmission({ submission_id: `sub_y${i}`, citizen_id: uid }));
+    }
+    const app = await setupMarkedCompleteProject(deps);
+
+    for (const uid of reporters) {
       await app.inject({
         method: "POST",
         url: "/v1/projects/proj_test/confirm-resolution",
         payload: { confirmed: true },
-        headers: citizenHeaders(deps, "cit_reporter"),
+        headers: citizenHeaders(deps, uid),
       });
     }
     expect((await deps.store.getProject("proj_test"))?.status).not.toBe("completed");

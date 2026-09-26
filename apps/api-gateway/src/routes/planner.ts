@@ -9,7 +9,7 @@ import { SCHEMES, SCHEME_BY_ID } from "../data/schemes.js";
 import { getIssuesInScope, regionNameMap } from "../services/consoleData.js";
 import { DEPARTMENT } from "../services/costing.js";
 import { notifyReporters, notify } from "../services/notify.js";
-import { buildCandidates, optimizePlan, simulateWeights } from "../services/planner.js";
+import { NOT_PLANNABLE, buildCandidates, optimizePlan, simulateWeights } from "../services/planner.js";
 import { computeAlignment, inferSettlement, matchSchemes, type Settlement } from "../services/schemes.js";
 import { audit, bad, issueInScope, notFound, outside, regionInScope, requireRole } from "./helpers.js";
 
@@ -154,7 +154,8 @@ export function registerPlannerRoutes(app: FastifyInstance, deps: Deps) {
     const skipped: { issue_id: string; reason: string }[] = [];
     for (const item of plan.items) {
       const issue = await deps.store.getIssue(item.issue_id);
-      if (!issue || ["funded", "in_progress", "resolved", "tombstoned"].includes(issue.status)) {
+      // Re-checked at approval: an issue can be funded elsewhere or disputed after the plan was saved.
+      if (!issue || NOT_PLANNABLE.has(issue.status)) {
         skipped.push({ issue_id: item.issue_id, reason: "no longer plannable" });
         continue;
       }

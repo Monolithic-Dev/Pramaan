@@ -47,22 +47,6 @@ export interface CreateSubmissionInput {
   country_code?: string;
 }
 
-export interface CreateSubmissionResult {
-  submission_id: string;
-  status: string;
-}
-
-export function submitReport(
-  input: CreateSubmissionInput,
-  idempotencyKey: string,
-): Promise<CreateSubmissionResult> {
-  return request("/submissions", {
-    method: "POST",
-    headers: { "idempotency-key": idempotencyKey },
-    body: JSON.stringify(input),
-  });
-}
-
 export function createAgentSession(
   token: string,
   regionScope: string,

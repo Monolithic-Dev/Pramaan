@@ -320,7 +320,7 @@ firebase deploy --only hosting
    and no second issue is created (deduplication working).
 4. Trigger scoring now: `curl -X POST $WORKER_URL/jobs/score -H "Authorization: Bearer $(gcloud auth print-identity-token)"`.
    An issue needs 3 distinct reporters (or emergency override) before it is scored.
-5. Sign in as the officer and open `/officer`: ask the agent a question, check the map, forecasts and equity tabs.
+5. Sign in as the officer at `/login` (you land in `/console`): ask the co-pilot a question, check the map, forecasts and equity tabs.
 6. Open `/transparency?` in a private window: it works without login (shows "insufficient data" until 5 issues exist).
 
 **If something fails:** Cloud Run, select the service, **Logs**. Common causes: a missing IAM role (Part 6),

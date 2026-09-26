@@ -7,7 +7,7 @@ import { inferSettlement, matchSchemes } from "./schemes.js";
 export const VULNERABLE_THRESHOLD = 0.66;
 // Issues in these states are already being handled, closed, or contested: funding them again
 // would double-spend, so they are never plan candidates.
-const NOT_PLANNABLE = new Set(["funded", "in_progress", "resolved", "disputed", "tombstoned"]);
+export const NOT_PLANNABLE = new Set(["funded", "in_progress", "resolved", "disputed", "tombstoned"]);
 
 export interface Candidate extends BudgetPlanItem {
   reports: number;

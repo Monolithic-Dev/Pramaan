@@ -408,8 +408,29 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
     return reply.code(200).send(updated);
   });
 
-  app.get("/admin/audit", { preHandler: [requireOfficer(deps.authVerifier), adminOnly] }, async (_request, reply) => {
-    return reply.code(200).send({ entries: await deps.store.listAuditLog(200) });
+  // Only entries about things inside the admin's jurisdiction, or made by officers inside it.
+  app.get("/admin/audit", { preHandler: [requireOfficer(deps.authVerifier), adminOnly] }, async (request, reply) => {
+    const scope = request.officer!.regionId;
+    if (!scope) return reply.code(200).send({ entries: [] });
+    const [entries, issues, projects, plans, officers, allRegions] = await Promise.all([
+      deps.store.listAuditLog(1000),
+      getIssuesInScope(deps, scope),
+      deps.store.listProjects(),
+      deps.store.listPlans(),
+      deps.officerAdmin.list(),
+      deps.bigqueryAgent.listRegions(),
+    ]);
+    const within = new Set(regionsWithin(allRegions, scope).map((r) => r.regionId));
+    const issueIds = new Set(issues.map((i) => i.issue_id));
+    const officerIds = new Set(officers.filter((o) => within.has(o.region_id)).map((o) => o.uid));
+    const targets = new Set([
+      ...issueIds,
+      ...projects.filter((p) => issueIds.has(p.issue_id)).map((p) => p.project_id),
+      ...plans.filter((p) => within.has(p.region_id)).map((p) => p.plan_id),
+      ...officerIds,
+    ]);
+    const visible = entries.filter((e) => (e.target_id && targets.has(e.target_id)) || officerIds.has(e.actor_id));
+    return reply.code(200).send({ entries: visible.slice(0, 200) });
   });
 
   // ---- Public (no login, aggregate only) -------------------------------------------------------------
