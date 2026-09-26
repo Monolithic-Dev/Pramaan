@@ -72,6 +72,41 @@ describe("GET /me", () => {
   });
 });
 
+describe("PATCH /me", () => {
+  it("saves a citizen's language so their updates are written in it", async () => {
+    const { app, admin, deps } = setup();
+    deps.tokens.set("cit", { uid: "cit_1", claims: {} });
+    const headers = { authorization: "Bearer cit" };
+    await app.inject({ method: "POST", url: "/v1/auth/session", headers, payload: { country_code: "IN" } });
+
+    const res = await app.inject({ method: "PATCH", url: "/v1/me", headers, payload: { preferred_language: "ta-IN" } });
+    expect(res.statusCode).toBe(200);
+    expect((await deps.store.getCitizen("cit_1"))?.preferred_language).toBe("ta-IN");
+    const me = (await app.inject({ method: "GET", url: "/v1/me", headers })).json();
+    expect(me).toMatchObject({ preferred_language: "ta-IN" });
+    expect(me.member_since).toEqual(expect.any(String));
+
+    expect((await app.inject({ method: "PATCH", url: "/v1/me", headers, payload: { preferred_language: "<script>" } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PATCH", url: "/v1/me", headers: admin, payload: { preferred_language: "hi-IN" } })).statusCode).toBe(403);
+    expect((await app.inject({ method: "PATCH", url: "/v1/me", payload: { preferred_language: "hi-IN" } })).statusCode).toBe(401);
+
+    // The web app is on another origin, so the browser asks first; CORS must allow PATCH.
+    const preflight = await app.inject({
+      method: "OPTIONS",
+      url: "/v1/me",
+      headers: { origin: "http://localhost:5173", "access-control-request-method": "PATCH" },
+    });
+    expect(preflight.headers["access-control-allow-methods"]).toContain("PATCH");
+  });
+
+  it("creates the citizen record if the session was never started", async () => {
+    const { app, deps } = setup();
+    deps.tokens.set("cit", { uid: "cit_9", claims: {} });
+    await app.inject({ method: "PATCH", url: "/v1/me", headers: { authorization: "Bearer cit" }, payload: { preferred_language: "pt-BR" } });
+    expect(await deps.store.getCitizen("cit_9")).toMatchObject({ preferred_language: "pt-BR", country_code: "BR" });
+  });
+});
+
 describe("citizen session and my reports", () => {
   it("creates a citizen record on first sign-in and lists only their own reports", async () => {
     const { app, deps } = setup();

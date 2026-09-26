@@ -21,6 +21,8 @@ export interface Me {
   region_id: string | null;
   country_code: string | null;
   preferred_language: string | null;
+  /** When the citizen record was created; null for officers. */
+  member_since?: string | null;
   permissions: Permissions;
 }
 
@@ -453,6 +455,7 @@ const qs = (params: Record<string, string | number | boolean | undefined>) => {
 
 export const api = {
   me: () => http<Me>("/me"),
+  updateMe: (body: { preferred_language: string }) => http<{ preferred_language: string }>("/me", { method: "PATCH", json: body }),
   ensureCitizenSession: (body: { preferred_language?: string; country_code?: string }) =>
     http<{ kind: string }>("/auth/session", { method: "POST", json: body }),
 

@@ -43,6 +43,8 @@ const isSupported = (code: string | null | undefined): code is LanguageCode => S
 interface LanguageContextValue {
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
+  /** The chosen language's dictionary has loaded, so t() now returns text in it. */
+  ready: boolean;
   /** Looks up `key` and substitutes any `{placeholder}` tokens from `vars`. */
   t: (key: string, vars?: Record<string, string | number>) => string;
   speechLang: string;
@@ -66,6 +68,7 @@ function initialLanguage(): LanguageCode {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>(initialLanguage);
   const [dictionary, setDictionary] = useState<Dictionary>(en);
+  const [loaded, setLoaded] = useState<LanguageCode>("en");
 
   const setLanguage = (lang: LanguageCode) => {
     setLanguageState(lang);
@@ -80,11 +83,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
     if (language === "en") {
       setDictionary(en);
+      setLoaded("en");
       return;
     }
     let live = true;
     LOADERS[language]()
-      .then((m) => live && setDictionary(m.default))
+      .then((m) => {
+        if (!live) return;
+        setDictionary(m.default);
+        setLoaded(language);
+      })
       // A failed download leaves the previous dictionary in place; missing keys fall back to English anyway.
       .catch(() => undefined);
     return () => {
@@ -97,6 +105,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return {
       language,
       setLanguage,
+      ready: loaded === language,
       speechLang: entry?.speechLang ?? "en-IN",
       countryCode: entry?.countryCode ?? "IN",
       t: (key, vars) => {
@@ -109,7 +118,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, dictionary]);
+  }, [language, dictionary, loaded]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
