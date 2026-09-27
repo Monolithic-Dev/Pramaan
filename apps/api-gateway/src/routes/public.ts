@@ -50,7 +50,9 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
     const issue = submission.issue_id ? await deps.store.getIssue(submission.issue_id) : null;
     const live = issue && issue.status !== "tombstoned" ? issue : null;
     const project = live ? await deps.store.getProjectByIssue(live.issue_id) : null;
-    const impact = project?.marked_complete_at ? await deps.store.getImpactRecord(project.project_id) : null;
+    // Loaded whenever a project exists, not only while it is marked complete: a citizen "not fixed" answer
+    // clears marked_complete_at, and the reporter must still see that their answer reopened the work.
+    const impact = project ? await deps.store.getImpactRecord(project.project_id) : null;
     return reply.code(200).send({
       // The code holder is an original reporter: ask them, like a signed-in citizen, whether it was fixed.
       awaiting_confirmation:

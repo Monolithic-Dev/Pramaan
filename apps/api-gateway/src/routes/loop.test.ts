@@ -88,6 +88,15 @@ describe("citizens reopening work that was not really fixed", () => {
     expect(ctx.deps.store.auditLog.at(-1)?.action).toBe("reopened_by_citizens");
   });
 
+  it("shows the anonymous reporter, on their tracker, that their 'not fixed' reopened the work", async () => {
+    const ctx = setup();
+    await markedComplete(ctx, [["s1", "anonymous", null, { tracking_code: "JS-EEEE6666" }]]);
+    expect((await confirmByCode(ctx, "JS-EEEE6666", false)).json()).toMatchObject({ reopened: true });
+    const track = (await ctx.app.inject({ method: "GET", url: "/v1/public/track/JS-EEEE6666" })).json();
+    // The reopen clears marked_complete_at; the tracker must still read the impact record.
+    expect(track).toMatchObject({ reopened_count: 1, issue_status: "in_progress", awaiting_confirmation: false });
+  });
+
   it("does not reopen while 'fixed' answers are ahead", async () => {
     const ctx = setup();
     const i = await markedComplete(ctx, [["s1", "c_alice", null, {}], ["s2", "c_bob", null, {}], ["s3", "c_carol", null, {}]]);

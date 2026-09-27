@@ -134,6 +134,18 @@ export function optimizePlan(candidates: Candidate[], params: PlanParams) {
 
   const chosenIds = new Set(chosen.map((c) => c.issue_id));
   const remaining = params.budget_inr - plan.cost_inr;
+
+  // The floor is a reserve of *budget*. Projects are indivisible, so it is met when the reserve is spent
+  // on vulnerable areas, or when no unfunded vulnerable project would still fit in what is left of it:
+  // the reserve was used as fully as whole projects allow. Comparing the share of *spend* instead
+  // flagged a plan at 49.3% against a 50% reserve as failing. It is honestly unmet only when there are
+  // not enough vulnerable issues to fill it.
+  const vulnerableSpend = chosen.filter((c) => c.vulnerability_score >= VULNERABLE_THRESHOLD).reduce((n, c) => n + c.cost_inr, 0);
+  const unfundedVulnerable = vulnerable.filter((c) => !chosenIds.has(c.issue_id));
+  const equityFloorMet =
+    reserve === 0 ||
+    vulnerableSpend >= reserve ||
+    (unfundedVulnerable.length > 0 && unfundedVulnerable.every((c) => c.cost_inr > reserve - spent1));
   // Every leftover is here for one reason: an optimal portfolio leaves nothing that still fits, so
   // whatever is missing lost out to items that deliver more value for the same money.
   const left_out = candidates
@@ -147,7 +159,7 @@ export function optimizePlan(candidates: Candidate[], params: PlanParams) {
     candidates_cost_inr: candidates.reduce((n, c) => n + c.cost_inr, 0),
     plan,
     remaining_inr: remaining,
-    equity_floor_met: params.min_vulnerable_share === 0 || plan.vulnerable_share >= params.min_vulnerable_share - 0.001,
+    equity_floor_met: equityFloorMet,
     baseline: summarise(baseline),
     left_out,
   };

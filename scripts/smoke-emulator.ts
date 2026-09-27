@@ -70,7 +70,7 @@ async function call(token: string | null, method: string, path: string, body?: u
 
 async function main() {
   const stamp = Date.now();
-  const created = { uids: [] as string[], submissionIds: [] as string[], issueId: "", projectId: "" };
+  const created = { uids: [] as string[], submissionIds: [] as string[], issueId: "", projectId: "", extraIssueIds: [] as string[], extraProjectIds: [] as string[] };
 
   // ---- 0. The stack is up and has data -------------------------------------------------------------------
   const health = await fetch(`${API.replace("/v1", "")}/healthz`).then((r) => r.status).catch(() => 0);
@@ -179,9 +179,85 @@ async function main() {
   check("impact ledger reflects real resolutions", impact.json?.resolved > 0 && impact.json?.people_benefited > 0, `${impact.json?.people_benefited} people`);
   check("audit log records the officer actions", (await call((await identity("signInWithPassword", "admin@pramaan.demo", OFFICER_PASSWORD)).token, "GET", "/admin/audit")).json?.entries?.some((e: any) => e.target_id === issueId));
 
+  // ---- 5. No account, no smartphone: an anonymous reporter closes (and reopens) the loop by code -------------------
+  const anonSpot = { lat: 28.5245, lng: 77.2066 }; // South Delhi
+  const anon = await call(null, "POST", "/submissions", { channel: "web", text: "The streetlights on Aurobindo Marg have been off for three weeks, it is dark and unsafe for women walking home.", ...anonSpot, consent_version: "dpdp-notice-v1", country_code: "IN" }, { "idempotency-key": randomUUID() });
+  check("an anonymous citizen can report and gets a tracking code", anon.status === 202 && Boolean(anon.json?.tracking_code), anon.json?.tracking_code);
+  created.submissionIds.push(anon.json?.submission_id);
+  const anonCode: string = anon.json?.tracking_code;
+  const anonIssueId = await until("the anonymous report to be processed", async () => {
+    const s = await db.collection("submissions").doc(anon.json?.submission_id).get();
+    return (s.data()?.issue_id as string | undefined) ?? null;
+  });
+  check("the worker processed the anonymous report", Boolean(anonIssueId), anonIssueId ?? "not processed");
+  if (anonIssueId) {
+    created.extraIssueIds.push(anonIssueId);
+    const nearby = await call(null, "GET", `/public/nearby?lat=${anonSpot.lat}&lng=${anonSpot.lng}&radius=500`);
+    check("'is this already reported?' finds it for the next person at that spot", nearby.json?.issues?.some((i: any) => i.issue_id === anonIssueId), `${nearby.json?.issues?.length} nearby`);
+
+    const southCollector = collector; // Central Delhi collector's jurisdiction does not cover South Delhi:
+    check("a district collector cannot touch another district's issue", (await call(southCollector.token, "GET", `/issues/${anonIssueId}`)).status === 403);
+    const delhiAdmin = await identity("signInWithPassword", "admin@pramaan.demo", OFFICER_PASSWORD);
+    const override = await call(delhiAdmin.token, "POST", `/issues/${anonIssueId}/emergency-override`, { enabled: true, justification: "Unlit road, safety risk for women" });
+    check("state admin applies an emergency override to a single-reporter safety issue", override.status === 200);
+    await fetch(`${WORKER}/jobs/score?country=IN`, { method: "POST", headers: WORKER_SECRET ? { "x-worker-secret": WORKER_SECRET } : {} });
+    await call(delhiAdmin.token, "POST", `/issues/${anonIssueId}/assign`, { officer_uid: delhiAdmin.uid });
+    const anonProject = await call(delhiAdmin.token, "POST", `/issues/${anonIssueId}/project`, {});
+    check("the overridden issue is scored and gets a project", anonProject.status === 201, anonProject.json?.assigned_dept);
+    const anonProjectId: string = anonProject.json?.project_id;
+    created.extraProjectIds.push(anonProjectId);
+    await call(delhiAdmin.token, "POST", `/projects/${anonProjectId}/status`, { status: "in_progress" });
+    await call(delhiAdmin.token, "POST", `/projects/${anonProjectId}/mark-complete`, {});
+    check("the anonymous reporter is asked to confirm, on the tracker", (await call(null, "GET", `/public/track/${anonCode}`)).json?.awaiting_confirmation === true);
+
+    const rejected = await call(null, "POST", `/public/track/${anonCode}/confirm`, { confirmed: false });
+    check("the reporter says 'not fixed' with just the code", rejected.status === 200, JSON.stringify(rejected.json));
+    const afterReject = await call(null, "GET", `/public/track/${anonCode}`);
+    check("a 'not fixed' answer REOPENS the work instead of closing it", afterReject.json?.reopened_count === 1 && afterReject.json?.issue_status === "in_progress", `reopened ${afterReject.json?.reopened_count}, status ${afterReject.json?.issue_status}`);
+    check("the officer handling it is told it was reopened", (await call(delhiAdmin.token, "GET", "/notifications")).json?.notifications?.some((n: any) => n.kind === "issue.reopened" && n.link.endsWith(anonIssueId)));
+
+    await call(delhiAdmin.token, "POST", `/projects/${anonProjectId}/mark-complete`, {});
+    check("after the real fix, the reporter confirms by code", (await call(null, "POST", `/public/track/${anonCode}/confirm`, { confirmed: true })).status === 200);
+    check("the same code cannot vote twice in a round", (await call(null, "POST", `/public/track/${anonCode}/confirm`, { confirmed: true })).status !== 200);
+    await call(delhiAdmin.token, "POST", `/projects/${anonProjectId}/officer-signoff`, {});
+    check("confirmation + sign-off resolves the anonymous report", (await call(null, "GET", `/public/track/${anonCode}`)).json?.stage === "fixed");
+  }
+
+  // ---- 6. Deadlines escalate up the chain ------------------------------------------------------------------------
+  const escId = `smoke_esc_${stamp}`;
+  created.extraIssueIds.push(escId);
+  await db.collection("issues").doc(escId).set({
+    issue_id: escId, country_code: "IN", state_id: "IN-DL", category: "water", subcategory: "no drinking water supply",
+    canonical_description: "Smoke test: no water supply for weeks", embedding: null, embedding_model: null, geo_cluster_id: escId,
+    admin_region_id: "dl-central-delhi", geohash: null, centroid_lat: 28.65, centroid_lng: 77.23, submission_ids: [], report_count: 5,
+    distinct_reporter_count: 5, first_reported_at: new Date(Date.now() - 60 * 86_400_000).toISOString(), last_reported_at: new Date().toISOString(),
+    emergency_override: false, fraud_flags: [], status: "open", composite_score: 0.8, latest_score_id: null,
+  });
+  check("the escalation job refuses callers without the secret", (await call(null, "POST", "/jobs/escalations")).status === 401);
+  const esc = await call(null, "POST", "/jobs/escalations", undefined, { "x-worker-secret": WORKER_SECRET });
+  check("the escalation job runs", esc.status === 200 && esc.json?.escalated > 0, `${esc.json?.escalated} escalated, ${esc.json?.notified} notified`);
+  const escalatedTo = (await db.collection("issues").doc(escId).get()).data()?.escalation_notified;
+  check("an issue 53 days past a 7-day deadline goes all the way to the state admin (level 2)", escalatedTo === 2, `level ${escalatedTo}`);
+  const again = await call(null, "POST", "/jobs/escalations", undefined, { "x-worker-secret": WORKER_SECRET });
+  check("escalation is not repeated on the next run", again.json?.escalated === 0, `${again.json?.escalated} on rerun`);
+
+  // ---- 7. Messaging channels are locked down -----------------------------------------------------------------------
+  const hook = { from: "+919800000000", message_id: `smoke-${stamp}`, text: "Smoke test message", location_text: "Karol Bagh, Delhi" };
+  check("the WhatsApp webhook rejects a caller without the provider secret", (await call(null, "POST", "/webhooks/whatsapp", hook)).status === 401);
+
   // ---- cleanup ---------------------------------------------------------------------------------------------------
   console.log("Cleaning up test data...");
   const del = async (col: string, id: string | undefined) => id && db.collection(col).doc(id).delete().catch(() => undefined);
+  for (const id of created.extraIssueIds) await del("issues", id);
+  for (const id of created.extraProjectIds) {
+    await del("projects", id);
+    await del("impactRecords", id);
+  }
+  for (const col of ["auditLog", "priorityScores", "notifications"]) {
+    const snap = await db.collection(col).get();
+    const ids = [...created.extraIssueIds, ...created.extraProjectIds].filter(Boolean);
+    await Promise.all(snap.docs.filter((d) => ids.some((id) => JSON.stringify(d.data()).includes(id))).map((d) => d.ref.delete()));
+  }
   await del("issues", created.issueId);
   await del("projects", created.projectId);
   await del("impactRecords", created.projectId);

@@ -45,6 +45,23 @@ describe("optimizePlan", () => {
     expect(noFloor.plan.vulnerable_share).toBe(0); // without the floor, the optimiser funds only the high-value, low-need issues
   });
 
+  it("counts the floor as met when the reserve is used as fully as whole projects allow", () => {
+    // Reserve = 50% of 10L = 5L. Vulnerable projects cost 4.8L and 3L: only the first fits, leaving 0.2L of
+    // the reserve that no remaining vulnerable project can use. Spend share lands just under 50%, but the
+    // reserve went as far as indivisible projects allow, so this is not a failure.
+    const r = optimizePlan(
+      [cand({ cost_inr: 480_000, value: 0.9, vulnerability_score: 0.9 }), cand({ cost_inr: 300_000, value: 0.5, vulnerability_score: 0.9 }), cand({ cost_inr: 500_000, value: 0.8, vulnerability_score: 0.2 })],
+      { budget_inr: 1_000_000, min_vulnerable_share: 0.5 },
+    );
+    expect(r.plan.vulnerable_share).toBeLessThan(0.5);
+    expect(r.equity_floor_met).toBe(true);
+  });
+
+  it("says the floor was not met when there are too few vulnerable issues to fill the reserve", () => {
+    const r = optimizePlan([cand({ cost_inr: 100_000, vulnerability_score: 0.9 }), cand({ cost_inr: 500_000, vulnerability_score: 0.2 })], { budget_inr: 1_000_000, min_vulnerable_share: 0.5 });
+    expect(r.equity_floor_met).toBe(false);
+  });
+
   it("spends the reserve elsewhere when there are no high-vulnerability issues, and says the floor was not met", () => {
     const r = optimizePlan([cand({ vulnerability_score: 0.2 }), cand({ vulnerability_score: 0.1 })], { budget_inr: 1_000_000, min_vulnerable_share: 0.6 });
     expect(r.plan.items.length).toBe(2);
