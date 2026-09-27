@@ -52,7 +52,7 @@ To regenerate the reference geography or the multilingual demo phrasings: `build
 ## 4. Verify
 
 ```bash
-./node_modules/.bin/tsx smoke-emulator.ts     # 42 end-to-end checks with real Gemini
+./node_modules/.bin/tsx smoke-emulator.ts     # 60 end-to-end checks with real Gemini
 ```
 
 ## Translations
