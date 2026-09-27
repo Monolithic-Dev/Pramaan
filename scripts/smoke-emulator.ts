@@ -244,6 +244,31 @@ async function main() {
   // ---- 7. Messaging channels are locked down -----------------------------------------------------------------------
   const hook = { from: "+919800000000", message_id: `smoke-${stamp}`, text: "Smoke test message", location_text: "Karol Bagh, Delhi" };
   check("the WhatsApp webhook rejects a caller without the provider secret", (await call(null, "POST", "/webhooks/whatsapp", hook)).status === 401);
+  const hookSecret = process.env.WEBHOOK_SHARED_SECRET;
+  if (hookSecret) {
+    const status = await call(null, "POST", "/webhooks/sms", { ...hook, message_id: `smoke-status-${stamp}`, text: `STATUS ${citizens[0].code}` }, { "x-webhook-secret": hookSecret });
+    check("an SMS 'STATUS <code>' is answered with where the report stands", status.status === 200 && status.json?.stage === "fixed" && /fixed/.test(status.json?.reply ?? ""), status.json?.reply);
+  }
+  const sim = await call(null, "POST", "/public/demo/message", { channel: "whatsapp", text: `status ${citizens[0].code}` });
+  if (sim.status !== 404) check("the public channel simulator answers a status query", sim.status === 200 && sim.json?.kind === "status", sim.json?.reply);
+
+  // ---- 8. Follow the money: need vs spend and the scheme impact ledger -------------------------------------------
+  check("a recommended project records the scheme paying for it", Boolean(project.json?.scheme_id), project.json?.scheme_id);
+  const nvs = await call(collector.token, "GET", "/analytics/need-vs-spend");
+  check("need vs spend ranks the collector's districts", nvs.status === 200 && nvs.json?.districts?.length > 0, `${nvs.json?.districts?.length} districts, ${nvs.json?.verdict}`);
+  check("need vs spend refuses a region outside the officer's jurisdiction", (await call(collector.token, "GET", "/analytics/need-vs-spend?region=IN-MH")).status === 403);
+  const pubNvs = await call(null, "GET", "/public/need-vs-spend?country=IN");
+  check(
+    "public need vs spend withholds counts for districts with few reports",
+    pubNvs.status === 200 && pubNvs.json?.districts?.every((d: any) => d.open_issues === null || d.open_issues >= pubNvs.json.min_public_count),
+    `${pubNvs.json?.quadrants?.underserved} underserved, r=${pubNvs.json?.alignment}`,
+  );
+  const ledger = await call(collector.token, "GET", "/schemes/performance");
+  check("the scheme ledger counts the smoke project under its scheme", ledger.json?.schemes?.some((s: any) => s.scheme_id === project.json?.scheme_id && s.completed > 0));
+  const otherScheme = (await call(null, "GET", "/public/schemes")).json?.schemes?.find((s: any) => s.id !== project.json?.scheme_id)?.id;
+  check("a field officer cannot change a project's scheme", (await call(field.token, "POST", `/projects/${created.projectId}/scheme`, { scheme_id: otherScheme })).status === 403);
+  check("a collector can correct a project's scheme", (await call(collector.token, "POST", `/projects/${created.projectId}/scheme`, { scheme_id: otherScheme })).json?.scheme_id === otherScheme);
+  check("the public scheme ledger is open to anyone", (await call(null, "GET", "/public/schemes/performance?country=IN")).json?.schemes?.length > 0);
 
   // ---- cleanup ---------------------------------------------------------------------------------------------------
   console.log("Cleaning up test data...");

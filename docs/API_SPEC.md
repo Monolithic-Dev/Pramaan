@@ -270,3 +270,27 @@ Built after sections 1–9 were written; all live under `/v1`. **Access** column
 - Each level notifies once (`Issue.escalation_notified`).
 - If a district has no collector on the platform, the state admin receives level 1 too.
 - Called every 15 minutes by `.github/workflows/scheduled-jobs.yml` when the `API_URL` secret is set.
+
+Both webhooks answer with a `reply` for the provider to send back to the phone. A message that is `STATUS <code>` (also `track`, `check`, or the word for status in Hindi, Tamil, Bengali, Telugu, Marathi, Kannada, Malayalam, Gujarati, Punjabi and Portuguese), or just a tracking code, files nothing: it returns `200 { kind: "status", tracking_code, stage, category, other_reporters, reply }`, or `{ kind: "status_not_found", reply }`. Anything else is a report: `202 { submission_id, tracking_code, ..., reply }`.
+
+### POST /public/demo/message
+The public channel simulator behind the phone on `/channels`. Body `{ channel: "sms" | "whatsapp", text, location_text?, country_code? }`; goes through the same handler as the webhooks, so reports are really filed. Returns `404` unless `DEMO_CHANNEL_SIMULATOR=true`; rate-limited to 10 per minute per IP.
+
+## 10. Follow the money
+
+### GET /analytics/need-vs-spend?region=
+Officer, jurisdiction-scoped. Per district: `vulnerability` (0-1 from deprivation indices), `open_issues`, `waiting_reporters`, `investment` over the last four fiscal years, `need_index` and `spend_index` (percentiles within the country), `gap`, `quadrant` (`underserved | targeted | over_indexed | stable`) and the most-reported unmet categories. Summary: `quadrants`, `alignment` (Pearson correlation of need and spend), `verdict` (`aligned | partly_aligned | misaligned | insufficient_data`), `underserved_population`, `underserved_people_waiting`.
+
+### GET /public/need-vs-spend?country=IN
+The same, for anyone, rate-limited; `open_issues`, `waiting_reporters`, `demand_per_100k` and categories are `null` for districts with fewer than `min_public_count` open issues.
+
+### GET /schemes/performance?region= · GET /public/schemes/performance?country=
+The scheme impact ledger. Per scheme: `pipeline` by project stage, `committed_inr` and `central_inr`, `completed`, `delivery_rate`, `avg_days_to_fix`, `people_benefited`, `cost_per_person_inr`, `citizen_confirmation` (%), `reopened`, and a `signal` (`delivering | slow | quality_concerns | early`). Projects are attributed to their recorded `scheme_id`, or the best-fit scheme for older projects.
+
+### POST /projects/{project_id}/scheme
+District collector or above, within jurisdiction. Body `{ scheme_id }` (a catalogue id). Records which scheme pays for the project; audited as `project_scheme_set`.
+
+## 11. Report assistant
+
+### POST /assist/photo
+Optional auth, 10 per minute per IP. Body `{ photo_url, language }`; `photo_url` must be one issued by `POST /media`. Returns `{ shows_issue, category, subcategory, description, severity, safety_hazard, language }` with the description in the requested language, or `502 ASSIST_UNAVAILABLE`.

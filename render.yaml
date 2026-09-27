@@ -19,6 +19,8 @@ services:
       - { key: WORKER_SHARED_SECRET, sync: false }
       # The WhatsApp/SMS webhooks fail closed (503) until this is set to the secret the provider sends.
       - { key: WEBHOOK_SHARED_SECRET, sync: false }
+      # The live WhatsApp/SMS simulator on /channels (POST /v1/public/demo/message). Rate-limited; set to false to hide it.
+      - { key: DEMO_CHANNEL_SIMULATOR, value: "true" }
       # Lock the API to the web app, e.g. https://pramaan-web.onrender.com (comma-separated). Unset = any origin.
       - { key: CORS_ORIGINS, sync: false }
 

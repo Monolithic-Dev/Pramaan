@@ -7,6 +7,7 @@ import { createIdentityToolkit, type IdentityToolkit } from "./lib/identityToolk
 import { createFirestoreMediaStore, createGcsMediaStore, type MediaStore } from "./lib/mediaStore.js";
 import { createFirebaseOfficerAdmin, type OfficerAdmin } from "./lib/officerAdmin.js";
 import { createGeminiNarrator, type Narrator } from "./lib/narrator.js";
+import { createGeminiReportAssistant, type ReportAssistant } from "./lib/reportAssistant.js";
 import { createGeminiTranslator, type Translator } from "./lib/translator.js";
 import { createHttpPublisher, createPubSubPublisher, type Publisher } from "./lib/pubsub.js";
 import { createFirestoreStore } from "./store/firestoreStore.js";
@@ -22,6 +23,7 @@ export interface Deps {
   mediaStore: MediaStore;
   translator: Translator;
   narrator: Narrator;
+  assistant: ReportAssistant;
   officerAdmin: OfficerAdmin;
 }
 
@@ -41,6 +43,7 @@ export function createRealDeps(): Deps {
     mediaStore: process.env.MEDIA_BUCKET ? createGcsMediaStore() : createFirestoreMediaStore(getDb()),
     translator: createGeminiTranslator(),
     narrator: createGeminiNarrator(),
+    assistant: createGeminiReportAssistant(),
     officerAdmin: createFirebaseOfficerAdmin(),
   };
 }

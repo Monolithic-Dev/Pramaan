@@ -4,7 +4,7 @@ import type { SubmissionChannel } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
 import { env } from "../lib/env.js";
 import { getOrCreateCitizenByPhone } from "../services/citizens.js";
-import { ingestSubmission } from "../services/ingestSubmission.js";
+import { handleInboundMessage } from "../services/inboundMessage.js";
 import { channelWebhookSchema } from "../schemas/webhooks.js";
 
 const digest = (s: string) => createHash("sha256").update(s).digest();
@@ -51,7 +51,9 @@ function registerChannelWebhook(
     // Idempotency-Key (docs/EDGE_CASES.md #14).
     const idempotencyKey = `${channel}_${body.message_id}`;
 
-    const { result, conflict } = await ingestSubmission(
+    // A report is filed and answered with a tracking code; "STATUS <code>" (or just the code) is answered
+    // with where that report stands. `reply` is the text the provider sends back to the phone.
+    const outcome = await handleInboundMessage(
       deps,
       {
         channel,
@@ -60,14 +62,14 @@ function registerChannelWebhook(
         lat: body.lat,
         lng: body.lng,
         location_text: body.location_text,
-        consent_version: consentVersion,
+        consentVersion,
         citizenId: citizen.citizen_id,
         idempotencyKey,
       },
       request.log,
     );
 
-    if (conflict) {
+    if (outcome.kind === "conflict") {
       return reply.code(409).send({
         error: {
           code: "IDEMPOTENCY_CONFLICT",
@@ -76,7 +78,8 @@ function registerChannelWebhook(
       });
     }
 
-    return reply.code(202).send(result);
+    if (outcome.kind === "report") return reply.code(202).send({ ...outcome.result, reply: outcome.reply });
+    return reply.code(200).send(outcome);
   });
 }
 

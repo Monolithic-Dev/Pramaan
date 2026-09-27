@@ -3,6 +3,8 @@ import type {
   AncestryStep,
   AvailableData,
   BigQueryAgentClient,
+  InfraIndexRow,
+  InvestmentRow,
   InvestmentSummary,
   RegionInfo,
 } from "../lib/bigquery.js";
@@ -11,12 +13,15 @@ import type { IdentityToolkit } from "../lib/identityToolkit.js";
 import type { MediaStore } from "../lib/mediaStore.js";
 import type { OfficerAccount, OfficerAdmin } from "../lib/officerAdmin.js";
 import type { Narrator } from "../lib/narrator.js";
+import type { PhotoSuggestion, ReportAssistant } from "../lib/reportAssistant.js";
 import type { Translator } from "../lib/translator.js";
 import type { Publisher } from "../lib/pubsub.js";
 import { createInMemoryStore } from "../store/inMemoryStore.js";
 import type { Deps } from "../deps.js";
 
-export interface FakeDeps extends Omit<Deps, "store"> {
+export interface FakeDeps extends Omit<Deps, "store" | "assistant"> {
+  /** Serves `next` to describePhoto() and records the language it was asked for. */
+  assistant: ReportAssistant & { next: PhotoSuggestion | null; lastLanguage: string };
   store: ReturnType<typeof createInMemoryStore>;
   publishedMessages: unknown[];
   /** Maps a fake token string to the decoded identity it should resolve to. */
@@ -31,6 +36,9 @@ export interface FakeDeps extends Omit<Deps, "store"> {
   nextAgentResponses: AgentTurnResponse[];
   /** Regions served by listRegions() (pickers, filters, names). */
   regions: RegionInfo[];
+  /** Rows served by listInvestments() / listInfraIndex(). */
+  investments: InvestmentRow[];
+  infraIndex: InfraIndexRow[];
   officerAccounts: OfficerAccount[];
   storedMedia: { kind: string; contentType: string; bytes: number }[];
 }
@@ -44,6 +52,8 @@ export function createFakeDeps(): FakeDeps {
   const availableDataByRegion = new Map<string, AvailableData>();
   const nextAgentResponses: AgentTurnResponse[] = [];
   const regions: RegionInfo[] = [];
+  const investments: InvestmentRow[] = [];
+  const infraIndex: InfraIndexRow[] = [];
   const officerAccounts: OfficerAccount[] = [];
   const officerAdmin: OfficerAdmin = {
     async list() {
@@ -85,6 +95,15 @@ export function createFakeDeps(): FakeDeps {
   const narrator: Narrator = {
     async narrate(_facts, language) {
       return `Briefing in ${language}.`;
+    },
+  };
+
+  const assistant: ReportAssistant & { next: PhotoSuggestion | null; lastLanguage: string } = {
+    next: { shows_issue: true, category: "roads", subcategory: "pothole", description: "There is a deep pothole on the road.", severity: "high", safety_hazard: true },
+    lastLanguage: "",
+    async describePhoto(_image, languageName) {
+      assistant.lastLanguage = languageName;
+      return assistant.next;
     },
   };
 
@@ -133,6 +152,12 @@ export function createFakeDeps(): FakeDeps {
     async getAvailableData(regionId) {
       return availableDataByRegion.get(regionId) ?? { infraIndexTypes: [], investmentFiscalYears: [] };
     },
+    async listInvestments() {
+      return investments;
+    },
+    async listInfraIndex() {
+      return infraIndex;
+    },
   };
 
   const geminiAgent: GeminiAgentClient = {
@@ -154,6 +179,7 @@ export function createFakeDeps(): FakeDeps {
     mediaStore,
     translator,
     narrator,
+    assistant,
     storedMedia,
     publishedMessages,
     tokens,
@@ -163,6 +189,8 @@ export function createFakeDeps(): FakeDeps {
     availableDataByRegion,
     nextAgentResponses,
     regions,
+    investments,
+    infraIndex,
     officerAccounts,
     officerAdmin,
   };

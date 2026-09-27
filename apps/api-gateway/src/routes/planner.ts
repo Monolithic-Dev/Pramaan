@@ -181,6 +181,7 @@ export function registerPlannerRoutes(app: FastifyInstance, deps: Deps) {
           budget_estimate_inr: item.cost_inr,
           marked_complete_at: null,
           officer_signed_off_at: null,
+          scheme_id: item.scheme_id,
         };
         await deps.store.putProject(project);
       }

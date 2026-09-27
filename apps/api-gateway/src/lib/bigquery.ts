@@ -24,6 +24,25 @@ export interface InvestmentSummary {
   data_origin: string;
 }
 
+/** One investment record, across every region: for region-level alignment and scheme analytics. */
+export interface InvestmentRow {
+  region_id: string;
+  category: string;
+  scheme_id: string;
+  scheme_name: string;
+  amount: number;
+  currency: string;
+  fiscal_year: string;
+  data_origin: string;
+}
+
+/** One infrastructure/deprivation index value for a region, as a 0-1 percentile within its country. */
+export interface InfraIndexRow {
+  region_id: string;
+  index_type: string;
+  normalised_value: number;
+}
+
 export interface AvailableData {
   infraIndexTypes: string[];
   investmentFiscalYears: string[];
@@ -50,6 +69,10 @@ export interface BigQueryAgentClient {
   listRegions(filter?: { level?: string; parentId?: string; countryCode?: string }): Promise<RegionInfo[]>;
   getInvestmentRecords(regionId: string, category: string): Promise<InvestmentSummary[]>;
   getAvailableData(regionId: string): Promise<AvailableData>;
+  /** Every investment record (small reference table; callers aggregate in memory). */
+  listInvestments(): Promise<InvestmentRow[]>;
+  /** Every infrastructure index value (small reference table). */
+  listInfraIndex(): Promise<InfraIndexRow[]>;
 }
 
 export function createBigQueryAgentClient(): BigQueryAgentClient {
@@ -115,6 +138,17 @@ export function createBigQueryAgentClient(): BigQueryAgentClient {
         infraIndexTypes: infraRows.map((r) => r.index_type),
         investmentFiscalYears: investmentRows.map((r) => r.fiscal_year),
       };
+    },
+
+    async listInvestments() {
+      return query<InvestmentRow>(
+        `SELECT region_id, category, scheme_id, scheme_name, amount, currency, fiscal_year, data_origin FROM \`${DATASET}.investment_record\``,
+        {},
+      );
+    },
+
+    async listInfraIndex() {
+      return query<InfraIndexRow>(`SELECT region_id, index_type, normalised_value FROM \`${DATASET}.infra_index\``, {});
     },
   };
 }

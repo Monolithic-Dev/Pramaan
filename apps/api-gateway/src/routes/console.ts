@@ -10,6 +10,7 @@ import { priorityBand } from "../insights/transparency.js";
 import { hasMinimumRole, requireAuth, requireOfficer } from "../middleware/auth.js";
 import { DEPARTMENT, estimateBudget } from "../services/costing.js";
 import { notifyReporters } from "../services/notify.js";
+import { inferSettlement, matchSchemes } from "../services/schemes.js";
 import { slaFor } from "../services/sla.js";
 import { permissionsFor } from "../services/permissions.js";
 import {
@@ -286,6 +287,8 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
     }
     const score = await deps.store.getCanonicalScore(issueId);
     const budget = estimateBudget(issue);
+    const regionInfo = issue.admin_region_id ? (await regionNameMap(deps)).get(issue.admin_region_id) : undefined;
+    const bestScheme = matchSchemes(issue, inferSettlement(regionInfo).settlement, budget)[0]?.scheme.id ?? null;
     const project: Project = {
       project_id: `proj_${randomUUID().replace(/-/g, "").slice(0, 10)}`,
       issue_id: issueId,
@@ -301,6 +304,7 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
       budget_estimate_inr: budget,
       marked_complete_at: null,
       officer_signed_off_at: null,
+      scheme_id: bestScheme,
     };
     await deps.store.putProject(project);
     if (issue.status === "open" || issue.status === "verified") await deps.store.updateIssue(issueId, { status: "prioritized" });

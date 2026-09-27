@@ -7,6 +7,7 @@ import { registerAuthRoutes } from "./routes/auth.js";
 import { registerConsoleRoutes } from "./routes/console.js";
 import { registerInsightRoutes } from "./routes/insights.js";
 import { registerIssueRoutes } from "./routes/issues.js";
+import { registerIntelligenceRoutes } from "./routes/intelligence.js";
 import { registerJobRoutes } from "./routes/jobs.js";
 import { registerMediaRoutes } from "./routes/media.js";
 import { registerPrivacyRoutes } from "./routes/privacy.js";
@@ -94,6 +95,7 @@ export function buildApp(deps: Deps) {
       registerReportRoutes(v1, deps);
       registerPublicRoutes(v1, deps);
       registerJobRoutes(v1, deps);
+      registerIntelligenceRoutes(v1, deps);
     },
     { prefix: "/v1" },
   );

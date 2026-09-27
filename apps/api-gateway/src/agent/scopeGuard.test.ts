@@ -16,6 +16,12 @@ function fakeBigQuery(ancestryByRegion: Record<string, { regionId: string; level
     async getAvailableData() {
       return { infraIndexTypes: [], investmentFiscalYears: [] };
     },
+    async listInvestments() {
+      return [];
+    },
+    async listInfraIndex() {
+      return [];
+    },
   };
 }
 

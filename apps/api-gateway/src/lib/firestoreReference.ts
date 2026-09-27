@@ -1,5 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
-import type { AncestryStep, AvailableData, BigQueryAgentClient, InvestmentSummary } from "./bigquery.js";
+import type { AncestryStep, AvailableData, BigQueryAgentClient, InfraIndexRow, InvestmentRow, InvestmentSummary } from "./bigquery.js";
 
 const MAX_ANCESTRY_HOPS = 6;
 
@@ -18,6 +18,16 @@ export function createFirestoreAgentClient(db: Firestore): BigQueryAgentClient {
       cache = { at: Date.now(), rows: snap.docs.map((d) => d.data() as Record<string, any>) };
     }
     return cache.rows;
+  };
+
+  // The same short cache for the two other small reference tables (a few hundred rows each).
+  const tableCache = new Map<string, { at: number; rows: Record<string, unknown>[] }>();
+  const cached = async (collection: string) => {
+    const hit = tableCache.get(collection);
+    if (hit && Date.now() - hit.at <= REGION_CACHE_MS) return hit.rows;
+    const rows = (await db.collection(collection).get()).docs.map((d) => d.data());
+    tableCache.set(collection, { at: Date.now(), rows });
+    return rows;
   };
 
   return {
@@ -69,6 +79,18 @@ export function createFirestoreAgentClient(db: Firestore): BigQueryAgentClient {
         infraIndexTypes: [...new Set(infra.docs.map((d) => d.data().index_type as string))],
         investmentFiscalYears: [...new Set(inv.docs.map((d) => d.data().fiscal_year as string))],
       };
+    },
+
+    async listInvestments() {
+      return (await cached("ref_investment_record")) as InvestmentRow[];
+    },
+
+    async listInfraIndex() {
+      return ((await cached("ref_infra_index")) as InfraIndexRow[]).map((r) => ({
+        region_id: r.region_id,
+        index_type: r.index_type,
+        normalised_value: Number(r.normalised_value),
+      }));
     },
   };
 }

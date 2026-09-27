@@ -29,7 +29,7 @@ export FIREBASE_PROJECT_ID=pramaan-a0c00
 # worker
 cd apps/worker-ai-pipeline && PORT=8081 WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx src/index.ts
 # gateway
-cd apps/api-gateway && PORT=8080 WORKER_URL=http://localhost:8081 WORKER_SHARED_SECRET=localsecret WEBHOOK_SHARED_SECRET=localsecret ./node_modules/.bin/tsx src/index.ts
+cd apps/api-gateway && PORT=8080 WORKER_URL=http://localhost:8081 WORKER_SHARED_SECRET=localsecret WEBHOOK_SHARED_SECRET=localsecret DEMO_CHANNEL_SIMULATOR=true ./node_modules/.bin/tsx src/index.ts
 # web (dev server)
 cd apps/web && VITE_API_BASE_URL=http://localhost:8080/v1 VITE_FIREBASE_API_KEY=fake VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099 ./node_modules/.bin/vite --port 5173 --strictPort
 ```

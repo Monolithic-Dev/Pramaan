@@ -299,6 +299,9 @@ export interface Project {
   /** Resolution needs confirmations_received >= confirmations_required *and*
    *  this (docs/EDGE_CASES.md #13) — set by a separate officer sign-off action. */
   officer_signed_off_at: string | null;
+  /** The national scheme paying for the work (data/schemes.ts id). Set to the best match when the project is
+   *  created; an officer can correct it. Absent on older projects, which are attributed by best match. */
+  scheme_id?: string | null;
 }
 
 export interface ImpactRecord {
