@@ -75,9 +75,9 @@ Three audiences, one platform:
 
 | | Who | What they get |
 |---|---|---|
-| 🧑‍🤝‍🧑 | **Citizens** | Report in **11 languages** by voice, text or photo (web, installable offline app, WhatsApp, SMS). An *"is this already reported nearby?"* check before filing. A **tracking code** to follow the report with no account. Notifications. A **"was it really fixed?"** vote, which reopens the work if the majority says no. |
-| 🏛️ | **Officers** (3 roles, jurisdiction-scoped) | Ranked, explainable priorities; a live map; **my queue** with SLA clocks and **automatic escalation**; assignment and internal notes; a **budget optimiser** with an equity floor; a **national scheme matcher**; a **grounded AI policy co-pilot**; early-warning forecasts; an equity audit; an impact ledger; a **printable AI weekly briefing**. |
-| 🌐 | **The public** | **District scorecards** graded A to E by a published formula; an impact ledger; **open data** (CSV + a try-it API); an architecture page. Aggregates only, k-anonymous, no login. |
+| 🧑‍🤝‍🧑 | **Citizens** | Report in **11 languages** by voice, text or photo (web, installable offline app, WhatsApp, SMS). **Snap a photo and Gemini writes the report** in your language, flagging safety hazards. From a basic phone, text **`STATUS <code>`** to hear where your report stands. An *"is this already reported nearby?"* check before filing. A **tracking code** to follow the report with no account. Notifications. A **"was it really fixed?"** vote, which reopens the work if the majority says no. |
+| 🏛️ | **Officers** (3 roles, jurisdiction-scoped) | Ranked, explainable priorities; a live map; **my queue** with SLA clocks and **automatic escalation**; assignment and internal notes; a **budget optimiser** with an equity floor; a **national scheme matcher**; a **need-vs-spend map** that finds districts where need is high and investment is low; a **scheme impact ledger** (which central programmes actually deliver, and do citizens agree); a **grounded AI policy co-pilot**; early-warning forecasts; an equity audit; an impact ledger; a **printable AI weekly briefing**. |
+| 🌐 | **The public** | **Follow the money**: is investment reaching the districts that need it, and which schemes deliver. **District scorecards** graded A to E by a published formula; an impact ledger; a **live WhatsApp/SMS simulator**; **open data** (CSV + a try-it API); an architecture page. Aggregates only, k-anonymous, no login. |
 
 ---
 
@@ -108,10 +108,10 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 
 | Criterion | Weight | Where Pramaan delivers it |
 |---|---|---|
-| **Problem–Solution Fit** | 20% | Every part of the problem statement has a feature: *fragmented* → multilingual, multichannel ingestion with **AI deduplication** (8 reports in Hindi and English collapse into one issue); *misaligned spending* → **explainable scoring**, a **budget optimiser** that reached **60% more people** than funding by report volume on the demo data, and a **national scheme matcher**; *unmeasured impact* → **citizen-confirmed resolution**, an **impact ledger** and **public scorecards**. |
-| **AI / Technical Execution** | 25% | Gemini classifies, translates, reads photos, transcribes voice and writes **grounded** briefs. Embeddings drive cross-language deduplication. The co-pilot uses **function calling over 8 real tools** with a 3-layer guardrail: numbers it cannot trace are removed and unanswerable questions are refused. A **model-fallback pool** keeps AI features alive when a model hangs or overloads. Exact **0/1-knapsack** optimisation with an equity reserve. ~300 unit and route tests plus a **60-check end-to-end run against real Gemini**. |
-| **Depth & Reach across India** | 20% | **11 languages** (10 Indian + Portuguese) across UI, voice and reports; **36 states and UTs** in the reference geography; web, installable **offline PWA**, **voice**, **WhatsApp** and **SMS** intake; screen-reader and keyboard accessible; works on a phone. **Brazil runs on the same codebase** as proof it travels. |
-| **Impact Potential** | 15% | Connects demand to real central schemes (PMGSY, JJM, AMRUT 2.0, SBM, NHM, Samagra Shiksha, RDSS, MPLADS, 15th FC grants...) with the centre/state split. Measures **people benefited**, **days to resolve**, **cost per person** and **citizen confirmation rate**. An **equity audit** checks that vulnerable areas are really served. **Graded escalation** (collector, then state admin) stops issues rotting. |
+| **Problem–Solution Fit** | 20% | Every part of the problem statement has a feature: *fragmented* → multilingual, multichannel ingestion with **AI deduplication** (8 reports in Hindi and English collapse into one issue); *misaligned spending* → **explainable scoring**, a **budget optimiser** that reached **60% more people** than funding by report volume on the demo data, a **national scheme matcher**, and a **need-vs-spend map** that measures the misalignment directly (on the demo data, need and investment correlate at just **r = 0.02**, and 8 districts with 2.4 crore people are underserved); *unmeasured impact* → **citizen-confirmed resolution**, an **impact ledger** and **public scorecards**. |
+| **AI / Technical Execution** | 25% | Gemini classifies, translates, reads photos, transcribes voice and writes **grounded** briefs. **Gemini Vision turns a photo into a drafted report** (category, severity, safety hazard) in the citizen's language. Embeddings drive cross-language deduplication. The co-pilot uses **function calling over 8 real tools** with a 3-layer guardrail: numbers it cannot trace are removed and unanswerable questions are refused. A **model-fallback pool** keeps AI features alive when a model hangs or overloads. Exact **0/1-knapsack** optimisation with an equity reserve. ~310 unit and route tests plus a **70-check end-to-end run against real Gemini**. |
+| **Depth & Reach across India** | 20% | **11 languages** (10 Indian + Portuguese) across UI, voice and reports; **36 states and UTs** in the reference geography; web, installable **offline PWA**, **voice**, **WhatsApp** and **SMS** intake, with **status by SMS** (`STATUS <code>`, also in Hindi, Tamil, Bengali and more) so a feature phone gets the whole loop; screen-reader and keyboard accessible; works on a phone. **Brazil runs on the same codebase** as proof it travels. |
+| **Impact Potential** | 15% | Connects demand to real central schemes (PMGSY, JJM, AMRUT 2.0, SBM, NHM, Samagra Shiksha, RDSS, MPLADS, 15th FC grants...) with the centre/state split. Measures **people benefited**, **days to resolve**, **cost per person** and **citizen confirmation rate**, overall and **per scheme** in a public **scheme impact ledger** that flags programmes that are slow or whose fixes citizens reject. An **equity audit** checks that vulnerable areas are really served. **Graded escalation** (collector, then state admin) stops issues rotting. |
 | **Deployability & Scalability** | 20% | Runs **entirely on free tiers** (Firebase Spark, Render, Gemini API key) via a one-file **Render blueprint**, or on **Cloud Run + BigQuery** for scale, from the same code. Stateless services, idempotent ingestion, a scheduled sweep/score/escalate job, security headers, request ids, rate limits. **Adding a state is a form; adding a country is a config document.** Runs locally with **no cloud account** on the Firebase emulators. |
 
 ---
@@ -136,12 +136,15 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 |---|---|
 | ![My reports](docs/screenshots/40-citizen-my-reports.png) | ![Notifications](docs/screenshots/41-citizen-notifications.png) |
 
+| **Snap a photo, Gemini writes the report**: category, severity, safety hazard, in your language | **Live WhatsApp/SMS phone**: a real report and a `STATUS` reply, through the real pipeline |
+|---|---|
+| ![AI photo assist](docs/screenshots/12-ai-photo-assist.png) | ![Channels](docs/screenshots/08-whatsapp-sms.png) |
+
 | Profile, language and privacy (export or erase my data) | Works on a phone |
 |---|---|
 | ![Profile](docs/screenshots/42-citizen-profile.png) | <img src="docs/screenshots/51-mobile-report.png" width="300" alt="Mobile report" /> |
 
 <!-- 📷 SCREENSHOT SLOT: voice recording in progress (e.g. Hindi) -->
-<!-- 📷 SCREENSHOT SLOT: WhatsApp conversation with the tracking code reply -->
 
 ### For officers
 
@@ -157,9 +160,13 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 |---|---|
 | ![Planner](docs/screenshots/24-budget-planner.png) | ![Weights lab](docs/screenshots/24c-weights-lab.png) |
 
-| **National schemes**: how much open work central programmes could fund | Map with forecast overlays |
+| **Need vs spend**: is money following need? Underserved districts, in one chart | **National schemes + scheme impact ledger**: what central programmes could fund, and which ones deliver |
 |---|---|
-| ![Schemes](docs/screenshots/25-national-schemes.png) | ![Map](docs/screenshots/23-console-map.png) |
+| ![Need vs spend](docs/screenshots/35-need-vs-spend.png) | ![Schemes](docs/screenshots/25-national-schemes.png) |
+
+| Map with forecast overlays | |
+|---|---|
+| ![Map](docs/screenshots/23-console-map.png) | |
 
 | Impact ledger: people benefited, days to fix, cost per person, citizen confirmation | **AI weekly briefing**: every figure computed, fact-checked, printable, in 11 languages |
 |---|---|
@@ -190,9 +197,9 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 |---|---|
 | ![Scorecards](docs/screenshots/05-district-scorecards.png) | ![Ledger](docs/screenshots/06-public-ledger.png) |
 
-| Open data and a try-it API | WhatsApp and SMS: report from any phone |
+| **Follow the money**: need vs spend and the scheme ledger, for anyone | Open data and a try-it API |
 |---|---|
-| ![Open data](docs/screenshots/07-open-data-api.png) | ![Channels](docs/screenshots/08-whatsapp-sms.png) |
+| ![Follow the money](docs/screenshots/11-follow-the-money.png) | ![Open data](docs/screenshots/07-open-data-api.png) |
 
 | How it works, for anyone to inspect | |
 |---|---|
@@ -333,6 +340,7 @@ The switch between the two is configuration: `WORKER_URL` vs Pub/Sub, `REFERENCE
 |---|---|---|
 | **Understand** | Classifies the report (category, sub-category, severity), writes an English summary, detects the language and translates non-English reports for officers. | Structured-output schema with a stricter retry; if the model still fails, a raw-text fallback, so **a report is never dropped**. A citizen's personal emergency is routed out, not ranked. |
 | **See and hear** | Reads photos (does it show a real infrastructure problem?) and transcribes voice notes in the speaker's language. | A photo that doesn't match is flagged for review, never auto-rejected. |
+| **Photo to report** | While the citizen is still filling the form, Gemini Vision looks at their photo and drafts the description in their language, with category, severity and whether it is a safety hazard. | Only photos the app itself stored can be read; the draft only fills an empty box and the citizen can edit it; if the model is unavailable, the citizen simply types. |
 | **Deduplicate** | `gemini-embedding-001` embeds each summary; reports within the same area whose embeddings are similar (cosine ≥ 0.72, tuned on real Hindi/English pairs) merge into one issue. | Distinct *reporters* feed demand, not raw reports, so one person filing twelve times is one unit of demand. |
 | **Co-pilot** | Answers officers' questions with **function calling** over 8 tools: `query_fused_data`, `check_investment_status`, `get_priority_scores`, `simulate_priority`, `generate_brief`, `list_available_data`, `get_risk_forecasts`, `get_equity_audit`. | Three layers: tools only see the officer's jurisdiction; every number in the answer must appear in a tool result; any sentence with an untraceable number is dropped, and unanswerable questions are refused. |
 | **Briefs** | Project briefs and the **weekly briefing** in 11 languages. | Every figure is computed first. The model only rephrases, and the same numeric check removes any invented figure. If the model is down, a template briefing is served instead. |
@@ -355,6 +363,10 @@ priority = (0.40 × demand + 0.30 × vulnerability + 0.30 × gap) × duplication
 Every issue shows its full breakdown, the weights, and any data it had to substitute. Weights are configurable per deployment, and the **weights lab** lets a policymaker see how the ranking would change, without touching the official scores.
 
 **Budget optimiser.** Each eligible issue is worth `score × reach`, and costs its indicative budget. An **exact 0/1 knapsack** picks the set with the highest total value that fits the budget, with a guaranteed reserve spent first on high-vulnerability areas. It is shown next to the obvious alternative, funding by report volume. On the demo data at ₹1 Cr it reaches **28.7 lakh people vs 17.9 lakh (+60%)**, with more of the money going to vulnerable areas.
+
+**Need vs spend.** Every district gets a *need* rank (half official deprivation indices, half distinct people with unresolved reports per 100,000 residents) and a *spend* rank (investment per person over the last four fiscal years), both as percentiles within the country. High need with low spend is **underserved**. The correlation between the two says, in one number, whether money follows need. Publicly, report counts are withheld for districts with fewer than 5 open issues.
+
+**Scheme impact ledger.** Every project records the national scheme paying for it (the best match automatically; a collector can correct it, audited). Per scheme: money committed and the central share, projects delivered, days to fix, cost per person reached, and the share of reporters who confirmed the fix. A scheme is flagged **slow** above 90 days, or with **quality concerns** below 70% citizen confirmation.
 
 **Deadlines.** Open issues get a response deadline by priority (emergency 2 days, high 7, medium 21, low 45). A missed deadline escalates to the **district collector**; missing it by a further full window escalates to the **state administrator** (the CPGRAMS pattern).
 
@@ -413,7 +425,7 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 │   └── ai-prompts/             Versioned prompts and response schemas
 ├── scripts/
 │   ├── seed-demo-data/         Reference geography (36 states/UTs + Brazil), multilingual demo dataset
-│   ├── smoke-emulator.ts       60-check end-to-end test against the real worker and Gemini
+│   ├── smoke-emulator.ts       70-check end-to-end test against the real worker and Gemini
 │   ├── translate-i18n.ts       Gemini translation of UI strings, placeholder-safe
 │   └── create-officer.ts       Officer account tooling
 ├── docs/                       PRD, architecture, data model, AI pipeline, API spec, security, deployment
@@ -424,16 +436,16 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 
 ## 🔌 API overview
 
-56 gateway routes under `/v1` (full spec: [`docs/API_SPEC.md`](docs/API_SPEC.md)). Highlights:
+63 gateway routes under `/v1` (full spec: [`docs/API_SPEC.md`](docs/API_SPEC.md)). Highlights:
 
 | Area | Examples |
 |---|---|
-| **Ingest** | `POST /submissions` (idempotent), `POST /media`, `POST /webhooks/whatsapp`, `POST /webhooks/sms` |
+| **Ingest** | `POST /submissions` (idempotent), `POST /media`, `POST /assist/photo` (Gemini Vision draft), `POST /webhooks/whatsapp`, `POST /webhooks/sms` (report, or `STATUS <code>`) |
 | **Citizen** | `GET /my-reports`, `GET /notifications`, `POST /projects/:id/confirm-resolution`, `POST /issues/:id/support` |
 | **Console** | `GET /issues`, `GET /issues/:id`, `POST /issues/:id/status`, `POST /issues/:id/assign`, `POST /issues/:id/comments`, `GET /activity` |
-| **Funding** | `GET /issues/:id/schemes`, `GET /schemes/alignment`, `POST /planner/optimize`, `POST /planner/plans/:id/approve`, `POST /planner/simulate-weights` |
+| **Funding** | `GET /issues/:id/schemes`, `GET /schemes/alignment`, `POST /planner/optimize`, `POST /planner/plans/:id/approve`, `POST /planner/simulate-weights`, `GET /analytics/need-vs-spend`, `GET /schemes/performance`, `POST /projects/:id/scheme` |
 | **Intelligence** | `POST /agent/sessions/:id/messages` (co-pilot, streamed), `GET /reports/briefing`, `GET /analytics/impact`, `GET /forecasts`, `GET /equity-audit` |
-| **Public** (no login) | `GET /public/track/:code`, `POST /public/track/:code/confirm`, `GET /public/nearby`, `GET /public/scorecards`, `GET /public/impact`, `GET /public/opendata/issues.csv` |
+| **Public** (no login) | `GET /public/track/:code`, `POST /public/track/:code/confirm`, `GET /public/nearby`, `GET /public/scorecards`, `GET /public/impact`, `GET /public/need-vs-spend`, `GET /public/schemes/performance`, `POST /public/demo/message` (channel simulator), `GET /public/opendata/issues.csv` |
 | **Jobs** (shared secret) | `POST /jobs/escalations` (gateway), `POST /jobs/sweep`, `POST /jobs/score` (worker) |
 
 ## 🛡 Security, privacy and trust
@@ -450,8 +462,8 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 | Check | Result |
 |---|---|
 | Typecheck, all 7 packages | ✅ clean |
-| Unit and route tests (Vitest) | ✅ ~300 passing: gateway 193, worker 46, shared utils 39, web 16, scripts 5 |
-| **End-to-end smoke test** on the emulators with **real Gemini** | ✅ **60 / 60** |
+| Unit and route tests (Vitest) | ✅ ~310 passing: gateway 203, worker 46, shared utils 39, web 16, scripts 5 |
+| **End-to-end smoke test** on the emulators with **real Gemini** | ✅ **70 / 70** |
 | UI tour of 30 screens (desktop + phone) on the production build | ✅ zero browser errors |
 | CI on every pull request | ✅ typecheck + test + build |
 
@@ -463,7 +475,8 @@ The smoke test (`scripts/smoke-emulator.ts`) drives the whole product the way pe
 - the project is funded, completed and **confirmed by the citizens**; three confirmations alone do **not** resolve it until an officer signs off;
 - an **anonymous** reporter confirms by code, a **"not fixed"** vote **reopens** the work and alerts the officer, and one code gets one vote;
 - an issue 53 days past a 7-day deadline **escalates to the state admin**, and escalation is not repeated;
-- the WhatsApp webhook rejects callers without the provider secret.
+- the WhatsApp webhook rejects callers without the provider secret, and an SMS `STATUS <code>` is answered from live data;
+- need vs spend ranks districts and refuses other jurisdictions, the public version withholds small counts, and the scheme ledger credits the finished project to its scheme (which only a collector may correct).
 
 ---
 
@@ -484,7 +497,7 @@ npx firebase-tools@13.35.1 emulators:start --only auth --project pramaan-a0c00
 export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=pramaan-a0c00
 
 cd apps/worker-ai-pipeline && PORT=8081 WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx src/index.ts
-cd apps/api-gateway && PORT=8080 WORKER_URL=http://localhost:8081 WORKER_SHARED_SECRET=localsecret WEBHOOK_SHARED_SECRET=localsecret ./node_modules/.bin/tsx src/index.ts
+cd apps/api-gateway && PORT=8080 WORKER_URL=http://localhost:8081 WORKER_SHARED_SECRET=localsecret WEBHOOK_SHARED_SECRET=localsecret DEMO_CHANNEL_SIMULATOR=true ./node_modules/.bin/tsx src/index.ts
 cd apps/web && VITE_API_BASE_URL=http://localhost:8080/v1 VITE_FIREBASE_API_KEY=fake VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099 ./node_modules/.bin/vite --port 5173 --strictPort
 
 # 3. Seed (from scripts/, with the worker running; it prints the demo logins)
@@ -517,10 +530,12 @@ Production secrets: `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_WEB_API_KEY`, `GE
 | Time | Show | Say |
 |---|---|---|
 | 0:00 | Landing page | "The same pothole is reported ten times in five languages, and money still goes to whoever shouts loudest. Pramaan fixes the whole chain." |
-| 0:30 | `/report` in Hindi, by voice | Report in your own language. Get a tracking code, no account needed. |
+| 0:30 | `/report`: add a photo, then speak in Hindi | **Gemini writes the report from the photo** and flags the safety hazard. Get a tracking code, no account needed. |
+| 0:50 | `/channels` live phone | Send an SMS, get a code; text `STATUS <code>`, get the answer. The whole loop works on a feature phone. |
 | 1:00 | Issue detail | Gemini classified it, translated it and **merged 8 reports from 8 people** into one issue. The score is fully explained. |
 | 1:45 | Budget planner (`national@`) at ₹1 Cr, 30% reserve | "**60% more people reached** than funding the loudest issues, and more of it in vulnerable areas." Then the weights lab. |
-| 2:30 | National schemes | "About half of this work (51%) could be paid by central schemes: AMRUT 2.0, NHM, Swachh Bharat." |
+| 2:15 | Need vs spend (`national@`) | "Need and investment correlate at **0.02**: money is not following need. 8 districts, 2.4 crore people, are underserved." |
+| 2:30 | National schemes + ledger | "About half of this work (51%) could be paid by central schemes. And the ledger shows which schemes actually deliver, as confirmed by citizens." |
 | 3:00 | Co-pilot, then the weekly briefing in Tamil | Grounded answers; numbers it cannot trace are removed. |
 | 3:40 | Project → mark complete → `/track` → "not fixed" | A "not fixed" vote **reopens the work**. Only citizens plus an officer sign-off close it. |
 | 4:20 | Scorecards, open data | Every district graded in public, and every number downloadable. |
