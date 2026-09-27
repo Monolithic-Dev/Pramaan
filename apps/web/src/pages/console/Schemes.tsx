@@ -6,6 +6,7 @@ import { Icon } from "../../ui/Icon.js";
 import { Badge, Card, CardTitle, EmptyState, PageHeader, Segmented, Skeleton, useAsync } from "../../ui/kit.js";
 import { Donut, Meter } from "../../ui/charts.js";
 import { money } from "../../ui/format.js";
+import { SchemeLedgerView } from "./SchemeLedger.js";
 
 const PALETTE = ["#1d3f97", "#ff9933", "#138808", "#7c3aed", "#0891b2", "#db2777", "#ca8a04", "#475569"];
 const CATEGORIES = ["all", "roads", "water", "electricity", "sanitation", "health_infra", "education_infra"] as const;
@@ -15,6 +16,7 @@ export default function Schemes() {
   const { regionId, regionName } = useScope();
   const align = useAsync(() => api.alignment(regionId), [regionId]);
   const catalogue = useAsync(() => api.schemes(), []);
+  const ledger = useAsync(() => api.schemePerformance(regionId), [regionId]);
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("all");
 
   const a = align.data;
@@ -91,6 +93,12 @@ export default function Schemes() {
           </Card>
         </div>
       )}
+
+      <div className="mb-8">
+        <h2 className="mb-1 text-xl font-bold text-slate-900">{t("ledger.title")}</h2>
+        <p className="mb-4 text-sm text-slate-600">{t("ledger.subtitle")}</p>
+        {ledger.loading || !ledger.data ? <Skeleton className="h-64" /> : <SchemeLedgerView data={ledger.data} />}
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-slate-900">{t("schemes.catalogue")}</h2>

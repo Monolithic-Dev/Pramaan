@@ -34,6 +34,7 @@ const NAV = [
   { to: "/community", key: "nav.community" },
   { to: "/accountability", key: "nav.accountability" },
   { to: "/transparency", key: "nav.transparency" },
+  { to: "/follow-the-money", key: "nav.money" },
   { to: "/about", key: "nav.howItWorks" },
 ];
 

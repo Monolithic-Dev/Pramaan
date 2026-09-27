@@ -10,7 +10,29 @@ import { SlaChip } from "../../ui/extras.js";
 import { AssignCard, NotesCard, SchemesCard } from "./issueParts.js";
 import { Alert, Badge, Button, Card, CardTitle, EmptyState, Field, Modal, PriorityBadge, SampleDataBadge, Select, Skeleton, StatusBadge, Textarea, cx, timeAgo, useAsync, useToast } from "../../ui/kit.js";
 
-const NEXT_STATUSES = ["verified", "disputed", "prioritized", "funded", "in_progress"];
+/** Which scheme pays for this project: set to the best match automatically, corrected by an officer, and
+ *  what the scheme impact ledger attributes the project's results to. */
+function ProjectSchemePicker({ value, editable, onChange }: { value: string; editable: boolean; onChange: (id: string) => void }) {
+  const { t } = useLanguage();
+  const { data } = useAsync(() => api.schemes(), []);
+  const schemes = data?.schemes ?? [];
+  const current = schemes.find((s) => s.id === value);
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+      <span className="flex items-center gap-1.5 text-slate-600"><Icon name="rupee" size={14} />{t("project.scheme")}</span>
+      {editable ? (
+        <Select value={value} onChange={(e) => e.target.value && onChange(e.target.value)} className="!w-auto !py-1 text-sm" aria-label={t("project.scheme")}>
+          {!value && <option value="">{t("project.scheme.none")}</option>}
+          {schemes.map((s) => <option key={s.id} value={s.id}>{s.short}</option>)}
+        </Select>
+      ) : (
+        <Badge tone="saffron">{current?.short ?? t("project.scheme.none")}</Badge>
+      )}
+    </div>
+  );
+}
+
+const NEXT_STATUSES =["verified", "disputed", "prioritized", "funded", "in_progress"];
 const REPORTS_PREVIEW = 4;
 
 /** What Gemini did before any officer looked, made visible: merging, language understanding,
@@ -255,6 +277,13 @@ export default function IssueDetail() {
                 </Badge>
                 {issue.country_code === "IN" && <Badge tone="slate">{t("issue.budget", { amount: project.budget_estimate_inr.toLocaleString("en-IN") })}</Badge>}
               </div>
+              {issue.country_code === "IN" && (
+                <ProjectSchemePicker
+                  value={project.scheme_id ?? ""}
+                  editable={can("manage_projects")}
+                  onChange={(id) => run(() => api.setProjectScheme(project.project_id, id), "project.toast.scheme")}
+                />
+              )}
               {impact && (
                 <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
                   <p className="font-medium text-slate-800">{t("issue.impact.title")}</p>

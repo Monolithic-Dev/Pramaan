@@ -51,6 +51,7 @@ const SECTIONS: { key: string; items: NavItem[] }[] = [
       { to: "/console/planner", key: "console.nav.planner", icon: "sliders", perm: "manage_projects" },
       { to: "/console/schemes", key: "console.nav.schemes", icon: "rupee" },
       { to: "/console/impact", key: "console.nav.impact", icon: "target" },
+      { to: "/console/need-vs-spend", key: "console.nav.needVsSpend", icon: "scale" },
     ],
   },
   {

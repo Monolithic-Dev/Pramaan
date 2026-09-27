@@ -38,6 +38,8 @@ const Accountability = lazy(() => import("./pages/Accountability.js"));
 const OpenData = lazy(() => import("./pages/OpenData.js"));
 const Channels = lazy(() => import("./pages/Channels.js"));
 const About = lazy(() => import("./pages/About.js"));
+const FollowTheMoney = lazy(() => import("./pages/FollowTheMoney.js"));
+const NeedVsSpend = lazy(() => import("./pages/console/NeedVsSpend.js"));
 const Notifications = lazy(() => import("./pages/citizen/Notifications.js"));
 
 function NotFound() {
@@ -80,6 +82,7 @@ function App() {
           <Route path="/accountability" element={<Accountability />} />
           <Route path="/open-data" element={<OpenData />} />
           <Route path="/channels" element={<Channels />} />
+          <Route path="/follow-the-money" element={<FollowTheMoney />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -112,6 +115,7 @@ function App() {
           <Route path="planner" element={<RequireAuth kind="officer" permission="manage_projects"><Planner /></RequireAuth>} />
           <Route path="schemes" element={<Schemes />} />
           <Route path="impact" element={<Impact />} />
+          <Route path="need-vs-spend" element={<NeedVsSpend />} />
           <Route path="briefing" element={<Briefing />} />
           <Route path="issues/:issueId" element={<IssueDetail />} />
           <Route path="map" element={<MapPage />} />

@@ -433,6 +433,85 @@ export interface Tracking {
   reopened_count?: number;
 }
 
+export type Quadrant = "underserved" | "targeted" | "over_indexed" | "stable";
+
+export interface NeedVsSpendRow {
+  region_id: string;
+  name: string;
+  state_name: string | null;
+  country_code: string;
+  population: number;
+  vulnerability: number | null;
+  /** null on the public view when too few reports to print. */
+  open_issues: number | null;
+  waiting_reporters: number | null;
+  demand_per_100k: number | null;
+  investment: number;
+  currency: string;
+  investment_per_capita: number;
+  need_index: number;
+  spend_index: number;
+  gap: number;
+  quadrant: Quadrant;
+  top_unmet_categories: { category: string; reporters: number }[];
+}
+
+export interface NeedVsSpend {
+  region?: string;
+  fiscal_years_from: string;
+  districts: NeedVsSpendRow[];
+  quadrants: Record<Quadrant, number>;
+  alignment: number | null;
+  verdict: "aligned" | "partly_aligned" | "misaligned" | "insufficient_data";
+  underserved_people_waiting: number;
+  underserved_population: number;
+  min_public_count?: number;
+}
+
+export interface SchemePerformanceRow {
+  scheme_id: string;
+  short: string;
+  name: string;
+  ministry: string;
+  priority: string;
+  centre_share: number;
+  projects: number;
+  pipeline: { recommended: number; funded: number; in_progress: number; completed: number };
+  committed_inr: number;
+  central_inr: number;
+  completed: number;
+  delivery_rate: number | null;
+  avg_days_to_fix: number | null;
+  people_benefited: number;
+  cost_per_person_inr: number | null;
+  citizen_confirmation: number | null;
+  reopened: number;
+  categories: string[];
+  signal: "delivering" | "slow" | "quality_concerns" | "early";
+}
+
+export interface SchemePerformance {
+  region?: string;
+  sample_data?: boolean;
+  totals: { schemes: number; projects: number; committed_inr: number; central_inr: number; completed: number; people_benefited: number };
+  schemes: SchemePerformanceRow[];
+}
+
+export interface PhotoSuggestion {
+  shows_issue: boolean;
+  category: string;
+  subcategory: string;
+  description: string;
+  severity: "low" | "medium" | "high";
+  safety_hazard: boolean;
+  language: string;
+}
+
+export type DemoReply =
+  | { kind: "report"; tracking_code: string; reply: string }
+  | { kind: "status"; tracking_code: string; stage: string; reply: string }
+  | { kind: "status_not_found"; reply: string };
+
 export interface IssueQuery {
   region?: string;
   category?: string;
@@ -509,6 +588,10 @@ export const api = {
   savePlan: (body: { region?: string; budget_inr: number; min_vulnerable_share: number; name: string }) => http<SavedPlan>("/planner/plans", { method: "POST", json: body }),
   plans: () => http<{ plans: SavedPlan[] }>("/planner/plans"),
   approvePlan: (id: string) => http<{ plan: SavedPlan; funded: number; skipped: { issue_id: string; reason: string }[] }>(`/planner/plans/${id}/approve`, { method: "POST", json: {} }),
+  needVsSpend: (region?: string) => http<NeedVsSpend>(`/analytics/need-vs-spend${qs({ region })}`),
+  schemePerformance: (region?: string) => http<SchemePerformance>(`/schemes/performance${qs({ region })}`),
+  setProjectScheme: (projectId: string, scheme_id: string) => http<Project>(`/projects/${projectId}/scheme`, { method: "POST", json: { scheme_id } }),
+  assistPhoto: (photo_url: string, language: string) => http<PhotoSuggestion>("/assist/photo", { method: "POST", json: { photo_url, language } }),
   simulateWeights: (body: { region?: string; demand: number; vulnerability: number; gap: number }) =>
     http<{ weights: { demand: number; vulnerability: number; gap: number }; ranking: WeightRow[] }>("/planner/simulate-weights", { method: "POST", json: body }),
 
@@ -543,6 +626,10 @@ export const api = {
   nearby: (lat: number, lng: number) =>
     http<{ radius_m: number; issues: NearbyIssue[] }>(`/public/nearby${qs({ lat, lng })}`, { auth: false }),
   support: (issueId: string) => http<{ support_count: number; already_supported: boolean }>(`/issues/${issueId}/support`, { method: "POST", json: {} }),
+  publicNeedVsSpend: (country?: string) => http<NeedVsSpend>(`/public/need-vs-spend${qs({ country })}`, { auth: false }),
+  publicSchemePerformance: (country?: string) => http<SchemePerformance>(`/public/schemes/performance${qs({ country })}`, { auth: false }),
+  demoMessage: (body: { channel: "sms" | "whatsapp"; text: string; location_text?: string; country_code?: string }) =>
+    http<DemoReply>("/public/demo/message", { method: "POST", json: body, auth: false }),
   transparency: (state: string) => http<TransparencyStats>(`/public/transparency${qs({ state })}`, { auth: false }),
 };
 

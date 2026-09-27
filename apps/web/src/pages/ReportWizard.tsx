@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, submitReportAuthed, uploadMediaAuthed, type NearbyIssue } from "../api/api.js";
+import { api, submitReportAuthed, uploadMediaAuthed, type NearbyIssue, type PhotoSuggestion } from "../api/api.js";
 import { ApiClientError } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { CONSENT_VERSION } from "../components/ConsentNotice.js";
@@ -160,6 +160,46 @@ function LiveResult({ submissionId }: { submissionId: string }) {
   );
 }
 
+/** What the AI saw in the photo: the drafted description, the category, and any danger to flag. */
+function AssistCard({ assist, text, onUse, onRetry }: { assist: PhotoSuggestion | "busy" | "failed"; text: string; onUse: (v: string) => void; onRetry: () => void }) {
+  const { t } = useLanguage();
+  if (assist === "busy") {
+    return (
+      <p className="mt-3 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800" aria-live="polite">
+        <Spinner size={16} />{t("assist.busy")}
+      </p>
+    );
+  }
+  if (assist === "failed") {
+    return (
+      <p className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <Icon name="info" size={14} />{t("assist.failed")}
+        <button type="button" onClick={onRetry} className="font-semibold text-brand-700 underline">{t("assist.retry")}</button>
+      </p>
+    );
+  }
+  if (!assist.shows_issue) {
+    return <p className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" aria-live="polite"><Icon name="info" size={14} />{t("assist.noIssue")}</p>;
+  }
+  const meta = CATEGORY_META[assist.category] ?? CATEGORY_META.other;
+  return (
+    <div className="mt-3 max-w-xl rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4" aria-live="polite">
+      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-700"><Icon name="sparkles" size={14} />{t("assist.title")}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge tone="blue"><Icon name={meta.icon} size={12} />{t(`category.${assist.category}`)}</Badge>
+        <Badge tone={assist.severity === "high" ? "red" : assist.severity === "medium" ? "amber" : "slate"}>{t("assist.severity", { level: t(`level.${assist.severity}`) })}</Badge>
+        {assist.safety_hazard && <Badge tone="red"><Icon name="alert" size={12} />{t("assist.hazard")}</Badge>}
+      </div>
+      <p className="mt-2 text-sm text-slate-800">{assist.description}</p>
+      {text.trim() === assist.description ? (
+        <p className="mt-2 text-xs text-slate-500">{t("assist.filled")}</p>
+      ) : (
+        <Button size="sm" variant="secondary" icon="sparkles" className="mt-2" onClick={() => onUse(assist.description)}>{t("assist.use")}</Button>
+      )}
+    </div>
+  );
+}
+
 export default function ReportWizard() {
   const { t, speechLang, countryCode, language, setLanguage } = useLanguage();
   const { speak } = useSpeechSynthesis(speechLang);
@@ -175,6 +215,7 @@ export default function ReportWizard() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoOffline, setPhotoOffline] = useState<Blob | null>(null);
   const [audioOffline, setAudioOffline] = useState<Blob | null>(null);
+  const [assist, setAssist] = useState<PhotoSuggestion | "busy" | "failed" | null>(null);
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [locationText, setLocationText] = useState("");
   const [locating, setLocating] = useState(false);
@@ -214,7 +255,9 @@ export default function ReportWizard() {
     try {
       blob = await compressImage(file);
       setPhotoPreview(URL.createObjectURL(blob));
-      setPhotoUrl(await uploadMediaAuthed("photo", blob));
+      const url = await uploadMediaAuthed("photo", blob);
+      setPhotoUrl(url);
+      void describePhoto(url);
     } catch (err) {
       // No connection: keep the photo on the device; the offline queue uploads it later.
       if (blob && (!navigator.onLine || err instanceof TypeError)) {
@@ -225,6 +268,19 @@ export default function ReportWizard() {
       }
     } finally {
       setPhotoBusy(false);
+    }
+  }
+
+  // Gemini looks at the photo and drafts the description in the reporter's language. It only fills the box
+  // when the reporter has not written anything, and they can always edit it.
+  async function describePhoto(url: string) {
+    setAssist("busy");
+    try {
+      const s = await api.assistPhoto(url, language);
+      setAssist(s);
+      if (s.shows_issue) setText((prev) => (prev.trim() ? prev : s.description));
+    } catch {
+      setAssist("failed");
     }
   }
 
@@ -374,15 +430,18 @@ export default function ReportWizard() {
             <div>
               <p className="mb-2 text-sm font-medium text-slate-800">{t("report.photoLabel")}</p>
               {photoPreview ? (
+                <>
                 <div className="relative w-fit">
                   <img src={photoPreview} alt="" className="h-40 rounded-xl border border-slate-200 object-cover" />
                   {photoBusy && <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/70"><Spinner /></div>}
-                  <button type="button" aria-label="Remove photo" onClick={() => { setPhotoPreview(null); setPhotoUrl(null); setPhotoOffline(null); }} className="absolute -right-2 -top-2 rounded-full bg-slate-900 p-1 text-white shadow">
+                  <button type="button" aria-label="Remove photo" onClick={() => { setPhotoPreview(null); setPhotoUrl(null); setPhotoOffline(null); setAssist(null); }} className="absolute -right-2 -top-2 rounded-full bg-slate-900 p-1 text-white shadow">
                     <Icon name="x" size={14} />
                   </button>
                   {photoUrl && <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-emerald-700"><Icon name="checkCircle" size={14} />{t("report.photoAttached")}</p>}
                   {photoOffline && <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-amber-700"><Icon name="clock" size={14} />{t("report.photoOffline")}</p>}
                 </div>
+                {assist && <AssistCard assist={assist} text={text} onUse={setText} onRetry={() => photoUrl && void describePhoto(photoUrl)} />}
+                </>
               ) : (
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 p-4 text-slate-600 transition hover:border-brand-400 hover:bg-brand-50/40">
                   <Icon name="camera" size={22} />
