@@ -5,6 +5,7 @@ import { CitizenLayout } from "./components/layout/CitizenLayout.js";
 import { ConsoleLayout } from "./components/layout/ConsoleLayout.js";
 import { PublicLayout } from "./components/layout/PublicLayout.js";
 import { RouteAnnouncer, SkipLink } from "./components/layout/A11y.js";
+import { ServerWakeNotice } from "./components/ServerWakeNotice.js";
 import { useLanguage } from "./i18n/LanguageProvider.js";
 import { Button, EmptyState, Spinner } from "./ui/kit.js";
 
@@ -64,6 +65,7 @@ function App() {
     <>
     <SkipLink />
     <RouteAnnouncer />
+    <ServerWakeNotice />
     <Suspense
       fallback={
         <div className="flex min-h-[60vh] items-center justify-center text-brand-700">
