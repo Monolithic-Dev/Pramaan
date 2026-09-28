@@ -30,38 +30,47 @@ describe("confirming a fix with a tracking code (reporters without an account)",
   it("counts anonymous reporters toward the threshold and lets each answer once", async () => {
     const ctx = setup();
     const i = await markedComplete(ctx, [
-      ["s1", "anonymous", null, { tracking_code: "JS-AAAA2222" }],
-      ["s2", "anonymous", null, { tracking_code: "JS-BBBB3333" }],
+      ["s1", "anonymous", null, { tracking_code: "PR-AAAA2222" }],
+      ["s2", "anonymous", null, { tracking_code: "PR-BBBB3333" }],
     ]);
     expect((await ctx.deps.store.getImpactRecord(`p_${i.issue_id}`))?.confirmations_required).toBe(2);
 
-    const track = (await ctx.app.inject({ method: "GET", url: "/v1/public/track/JS-AAAA2222" })).json();
+    const track = (await ctx.app.inject({ method: "GET", url: "/v1/public/track/PR-AAAA2222" })).json();
     expect(track.awaiting_confirmation).toBe(true);
 
     expect((await confirmByCode(ctx, "js aaaa 2222", true)).statusCode).toBe(200);
-    expect((await confirmByCode(ctx, "JS-AAAA2222", true)).statusCode).toBe(409);
-    expect((await ctx.app.inject({ method: "GET", url: "/v1/public/track/JS-AAAA2222" })).json().awaiting_confirmation).toBe(false);
+    expect((await confirmByCode(ctx, "PR-AAAA2222", true)).statusCode).toBe(409);
+    expect((await ctx.app.inject({ method: "GET", url: "/v1/public/track/PR-AAAA2222" })).json().awaiting_confirmation).toBe(false);
 
-    await confirmByCode(ctx, "JS-BBBB3333", true);
+    await confirmByCode(ctx, "PR-BBBB3333", true);
     await ctx.app.inject({ method: "POST", url: `/v1/projects/p_${i.issue_id}/officer-signoff`, headers: ctx.collector });
     expect(ctx.deps.store.issues.get(i.issue_id)?.status).toBe("resolved");
   });
 
+  it("still finds a code issued before the rename (JS-), however it is typed", async () => {
+    const ctx = setup();
+    const i = ctx.put(issue({ status: "verified" }));
+    await ctx.deps.store.putSubmission(submission("s_old", "anonymous", i.issue_id, { tracking_code: "JS-FFFF7777" }));
+    for (const typed of ["JS-FFFF7777", "PR-FFFF7777", "ffff 7777"]) {
+      expect((await ctx.app.inject({ method: "GET", url: `/v1/public/track/${encodeURIComponent(typed)}` })).statusCode).toBe(200);
+    }
+  });
+
   it("gives a signed-in reporter one vote even if they also use their code", async () => {
     const ctx = setup();
-    const i = await markedComplete(ctx, [["s1", "c_alice", null, { tracking_code: "JS-CCCC4444" }]]);
+    const i = await markedComplete(ctx, [["s1", "c_alice", null, { tracking_code: "PR-CCCC4444" }]]);
     const viaAccount = await ctx.app.inject({ method: "POST", url: `/v1/projects/p_${i.issue_id}/confirm-resolution`, headers: ctx.alice, payload: { confirmed: true } });
     expect(viaAccount.statusCode).toBe(200);
-    expect((await confirmByCode(ctx, "JS-CCCC4444", false)).statusCode).toBe(409);
+    expect((await confirmByCode(ctx, "PR-CCCC4444", false)).statusCode).toBe(409);
   });
 
   it("refuses unknown codes and projects not yet marked complete", async () => {
     const ctx = setup();
-    expect((await confirmByCode(ctx, "JS-ZZZZ9999", true)).statusCode).toBe(404);
+    expect((await confirmByCode(ctx, "PR-ZZZZ9999", true)).statusCode).toBe(404);
     const i = ctx.put(issue());
-    await ctx.deps.store.putSubmission(submission("s9", "anonymous", i.issue_id, { tracking_code: "JS-DDDD5555" }));
+    await ctx.deps.store.putSubmission(submission("s9", "anonymous", i.issue_id, { tracking_code: "PR-DDDD5555" }));
     ctx.deps.store.projects.set(`p_${i.issue_id}`, project(i.issue_id));
-    expect((await confirmByCode(ctx, "JS-DDDD5555", true)).statusCode).toBe(409);
+    expect((await confirmByCode(ctx, "PR-DDDD5555", true)).statusCode).toBe(409);
   });
 });
 
@@ -90,9 +99,9 @@ describe("citizens reopening work that was not really fixed", () => {
 
   it("shows the anonymous reporter, on their tracker, that their 'not fixed' reopened the work", async () => {
     const ctx = setup();
-    await markedComplete(ctx, [["s1", "anonymous", null, { tracking_code: "JS-EEEE6666" }]]);
-    expect((await confirmByCode(ctx, "JS-EEEE6666", false)).json()).toMatchObject({ reopened: true });
-    const track = (await ctx.app.inject({ method: "GET", url: "/v1/public/track/JS-EEEE6666" })).json();
+    await markedComplete(ctx, [["s1", "anonymous", null, { tracking_code: "PR-EEEE6666" }]]);
+    expect((await confirmByCode(ctx, "PR-EEEE6666", false)).json()).toMatchObject({ reopened: true });
+    const track = (await ctx.app.inject({ method: "GET", url: "/v1/public/track/PR-EEEE6666" })).json();
     // The reopen clears marked_complete_at; the tracker must still read the impact record.
     expect(track).toMatchObject({ reopened_count: 1, issue_status: "in_progress", awaiting_confirmation: false });
   });

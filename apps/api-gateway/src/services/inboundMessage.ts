@@ -1,12 +1,12 @@
 import type { FastifyBaseLogger } from "fastify";
 import type { Issue, SubmissionChannel } from "@pramaan/shared-types";
 import type { Deps } from "../deps.js";
-import { normalizeTrackingCode } from "../lib/trackingCode.js";
+import { findByTrackingCode, normalizeTrackingCode } from "../lib/trackingCode.js";
 import { ingestSubmission, type IngestSubmissionResult } from "./ingestSubmission.js";
 
 // One handler for every text-message channel (WhatsApp, SMS, and the public simulator), so a feature
 // phone gets exactly what the web app gets: a report is filed and answered with a tracking code, and a
-// message like "STATUS JS-K7M3P9QD" (or just the code) is answered with where that report stands,
+// message like "STATUS PR-K7M3P9QD" (or just the code) is answered with where that report stands,
 // without filing anything. `reply` is the text the messaging provider sends back to the phone.
 
 const STATUS_WORDS = /^\s*(status|track|check|स्थिति|நிலை|স্থিতি|స్థితి|स्थिती|ಸ್ಥಿತಿ|സ്ഥിതി|સ્થિતિ|ਸਥਿਤੀ|situação)(?:[\s:-]+|$)(.*)$/iu;
@@ -60,7 +60,7 @@ export async function handleInboundMessage(
 ): Promise<InboundOutcome> {
   const code = message.photo_url ? null : statusQueryCode(message.text);
   if (code) {
-    const submission = await deps.store.getSubmissionByTrackingCode(code);
+    const submission = await findByTrackingCode(deps.store, code);
     if (!submission || submission.status === "tombstoned") {
       return { kind: "status_not_found", reply: `Pramaan: we could not find ${code}. Check the code and try again.` };
     }

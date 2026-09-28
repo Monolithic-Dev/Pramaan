@@ -37,6 +37,7 @@ export function RequireAuth({
     return (
       <EmptyState
         icon="lock"
+        pageTitle
         title={t("guard.forbiddenTitle")}
         body={t("guard.forbiddenBody")}
         action={

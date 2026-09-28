@@ -177,7 +177,7 @@ describe("issue workflow RBAC", () => {
   });
 
   it("recommends a project once, only for a scored issue, and lets a collector fund it", async () => {
-    const { app, deps, collector, field } = setup();
+    const { app, deps, collector, field, admin, pune } = setup();
     put(deps, issue({ issue_id: "iss_p", category: "water" }));
     deps.store.issues.set("iss_unscored", issue({ issue_id: "iss_unscored" }));
 
@@ -197,6 +197,10 @@ describe("issue workflow RBAC", () => {
     expect(deps.store.issues.get("iss_p")?.status).toBe("funded");
     const list = (await app.inject({ method: "GET", url: "/v1/projects", headers: collector })).json();
     expect(list.projects[0]).toMatchObject({ project_id: project.project_id, status: "funded" });
+
+    // Scope: the Delhi state admin sees it, a Pune collector does not.
+    expect((await app.inject({ method: "GET", url: "/v1/projects", headers: admin })).json().projects).toHaveLength(1);
+    expect((await app.inject({ method: "GET", url: "/v1/projects", headers: pune })).json().projects).toHaveLength(0);
   });
 });
 

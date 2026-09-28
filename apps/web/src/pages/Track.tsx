@@ -6,7 +6,7 @@ import { JourneyStepper } from "../ui/extras.js";
 import { CATEGORY_META, Icon } from "../ui/Icon.js";
 import { Alert, Badge, Button, Card, Input, PriorityBadge, Skeleton, timeAgo } from "../ui/kit.js";
 
-const DEMO_CODE = "JS-K7M3P9QD";
+const DEMO_CODE = "PR-K7M3P9QD";
 
 /** Follow a report with nothing but its code: no account, no phone number, no personal data. */
 export default function Track() {
@@ -64,7 +64,7 @@ export default function Track() {
       </div>
 
       <form onSubmit={submit} className="mt-8 flex gap-2">
-        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="JS-XXXXXXXX" aria-label={t("track.code")} autoComplete="off" spellCheck={false} className="!py-3.5 text-center font-mono text-lg tracking-widest" />
+        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="PR-XXXXXXXX" aria-label={t("track.code")} autoComplete="off" spellCheck={false} className="!py-3.5 text-center font-mono text-lg tracking-widest" />
         <Button type="submit" size="lg" icon="arrowRight" loading={state === "loading"}>{t("track.find")}</Button>
       </form>
       <p className="mt-2 text-center text-xs text-slate-500">

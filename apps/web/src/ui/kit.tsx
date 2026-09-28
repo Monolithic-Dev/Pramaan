@@ -331,18 +331,22 @@ export function EmptyState({
   title,
   body,
   action,
+  pageTitle = false,
 }: {
   icon?: IconName;
   title: ReactNode;
   body?: ReactNode;
   action?: ReactNode;
+  /** The empty state is the whole page (404, no access), so its title is the page heading. */
+  pageTitle?: boolean;
 }) {
+  const Heading = pageTitle ? "h1" : "h3";
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       <span className="rounded-2xl bg-slate-100 p-4 text-slate-500">
         <Icon name={icon} size={28} />
       </span>
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+      <Heading className="text-lg font-semibold text-slate-900">{title}</Heading>
       {body && <p className="max-w-md text-sm text-slate-600">{body}</p>}
       {action}
     </div>

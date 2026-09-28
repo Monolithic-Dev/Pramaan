@@ -54,7 +54,7 @@ function PhoneSimulator() {
   }
 
   const wa = channel === "whatsapp";
-  const suggestions = [t("sim.example.report"), `STATUS ${lastCode ?? "JS-K7M3P9QD"}`];
+  const suggestions = [t("sim.example.report"), `STATUS ${lastCode ?? "PR-K7M3P9QD"}`];
 
   if (offline) return <ScriptedPhone />;
   return (
@@ -116,7 +116,7 @@ function ScriptedPhone() {
           <div className="ml-auto max-w-[80%] rounded-lg rounded-tr-sm bg-[#d9fdd3] px-3 py-2 text-slate-800 shadow-sm">{t("ch.demo.user")}</div>
           <div className="max-w-[85%] rounded-lg rounded-tl-sm bg-white px-3 py-2 text-slate-800 shadow-sm">
             {t("ch.demo.reply1")}
-            <p className="mt-1.5 font-mono text-xs font-bold tracking-widest text-brand-700">JS-K7M3P9QD</p>
+            <p className="mt-1.5 font-mono text-xs font-bold tracking-widest text-brand-700">PR-K7M3P9QD</p>
           </div>
           <div className="ml-auto max-w-[70%] rounded-lg rounded-tr-sm bg-[#d9fdd3] px-3 py-2 text-slate-800 shadow-sm">{t("ch.demo.user2")}</div>
           <div className="max-w-[85%] rounded-lg rounded-tl-sm bg-white px-3 py-2 text-slate-800 shadow-sm">{t("ch.demo.reply2")}</div>
@@ -179,11 +179,11 @@ x-webhook-secret: <shared secret>
   "location_text": "Gandhi Nagar, Delhi"
 }
 
-202 Accepted  ->  { "submission_id": "sub_...", "tracking_code": "JS-K7M3P9QD",
+202 Accepted  ->  { "submission_id": "sub_...", "tracking_code": "PR-K7M3P9QD",
                    "reply": "Pramaan: thank you, your report is recorded. ..." }
 
-{ "text": "STATUS JS-K7M3P9QD" }
-200 OK        ->  { "kind": "status", "stage": "verified", "reply": "Pramaan JS-K7M3P9QD: ..." }`}</pre>
+{ "text": "STATUS PR-K7M3P9QD" }
+200 OK        ->  { "kind": "status", "stage": "verified", "reply": "Pramaan PR-K7M3P9QD: ..." }`}</pre>
       </Card>
     </div>
   );

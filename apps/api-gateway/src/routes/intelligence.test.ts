@@ -138,10 +138,11 @@ describe("SMS / WhatsApp: status by text, and the live simulator", () => {
   });
 
   it("recognises status queries in several languages, and a bare code", () => {
-    expect(statusQueryCode("STATUS JS-K7M3P9QD")).toBe("JS-K7M3P9QD");
-    expect(statusQueryCode("track js k7m3 p9qd")).toBe("JS-K7M3P9QD");
-    expect(statusQueryCode("स्थिति JS-K7M3P9QD")).toBe("JS-K7M3P9QD");
-    expect(statusQueryCode("K7M3P9QD")).toBe("JS-K7M3P9QD");
+    expect(statusQueryCode("STATUS PR-K7M3P9QD")).toBe("PR-K7M3P9QD");
+    expect(statusQueryCode("track pr k7m3 p9qd")).toBe("PR-K7M3P9QD");
+    expect(statusQueryCode("track js k7m3 p9qd")).toBe("JS-K7M3P9QD"); // an old code, looked up under both prefixes
+    expect(statusQueryCode("स्थिति PR-K7M3P9QD")).toBe("PR-K7M3P9QD");
+    expect(statusQueryCode("K7M3P9QD")).toBe("PR-K7M3P9QD");
     expect(statusQueryCode("There is a big pothole near the market")).toBeNull();
   });
 
@@ -164,16 +165,16 @@ describe("SMS / WhatsApp: status by text, and the live simulator", () => {
     expect(j(status)).toMatchObject({ kind: "status", stage: "funded", other_reporters: 3 });
     expect(j(status).reply).toMatch(/funded/);
     expect(ctx.deps.publishedMessages.length).toBe(before); // nothing new was filed
-    expect(j(await ctx.app.inject({ method: "POST", url: "/v1/public/demo/message", payload: { channel: "sms", text: "STATUS JS-ZZZZ9999" } })).kind).toBe("status_not_found");
+    expect(j(await ctx.app.inject({ method: "POST", url: "/v1/public/demo/message", payload: { channel: "sms", text: "STATUS PR-ZZZZ9999" } })).kind).toBe("status_not_found");
   });
 
   it("answers status queries on the real WhatsApp webhook too, with a reply for the provider to send", async () => {
     env.webhookSharedSecret = "s3cret";
     const ctx = setup();
-    await ctx.deps.store.putSubmission(submission("sub_w", "anonymous", null, { tracking_code: "JS-WWWW2222" }));
+    await ctx.deps.store.putSubmission(submission("sub_w", "anonymous", null, { tracking_code: "PR-WWWW2222" }));
     const res = await ctx.app.inject({
       method: "POST", url: "/v1/webhooks/whatsapp", headers: { "x-webhook-secret": "s3cret" },
-      payload: { from: "+919800000001", message_id: "wamid.1", text: "status JS-WWWW2222" },
+      payload: { from: "+919800000001", message_id: "wamid.1", text: "status PR-WWWW2222" },
     });
     expect(res.statusCode).toBe(200);
     expect(j(res)).toMatchObject({ kind: "status", stage: "received" });

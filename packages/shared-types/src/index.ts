@@ -142,7 +142,7 @@ export interface Submission {
   /** SHA-256 of the submitting IP (never the raw address) — burst-detection input
    *  only (docs/SECURITY_PRIVACY.md §4); null for channels with no IP (WhatsApp/SMS). */
   submitter_ip_hash: string | null;
-  /** Short unguessable code (e.g. JS-7K3M9Q) so a citizen with no account can follow the report. */
+  /** Short unguessable code (e.g. PR-7K3M9Q) so a citizen with no account can follow the report. */
   tracking_code?: string | null;
 }
 

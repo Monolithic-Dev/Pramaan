@@ -314,14 +314,19 @@ export function registerConsoleRoutes(app: FastifyInstance, deps: Deps) {
 
   app.get("/projects", officerOnly, async (request, reply) => {
     const officer = request.officer!;
-    const [projects, regions] = await Promise.all([deps.store.listProjects(), regionNameMap(deps)]);
+    if (!officer.regionId) return reply.code(200).send({ projects: [] });
+    // One scoped (and cached) issue scan, not a Firestore read per project: with ~200 projects the
+    // per-project reads took 3s and spent a free-tier day's quota in a few hundred page views.
+    const [projects, regions, inScope] = await Promise.all([
+      deps.store.listProjects(),
+      regionNameMap(deps),
+      getIssuesInScope(deps, officer.regionId),
+    ]);
+    const issues = new Map(inScope.map((i) => [i.issue_id, i]));
     const rows = [];
     for (const project of projects) {
-      const issue = await deps.store.getIssue(project.issue_id);
-      if (!issue) continue;
-      const target = issue.admin_region_id ?? issue.state_id;
-      if (!officer.regionId || !(await isWithinScope(deps.bigqueryAgent, target, officer.regionId))) continue;
-      rows.push({ ...project, issue: summarizeIssue(issue, regions) });
+      const issue = issues.get(project.issue_id);
+      if (issue) rows.push({ ...project, issue: summarizeIssue(issue, regions) });
     }
     rows.sort((a, b) => b.composite_score - a.composite_score);
     return reply.code(200).send({ projects: rows });
