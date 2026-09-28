@@ -1,7 +1,7 @@
 // Pramaan service worker: makes the app installable and keeps the shell available with no connection, so a
 // citizen can still open the report form and have the report queued for later (see hooks/useOfflineQueue).
 // Deliberately small: it never touches API calls (they are cross-origin and must always be live).
-const CACHE = "pramaan-shell-v1";
+const CACHE = "pramaan-shell-v2";
 const SHELL = ["/", "/favicon.svg", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -24,9 +24,12 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
 
   // Pages: try the network, fall back to the cached app shell (the SPA renders whatever route was asked for).
+  // no-store bypasses the HTTP cache: a stale cached index.html would reference asset hashes a later
+  // deploy already deleted, 404ing on every chunk (the server also sends Cache-Control: no-cache on
+  // index.html itself, so this is belt-and-braces for proxies that ignore it).
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-store" })
         .then((res) => {
           // Never let an error page (host 5xx, maintenance page) replace the good offline shell.
           if (res.ok) {
