@@ -415,7 +415,7 @@ stateDiagram-v2
 
 ### Data model
 
-The core of the Firestore data model (full reference: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)). Many **submissions** (what citizens said) merge into one **issue** (the problem in the world); an issue is scored, may become a **project**, and a finished project gets an **impact record** that citizens confirm.
+The core of the Firestore data model (the types live in [`packages/shared-types`](packages/shared-types/src/index.ts)). Many **submissions** (what citizens said) merge into one **issue** (the problem in the world); an issue is scored, may become a **project**, and a finished project gets an **impact record** that citizens confirm.
 
 ```mermaid
 erDiagram
@@ -692,7 +692,7 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 │   ├── smoke-emulator.ts       69-check end-to-end test against the real worker and Gemini
 │   ├── translate-i18n.ts       Gemini translation of UI strings, placeholder-safe
 │   └── create-officer.ts       Officer account tooling
-├── docs/                       PRD, architecture, data model, AI pipeline, API spec, security, deployment
+├── docs/screenshots/           The product screenshots in this README
 ├── infra/gcp/                  Cloud Run / Cloud Build setup
 ├── render.yaml                 One-click free deployment blueprint
 └── .github/workflows/          CI (typecheck, test, build) and the 15-minute scheduled jobs
@@ -700,7 +700,7 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 
 ## 🔌 API overview
 
-63 gateway routes under `/v1` (full spec: [`docs/API_SPEC.md`](docs/API_SPEC.md)). Highlights:
+63 gateway routes under `/v1` (source: [`apps/api-gateway/src/routes/`](apps/api-gateway/src/routes)). Highlights:
 
 | Area | Examples |
 |---|---|
@@ -772,8 +772,7 @@ WORKER_URL=http://127.0.0.1:8081 WORKER_SHARED_SECRET=localsecret ./node_modules
 WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx smoke-emulator.ts      # 69 checks
 ```
 
-The first time you use the Firestore emulator, run `npx firebase-tools@13.35.1 emulators:start --only firestore` once to download the jar. Full guide and Windows notes: [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
-
+The first time you use the Firestore emulator, run `npx firebase-tools@13.35.1 emulators:start --only firestore` once to download the jar.
 ```bash
 pnpm turbo run lint test build     # typecheck, all unit tests, production build
 ```
@@ -782,8 +781,8 @@ pnpm turbo run lint test build     # typecheck, all unit tests, production build
 
 | Path | Guide |
 |---|---|
-| **Free** (Firebase Spark + Render + Gemini API key) | [`docs/FREE_DEPLOYMENT_GUIDE.md`](docs/FREE_DEPLOYMENT_GUIDE.md) and the steps below; everything is declared in [`render.yaml`](render.yaml) |
-| **Scale** (Cloud Run + Pub/Sub + BigQuery + Vertex AI) | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/GCP_SETUP_GUIDE.md`](docs/GCP_SETUP_GUIDE.md), [`infra/gcp/`](infra/gcp) |
+| **Free** (Firebase Spark + Render + Gemini API key) | The steps below; everything is declared in [`render.yaml`](render.yaml) |
+| **Scale** (Cloud Run + Pub/Sub + BigQuery + Vertex AI) | [`infra/gcp/`](infra/gcp) (Cloud Build and Cloud Run setup) |
 
 ### The free deployment, step by step
 
@@ -801,7 +800,7 @@ flowchart LR
 |---|---|---|---|
 | 1 | Generate a service-account key (Project settings → Service accounts → Generate new private key). Email/password sign-in is already on. | Firebase console | 2 min |
 | 2 | **New → Blueprint →** this repo → **Apply**. `render.yaml` creates `pramaan-api`, `pramaan-worker` and `pramaan-web`. | Render (sign in with GitHub) | 3 min |
-| 3 | Paste each service's variables with **Environment → Add from .env** (one block per service; see the table in the guide). Redeploy `pramaan-web` once the API URL is known. | Render | 5 min |
+| 3 | Paste each service's variables with **Environment → Add from .env** (one block per service; the variables are listed below). Redeploy `pramaan-web` once the API URL is known. | Render | 5 min |
 | 4 | Seed reference data and the labelled demo dataset into Firestore, pointed at the deployed worker. | Your machine | 10 min |
 | 5 | Add the web domain to **Authentication → Settings → Authorized domains**. | Firebase console | 1 min |
 | 6 | Set `WORKER_URL`, `API_URL`, `WORKER_SHARED_SECRET` and `SCHEDULED_JOBS_ENABLED=true` for the 15-minute job. | GitHub (`gh secret set`) | 1 min |
@@ -829,7 +828,6 @@ Production variables: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON` (ba
 | 4:20 | Scorecards, open data | Every district graded in public, and every number downloadable. |
 | 4:45 | Architecture | Free-tier today, Cloud Run tomorrow. 11 languages, 36 states, India and Brazil on one codebase. |
 
-Longer walkthrough: [`docs/advanced-features/DEMO_SCRIPT.md`](docs/advanced-features/DEMO_SCRIPT.md).
 
 ## 🗺 Roadmap
 
@@ -846,14 +844,15 @@ The reference data (district populations and centroids are approximate Census 20
 
 ## 👥 Team
 
-| Name | Role | GitHub |
-|---|---|---|
-| *Add name* | *Add role* | [@im-rk](https://github.com/im-rk) |
-| *Add name* | *Add role* | *Add handle* |
+| Name | GitHub |
+|---|---|
+| Ramkumar K R | [@im-rk](https://github.com/im-rk) |
+| Mahakisore M | [@Mahakisore7](https://github.com/Mahakisore7) |
+| Jaswanth S | [@Jaswanth-006](https://github.com/Jaswanth-006) |
 
 ## 📄 License
 
-*Add a licence before submission. An OSI-approved open-source licence (for example MIT or Apache-2.0) is required for recognition as a Digital Public Good.*
+[MIT](LICENSE) © 2026 Ramkumar K R, Mahakisore M and Jaswanth S. An OSI-approved open-source licence, as a Digital Public Good requires: any state, city or country may run, adapt and redistribute Pramaan. Third-party components keep their own licences (all open source; see each package's `package.json`). Map tiles © OpenStreetMap contributors (ODbL).
 
 ---
 

@@ -50,3 +50,11 @@ coverage/
 *firebase-adminsdk*.json
 *service-account*.json
 .secrets/
+
+# internal planning docs and agent skills stay local. docs/screenshots/ stays published: the README shows it.
+docs/*
+!docs/screenshots/
+.claude/
+
+# local-only notes (demo video script)
+DEMO_VIDEO_SCRIPT.md
