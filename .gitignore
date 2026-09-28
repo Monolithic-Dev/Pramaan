@@ -45,3 +45,8 @@ coverage/
 *.pem
 *.log
 .vercel/
+
+# service-account keys (never commit; production takes them base64 in FIREBASE_SERVICE_ACCOUNT_JSON)
+*firebase-adminsdk*.json
+*service-account*.json
+.secrets/

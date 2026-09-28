@@ -25,6 +25,10 @@ Not used because they need GCP billing: Vertex AI, BigQuery, Cloud Run, Cloud St
 - **Cold starts:** Render free services sleep after ~15 minutes idle; the first request after that takes
   30-60 seconds. **Open the site and the `/healthz` URLs 2 minutes before any demo.**
 - **Free instance hours** are shared across services (750/month). Two sleeping services are fine for a demo.
+- **Firestore free quota** is 50,000 reads and 20,000 writes a day. Console pages scan every issue, score and
+  project (about 1,000 reads with the demo data), so the API keeps each scan for 30 seconds
+  (`STORE_SCAN_CACHE_MS`) and drops it on any write it makes. Seeding the demo data uses several thousand writes:
+  seed once, not on every deploy.
 - **Uploads are small:** photos are compressed in the browser and voice notes are capped at 60 seconds, to fit
   Firestore's 1 MiB document limit. Fine for a prototype; move to Cloud Storage at scale.
 - **Phone OTP** works with **test phone numbers** only (no SMS cost). Real SMS needs Firebase Blaze billing.
@@ -73,10 +77,29 @@ export FIREBASE_PROJECT_ID=<your-project-id>
 pnpm --filter @pramaan/scripts seed-firestore-reference
 ```
 
-It writes 13 regions (India + Brazil), infrastructure indexes and investment records. Check in Firestore:
-collections `ref_admin_regions`, `ref_infra_index`, `ref_investment_record`.
+It writes 93 regions (36 Indian states/UTs with their demo districts, plus Brazil), 430 infrastructure
+indices and 52 investment records. Check in Firestore: `ref_admin_regions`, `ref_infra_index`,
+`ref_investment_record`.
+
+Then load the labelled demo dataset (about 430 issues, 1,850 reports in 10 languages, projects, confirmations,
+plans) and the demo logins. It scores every issue through the worker, so point `WORKER_URL` at the deployed
+worker (Step 4) or at one running locally with the same key:
+
+```bash
+cd scripts
+WORKER_URL=https://pramaan-worker.onrender.com WORKER_SHARED_SECRET=<same secret as the services> \
+  ../apps/api-gateway/node_modules/.bin/tsx seed-demo-data/seedDemoData.ts
+```
+
+Every demo document id starts with `dm_` and every demo issue is `is_synthetic: true` (badged in the UI), so
+re-running replaces only the demo data and never touches real reports; `--clean-only` removes it.
 
 ## Step 3: Create an officer login
+
+The demo seed already creates the demo logins listed in the README (`national@`, `admin@`, `collector@`,
+`field@` ... `@pramaan.demo`, password `DemoAdmin!2026`; citizen `citizen@pramaan.demo` / `DemoCitizen!2026`).
+Those passwords are public, so for a real pilot create your own officers instead and run the seed with
+`--clean-only`:
 
 ```bash
 pnpm --filter @pramaan/scripts create-officer officer@example.com 'ChooseAStrongPassword1' state_admin IN-DL IN
@@ -102,9 +125,14 @@ jurisdiction, e.g. `IN-DL` (Delhi), `IN-MH`, `IN-KA`, `dl-central-delhi`, `BR-SP
 | `WORKER_SHARED_SECRET` | any long random string | **same string** | |
 | `WORKER_URL` | `https://pramaan-worker.onrender.com` (worker's URL) | | |
 | `WEBHOOK_SHARED_SECRET` | optional: only to enable the WhatsApp/SMS webhooks (they return 503 without it) | | |
+| `DEMO_CHANNEL_SIMULATOR` | `true` (set by the blueprint): the live phone on `/channels`; `false` hides it | | |
+| `CORS_ORIGINS` | the web URL, e.g. `https://pramaan-web.onrender.com` | | |
 | `VITE_API_BASE_URL` | | | `https://pramaan-api.onrender.com/v1` |
 | `VITE_FIREBASE_API_KEY` | | | web API key |
 
+   Each service's **Environment** page has **Add from .env**: paste a block of `KEY=value` lines at once.
+   Keeping one local, git-ignored file per service (`.env.deploy.api`, `.env.deploy.worker`,
+   `.env.deploy.web`; the `.env.*` pattern ignores them) makes this a copy and paste.
    Generate the secret with: `openssl rand -hex 24`. The URLs are shown at the top of each Render service page;
    if Render adds a suffix, use the exact URL.
 4. After the first deploy, redeploy `pramaan-web` once so it picks up the API URL.
@@ -117,9 +145,17 @@ Check: open `https://<api>/healthz` and `https://<worker>/healthz`. Both return 
 
 Reports are handed to the worker immediately; this cron catches anything missed and runs scoring.
 
-1. GitHub repo, **Settings, Secrets and variables, Actions:**
-   - Secrets: `WORKER_URL` (worker URL) and `WORKER_SHARED_SECRET` (same string as above).
+1. GitHub repo, **Settings, Secrets and variables, Actions** (or with the GitHub CLI, as below):
+   - Secrets: `WORKER_URL` (worker URL), `API_URL` (the API's `/v1` base, for deadline escalation) and
+     `WORKER_SHARED_SECRET` (same string as above).
    - Variables: `SCHEDULED_JOBS_ENABLED` = `true`.
+
+```bash
+gh secret set WORKER_URL --body https://pramaan-worker.onrender.com
+gh secret set API_URL --body https://pramaan-api.onrender.com/v1
+gh secret set WORKER_SHARED_SECRET < <(printf %s "$WORKER_SHARED_SECRET")
+gh variable set SCHEDULED_JOBS_ENABLED --body true
+```
 2. **Actions, scheduled-jobs, Run workflow** once to test. It should go green.
 
 ## Step 6: End-to-end test
@@ -160,6 +196,9 @@ dl-central-delhi) and `admin.br@pramaan.test` (state_admin, BR-SP) from `create-
 - **CORS error in browser console:** the api service is asleep or crashed; open its `/healthz` and check Render logs.
 - **Submission stays `queued`:** worker asleep or `WORKER_SHARED_SECRET` mismatch. The 15-minute cron will retry.
 - **"The query requires an index":** open the link in the error; it creates the Firestore index in one click.
+  (The code only uses equality filters, which need no composite index, so this should not happen.)
+- **`RESOURCE_EXHAUSTED` / quota exceeded:** the Firestore daily free quota ran out; it resets at midnight
+  Pacific time. Avoid re-seeding on the day of a demo.
 - **Officer login fails:** wrong email/password, or `VITE_FIREBASE_API_KEY` missing on the web service.
 - **403 on officer screens:** the officer claims do not cover that region; re-run `create-officer` with the right `region_id`.
 

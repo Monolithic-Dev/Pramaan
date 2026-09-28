@@ -17,7 +17,49 @@ import type {
 } from "@pramaan/shared-types";
 import type { AuditLogEntry, IdempotencyRecord, Store } from "./types.js";
 
+// Most console pages scan every issue, score, project and impact record. On Firebase's free plan (50,000
+// reads a day) doing that on every request would exhaust the quota within an hour of demo traffic, so each
+// scan is reused for STORE_SCAN_CACHE_MS and dropped whenever this process writes one of those collections.
+// The worker writes issues and scores directly; its changes appear once the TTL passes.
+const SCANS = new Set(["listIssues", "listProjects", "listScores", "listImpactRecords"]);
+const INVALIDATES = new Set(["setEmergencyOverride", "updateIssue", "tombstoneIssue", "putProject", "updateProject", "putImpactRecord"]);
+
+export function withScanCache(store: Store, ttlMs = Number(process.env.STORE_SCAN_CACHE_MS ?? 30_000)): Store {
+  if (ttlMs <= 0) return store;
+  const cache = new Map<string, { at: number; value: Promise<unknown[]> }>();
+  const wrapped: Record<string, unknown> = { ...store };
+  for (const [name, fn] of Object.entries(store) as [string, (...args: unknown[]) => Promise<unknown>][]) {
+    if (SCANS.has(name)) {
+      wrapped[name] = (...args: unknown[]) => {
+        const key = `${name}:${JSON.stringify(args)}`;
+        const hit = cache.get(key);
+        let value = hit && Date.now() - hit.at < ttlMs ? hit.value : undefined;
+        if (!value) {
+          value = fn(...args) as Promise<unknown[]>;
+          cache.set(key, { at: Date.now(), value });
+          value.catch(() => cache.delete(key));
+        }
+        // A fresh array per caller: some sort their result in place.
+        return value.then((rows) => [...rows]);
+      };
+    } else if (INVALIDATES.has(name)) {
+      wrapped[name] = async (...args: unknown[]) => {
+        try {
+          return await fn(...args);
+        } finally {
+          cache.clear();
+        }
+      };
+    }
+  }
+  return wrapped as unknown as Store;
+}
+
 export function createFirestoreStore(db: Firestore): Store {
+  return withScanCache(createUncachedFirestoreStore(db));
+}
+
+function createUncachedFirestoreStore(db: Firestore): Store {
   return {
     async getCitizen(citizenId) {
       const doc = await db.collection("citizens").doc(citizenId).get();

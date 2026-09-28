@@ -112,7 +112,7 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 | **AI / Technical Execution** | 25% | Gemini classifies, translates, reads photos, transcribes voice and writes **grounded** briefs. **Gemini Vision turns a photo into a drafted report** (category, severity, safety hazard) in the citizen's language. Embeddings drive cross-language deduplication. The co-pilot uses **function calling over 8 real tools** with a 3-layer guardrail: numbers it cannot trace are removed and unanswerable questions are refused. A **model-fallback pool** keeps AI features alive when a model hangs or overloads. Exact **0/1-knapsack** optimisation with an equity reserve. ~310 unit and route tests plus a **70-check end-to-end run against real Gemini**. |
 | **Depth & Reach across India** | 20% | **11 languages** (10 Indian + Portuguese) across UI, voice and reports; **36 states and UTs** in the reference geography; web, installable **offline PWA**, **voice**, **WhatsApp** and **SMS** intake, with **status by SMS** (`STATUS <code>`, also in Hindi, Tamil, Bengali and more) so a feature phone gets the whole loop; screen-reader and keyboard accessible; works on a phone. **Brazil runs on the same codebase** as proof it travels. |
 | **Impact Potential** | 15% | Connects demand to real central schemes (PMGSY, JJM, AMRUT 2.0, SBM, NHM, Samagra Shiksha, RDSS, MPLADS, 15th FC grants...) with the centre/state split. Measures **people benefited**, **days to resolve**, **cost per person** and **citizen confirmation rate**, overall and **per scheme** in a public **scheme impact ledger** that flags programmes that are slow or whose fixes citizens reject. An **equity audit** checks that vulnerable areas are really served. **Graded escalation** (collector, then state admin) stops issues rotting. |
-| **Deployability & Scalability** | 20% | Runs **entirely on free tiers** (Firebase Spark, Render, Gemini API key) via a one-file **Render blueprint**, or on **Cloud Run + BigQuery** for scale, from the same code. Stateless services, idempotent ingestion, a scheduled sweep/score/escalate job, security headers, request ids, rate limits. **Adding a state is a form; adding a country is a config document.** Runs locally with **no cloud account** on the Firebase emulators. |
+| **Deployability & Scalability** | 20% | Runs **entirely on free tiers** (Firebase Spark, Render, Gemini API key) via a one-file **Render blueprint**, or on **Cloud Run + BigQuery** for scale, from the same code. Stateless services, idempotent ingestion, a scheduled sweep/score/escalate job, read caching that keeps a demo inside the free Firestore quota, security headers, request ids, rate limits. **Adding a state is a form; adding a country is a config document.** Runs locally with **no cloud account** on the Firebase emulators. |
 
 ---
 
@@ -462,7 +462,7 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 | Check | Result |
 |---|---|
 | Typecheck, all 7 packages | ✅ clean |
-| Unit and route tests (Vitest) | ✅ ~310 passing: gateway 203, worker 46, shared utils 39, web 16, scripts 5 |
+| Unit and route tests (Vitest) | ✅ ~310 passing: gateway 205, worker 46, shared utils 39, web 16, scripts 5 |
 | **End-to-end smoke test** on the emulators with **real Gemini** | ✅ **70 / 70** |
 | UI tour of 30 screens (desktop + phone) on the production build | ✅ zero browser errors |
 | CI on every pull request | ✅ typecheck + test + build |
@@ -518,10 +518,34 @@ pnpm turbo run lint test build     # typecheck, all unit tests, production build
 
 | Path | Guide |
 |---|---|
-| **Free** (Firebase Spark + Render + Gemini API key) | [`docs/FREE_DEPLOYMENT_GUIDE.md`](docs/FREE_DEPLOYMENT_GUIDE.md): push, point Render at [`render.yaml`](render.yaml), fill in the secrets |
+| **Free** (Firebase Spark + Render + Gemini API key) | [`docs/FREE_DEPLOYMENT_GUIDE.md`](docs/FREE_DEPLOYMENT_GUIDE.md) and the steps below; everything is declared in [`render.yaml`](render.yaml) |
 | **Scale** (Cloud Run + Pub/Sub + BigQuery + Vertex AI) | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/GCP_SETUP_GUIDE.md`](docs/GCP_SETUP_GUIDE.md), [`infra/gcp/`](infra/gcp) |
 
-Production secrets: `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_WEB_API_KEY`, `GEMINI_API_KEY`, `WORKER_SHARED_SECRET`, `WEBHOOK_SHARED_SECRET` (for WhatsApp/SMS), and optionally `CORS_ORIGINS`. The scheduled workflow needs repository secrets `WORKER_URL`, `API_URL`, `WORKER_SHARED_SECRET` and the variable `SCHEDULED_JOBS_ENABLED=true`.
+### The free deployment, step by step
+
+```mermaid
+flowchart LR
+  U[Browser] --> W["pramaan-web<br/>Render static site"]
+  W -->|/v1| A["pramaan-api<br/>Render web service"]
+  A -->|new report| K["pramaan-worker<br/>Render web service"]
+  A & K --> F[("Firebase<br/>Firestore + Auth")]
+  A & K --> G["Gemini API"]
+  C["GitHub Actions cron<br/>every 15 min"] -->|sweep, score, escalate| K & A
+```
+
+| # | Step | Where | Time |
+|---|---|---|---|
+| 1 | Generate a service-account key (Project settings → Service accounts → Generate new private key). Email/password sign-in is already on. | Firebase console | 2 min |
+| 2 | **New → Blueprint →** this repo → **Apply**. `render.yaml` creates `pramaan-api`, `pramaan-worker` and `pramaan-web`. | Render (sign in with GitHub) | 3 min |
+| 3 | Paste each service's variables with **Environment → Add from .env** (one block per service; see the table in the guide). Redeploy `pramaan-web` once the API URL is known. | Render | 5 min |
+| 4 | Seed reference data and the labelled demo dataset into Firestore, pointed at the deployed worker. | Your machine | 10 min |
+| 5 | Add the web domain to **Authentication → Settings → Authorized domains**. | Firebase console | 1 min |
+| 6 | Set `WORKER_URL`, `API_URL`, `WORKER_SHARED_SECRET` and `SCHEDULED_JOBS_ENABLED=true` for the 15-minute job. | GitHub (`gh secret set`) | 1 min |
+| 7 | Check `/healthz` on both services, sign in as `national@pramaan.demo`, file a report, text `STATUS <code>` on `/channels`. | Browser | 5 min |
+
+Production variables: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON` (base64 key), `FIREBASE_WEB_API_KEY`, `GEMINI_API_KEY`, `WORKER_URL`, `WORKER_SHARED_SECRET` (same on API and worker), `WEBHOOK_SHARED_SECRET` (WhatsApp/SMS), `DEMO_CHANNEL_SIMULATOR` (live phone on `/channels`), `CORS_ORIGINS` (the web URL); on the web: `VITE_API_BASE_URL`, `VITE_FIREBASE_API_KEY`.
+
+**Free-tier notes.** Render services sleep after 15 idle minutes (the first request then takes 30–60 s), so open the site two minutes before a demo. Firestore's free plan allows 50,000 reads a day; the API caches whole-collection scans for 30 seconds (`STORE_SCAN_CACHE_MS`) so a room of judges does not exhaust it. No composite Firestore indexes are needed.
 
 ---
 
