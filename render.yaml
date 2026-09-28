@@ -46,5 +46,8 @@ services:
     routes:
       - { type: rewrite, source: /*, destination: /index.html }
     envVars:
+      # Without this Render defaults to its newest Node image, where `corepack enable` fails
+      # (EROFS: read-only file system, unlink '/usr/bin/pnpm'). Match the other two services.
+      - { key: NODE_VERSION, value: "20" }
       - { key: VITE_API_BASE_URL, sync: false }
       - { key: VITE_FIREBASE_API_KEY, sync: false }
