@@ -1106,5 +1106,7 @@
   "transparency.total": "Issues reported",
   "transparency.trend": "Issues reported per month",
   "transparency.trendSub": "New distinct issues, last 12 months",
-  "transparency.verified": "Verified or beyond"
+  "transparency.verified": "Verified or beyond",
+  "wake.body": "Pramaan runs on free hosting that sleeps when nobody is using it. The first visit takes up to a minute; after that it is fast.",
+  "wake.title": "Waking up the server..."
 }

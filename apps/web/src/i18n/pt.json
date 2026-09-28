@@ -1106,5 +1106,7 @@
   "transparency.total": "Problemas relatados",
   "transparency.trend": "Chamados registrados por mês",
   "transparency.trendSub": "Novos chamados distintos nos últimos 12 meses",
-  "transparency.verified": "Verificados ou além"
+  "transparency.verified": "Verificados ou além",
+  "wake.body": "O Pramaan utiliza uma hospedagem gratuita que entra em repouso quando não está em uso. O primeiro acesso pode levar até um minuto; depois disso, fica rápido.",
+  "wake.title": "Iniciando o servidor..."
 }

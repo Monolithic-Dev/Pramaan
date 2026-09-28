@@ -809,7 +809,7 @@ flowchart LR
 
 Production variables: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON` (base64 key), `FIREBASE_WEB_API_KEY`, `GEMINI_API_KEY`, `WORKER_URL`, `WORKER_SHARED_SECRET` (same on API and worker), `WEBHOOK_SHARED_SECRET` (WhatsApp/SMS), `DEMO_CHANNEL_SIMULATOR` (live phone on `/channels`), `CORS_ORIGINS` (the web URL); on the web: `VITE_API_BASE_URL`, `VITE_FIREBASE_API_KEY`.
 
-**Free-tier notes.** Render services sleep after 15 idle minutes (the first request then takes 30–60 s), so open the site two minutes before a demo. Firestore's free plan allows 50,000 reads a day; the API caches whole-collection scans for 30 seconds (`STORE_SCAN_CACHE_MS`) so a room of judges does not exhaust it. No composite Firestore indexes are needed.
+**Free-tier notes.** Render services sleep after 15 idle minutes (the first request then takes 30–60 s), so open the site two minutes before a demo. If someone arrives cold anyway, the app says it is waking the server instead of looking broken, and the API wakes the worker at the same moment so both boot in parallel. Firestore's free plan allows 50,000 reads a day; the API caches whole-collection scans for 30 seconds (`STORE_SCAN_CACHE_MS`) so a room of judges does not exhaust it. No composite Firestore indexes are needed.
 
 ---
 
