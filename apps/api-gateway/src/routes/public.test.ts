@@ -13,7 +13,7 @@ describe("submission tracking codes", () => {
     });
     expect(res.statusCode).toBe(202);
     const code = j(res).tracking_code as string;
-    expect(code).toMatch(/^JS-/);
+    expect(code).toMatch(/^PR-/);
 
     // Replaying the same request returns the same code.
     const replay = await app.inject({
@@ -40,10 +40,10 @@ describe("submission tracking codes", () => {
 
   it("404s for unknown or malformed codes, and rate-limits guessing", async () => {
     const { app } = setup();
-    expect((await app.inject({ method: "GET", url: "/v1/public/track/JS-ABCDEFGH" })).statusCode).toBe(404);
+    expect((await app.inject({ method: "GET", url: "/v1/public/track/PR-ABCDEFGH" })).statusCode).toBe(404);
     expect((await app.inject({ method: "GET", url: "/v1/public/track/nonsense" })).statusCode).toBe(404);
     let last = 0;
-    for (let n = 0; n < 25; n++) last = (await app.inject({ method: "GET", url: "/v1/public/track/JS-ABCDEFGH" })).statusCode;
+    for (let n = 0; n < 25; n++) last = (await app.inject({ method: "GET", url: "/v1/public/track/PR-ABCDEFGH" })).statusCode;
     expect(last).toBe(429);
   });
 });

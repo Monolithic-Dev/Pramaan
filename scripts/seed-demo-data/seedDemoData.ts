@@ -34,7 +34,7 @@ const PASSWORD = "DemoAdmin!2026";
 const CITIZEN_PASSWORD = "DemoCitizen!2026";
 const DAY = 86_400_000;
 const NOW = Date.now();
-const DEMO_TRACKING_CODE = "JS-K7M3P9QD";
+const DEMO_TRACKING_CODE = "PR-K7M3P9QD";
 
 // ---------- helpers ----------------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ function weighted<T>(items: readonly T[], weights: readonly number[]): T {
 }
 const iso = (ms: number) => new Date(ms).toISOString();
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-const trackingCode = () => `JS-${[...randomBytes(8)].map((b) => ALPHABET[b % ALPHABET.length]).join("")}`;
+const trackingCode = () => `PR-${[...randomBytes(8)].map((b) => ALPHABET[b % ALPHABET.length]).join("")}`;
 
 async function writeAll(collection: string, docs: { id: string; data: object }[]) {
   for (let i = 0; i < docs.length; i += 400) {
@@ -480,7 +480,7 @@ async function main() {
   const submissionPatches: Submission[] = [];
   if (trackTarget) {
     const first = trackTarget.subs.find((s) => s.citizen_id.startsWith("dm_cit_"));
-    if (first) submissionPatches.push({ ...first, tracking_code: "JS-M4X8R2WH", citizen_id: "anonymous", channel: "sms" });
+    if (first) submissionPatches.push({ ...first, tracking_code: "PR-M4X8R2WH", citizen_id: "anonymous", channel: "sms" });
   }
 
   // Budget plans for Delhi: one approved (from what is funded), one draft to try approving live.
@@ -519,7 +519,7 @@ async function main() {
   console.log("\nLogins (password for officers: " + PASSWORD + ")");
   for (const a of ACCOUNTS) console.log(`  ${a.email.padEnd(28)} ${a.role.padEnd(20)} ${a.region}`);
   console.log(`  citizen@pramaan.demo         citizen (password ${CITIZEN_PASSWORD})`);
-  console.log(`Demo tracking codes: ${DEMO_TRACKING_CODE} (citizen report), JS-M4X8R2WH (anonymous SMS)`);
+  console.log(`Demo tracking codes: ${DEMO_TRACKING_CODE} (citizen report), PR-M4X8R2WH (anonymous SMS)`);
 }
 
 main().catch((err) => {

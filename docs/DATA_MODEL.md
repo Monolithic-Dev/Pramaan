@@ -337,7 +337,7 @@ These collections and fields exist in `packages/shared-types` and both stores, t
 | `centroid_lat`, `centroid_lng` | Exact report location, used for dedup and the officer map; the public map rounds it to ~1 km |
 | `is_synthetic` | Illustrative sample data; the UI labels it everywhere |
 
-**New field on `Submission`:** `tracking_code` (`JS-XXXXXXXX`). The only credential an anonymous reporter needs to follow a report and to confirm the fix.
+**New field on `Submission`:** `tracking_code` (`PR-XXXXXXXX`). The only credential an anonymous reporter needs to follow a report and to confirm the fix.
 
 **New collections:**
 

@@ -75,7 +75,7 @@ export default function OpenData() {
           ))}
           <li className="flex flex-wrap items-center gap-3 border-t border-slate-100 px-5 py-3">
             <Badge tone="green">GET</Badge>
-            <code className="min-w-0 flex-1 truncate rounded bg-slate-100 px-2 py-1 text-xs text-slate-800">/public/track/JS-XXXXXXXX</code>
+            <code className="min-w-0 flex-1 truncate rounded bg-slate-100 px-2 py-1 text-xs text-slate-800">/public/track/PR-XXXXXXXX</code>
             <span className="hidden text-sm text-slate-500 md:block md:w-64">{t("od.ep.track")}</span>
           </li>
         </ul>

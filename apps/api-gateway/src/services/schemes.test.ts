@@ -3,7 +3,7 @@ import { computeAlignment, inferSettlement, matchSchemes } from "./schemes.js";
 import { issue } from "../testUtils/fixtures.js";
 import { slaFor } from "./sla.js";
 import { gradeFor } from "./analytics.js";
-import { newTrackingCode, normalizeTrackingCode } from "../lib/trackingCode.js";
+import { newTrackingCode, normalizeTrackingCode, trackingCodeCandidates } from "../lib/trackingCode.js";
 import { inr } from "./briefing.js";
 import { csvCell } from "../routes/reports.js";
 
@@ -84,17 +84,24 @@ describe("gradeFor", () => {
 describe("tracking codes", () => {
   it("generates unambiguous codes and normalises what people actually type", () => {
     const code = newTrackingCode();
-    expect(code).toMatch(/^JS-[2-9A-HJKMNP-Z]{8}$/);
+    expect(code).toMatch(/^PR-[2-9A-HJKMNP-Z]{8}$/);
     expect(normalizeTrackingCode(code.toLowerCase())).toBe(code);
     expect(normalizeTrackingCode(code.replace("-", " "))).toBe(code);
     expect(normalizeTrackingCode(code.slice(3))).toBe(code);
-    expect(normalizeTrackingCode("JS-0000000O")).toBeNull(); // ambiguous characters are not in the alphabet
+    expect(normalizeTrackingCode("PR-0000000O")).toBeNull(); // ambiguous characters are not in the alphabet
     expect(normalizeTrackingCode("short")).toBeNull();
   });
 
-  it("handles a body that itself begins with JS", () => {
-    expect(normalizeTrackingCode("JSAB2345")).toBe("JS-JSAB2345");
-    expect(normalizeTrackingCode("JS-JSAB2345")).toBe("JS-JSAB2345");
+  it("handles a body that itself begins with a prefix", () => {
+    expect(normalizeTrackingCode("JSAB2345")).toBe("PR-JSAB2345");
+    expect(normalizeTrackingCode("PR-JSAB2345")).toBe("PR-JSAB2345");
+    expect(normalizeTrackingCode("PRAB2345")).toBe("PR-PRAB2345");
+  });
+
+  it("keeps codes issued before the rename (JS-) working", () => {
+    expect(normalizeTrackingCode("js-k7m3 p9qd")).toBe("JS-K7M3P9QD");
+    expect(trackingCodeCandidates("PR-K7M3P9QD")).toEqual(["PR-K7M3P9QD", "JS-K7M3P9QD"]);
+    expect(trackingCodeCandidates("JS-K7M3P9QD")).toEqual(["JS-K7M3P9QD", "PR-K7M3P9QD"]);
   });
 });
 

@@ -47,6 +47,7 @@ function NotFound() {
   return (
     <EmptyState
       icon="map"
+      pageTitle
       title={t("notFound.title")}
       body={t("notFound.body")}
       action={

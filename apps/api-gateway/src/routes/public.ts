@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Issue, Submission } from "@pramaan/shared-types";
 import { haversineMeters } from "@pramaan/shared-utils";
 import type { Deps } from "../deps.js";
-import { normalizeTrackingCode } from "../lib/trackingCode.js";
+import { findByTrackingCode, normalizeTrackingCode } from "../lib/trackingCode.js";
 import { requireAuth } from "../middleware/auth.js";
 import { MIN_PUBLIC_COUNT, priorityBand } from "../insights/transparency.js";
 import { SCHEMES } from "../data/schemes.js";
@@ -44,7 +44,7 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
     // Tight limit: the code is the only credential, so enumeration must stay impractical.
     if (!(await publicRateLimit(deps, request, reply, "track", 20))) return;
     const code = normalizeTrackingCode((request.params as { code: string }).code);
-    const submission = code ? await deps.store.getSubmissionByTrackingCode(code) : null;
+    const submission = code ? await findByTrackingCode(deps.store, code) : null;
     if (!submission || submission.status === "tombstoned") return reply.code(404).send(notFound("Report"));
 
     const issue = submission.issue_id ? await deps.store.getIssue(submission.issue_id) : null;
@@ -79,7 +79,7 @@ export function registerPublicRoutes(app: FastifyInstance, deps: Deps) {
     const body = z.object({ confirmed: z.boolean() }).safeParse(request.body);
     if (!body.success) return reply.code(400).send(bad(body.error.issues[0]?.message));
     const code = normalizeTrackingCode((request.params as { code: string }).code);
-    const submission = code ? await deps.store.getSubmissionByTrackingCode(code) : null;
+    const submission = code ? await findByTrackingCode(deps.store, code) : null;
     if (!submission || submission.status === "tombstoned" || !submission.issue_id) return reply.code(404).send(notFound("Report"));
     const project = await deps.store.getProjectByIssue(submission.issue_id);
     if (!project) return reply.code(409).send({ error: { code: "NOT_MARKED_COMPLETE", message: "This project hasn't been marked complete yet." } });

@@ -166,7 +166,7 @@ gh variable set SCHEDULED_JOBS_ENABLED --body true
 3. Try a voice note (works in Chrome via browser speech, or as an uploaded recording elsewhere) and a photo-only report.
 4. Open `/login`, sign in with the officer email/password: you land in `/console`. Look at the map, forecasts,
    equity tabs and ask the co-pilot a question.
-5. `/track`: enter the tracking code shown after filing (`JS-XXXXXXXX`). A signed-in citizen sees the same report under `/my`.
+5. `/track`: enter the tracking code shown after filing (`PR-XXXXXXXX`). A signed-in citizen sees the same report under `/my`.
 6. `/transparency` and `/accountability`: work in a private window with no login.
 
 Scoring needs 3 distinct reporters on an issue (or emergency override). Use three test phones / different
