@@ -10,42 +10,94 @@
 
 *Built for Google Cloud **Build with AI: Code for Communities** (India).*
 
-![Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&logoColor=white)
-![Firebase](https://img.shields.io/badge/Data-Firebase%20%7C%20Firestore-FFCA28?logo=firebase&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-end%20to%20end-3178C6?logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-~300%20unit%20%2B%2060%20end--to--end-2ea44f)
-![Languages](https://img.shields.io/badge/languages-11-orange)
+<a href="https://github.com/Monolithic-Dev/Pramaan/actions/workflows/ci.yml"><img src="https://github.com/Monolithic-Dev/Pramaan/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+<img src="https://img.shields.io/badge/tests-328%20passing-2ea44f?logo=vitest&logoColor=white" alt="328 tests passing" />
+<img src="https://img.shields.io/badge/end--to--end-69%2F69%20with%20real%20Gemini-2ea44f?logo=googlegemini&logoColor=white" alt="69 of 69 end-to-end checks" />
+<img src="https://img.shields.io/badge/languages-11-FF9933" alt="11 languages" />
+<img src="https://img.shields.io/badge/states%20%26%20UTs-36-138808" alt="36 states and UTs" />
+<img src="https://img.shields.io/badge/runs%20on-free%20tiers-0B1A3C" alt="Runs on free tiers" />
 
-**[▶ Live demo](#-live-demo-and-video)** · **[🎬 Demo video](#-live-demo-and-video)** · **[Screenshots](#-a-tour-of-the-product)** · **[Architecture](#-architecture)** · **[Run it locally](#-run-it-locally-in-10-minutes)**
+<br/><br/>
+
+**AI and cloud**
+
+<img src="https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Google Gemini" />
+<img src="https://img.shields.io/badge/Google%20Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud" />
+<img src="https://img.shields.io/badge/Firebase-DD2C00?style=for-the-badge&logo=firebase&logoColor=white" alt="Firebase" />
+<img src="https://img.shields.io/badge/Cloud%20Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Cloud Run" />
+<img src="https://img.shields.io/badge/BigQuery-669DF6?style=for-the-badge&logo=googlebigquery&logoColor=white" alt="BigQuery" />
+<img src="https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white" alt="Render" />
+
+**Application**
+
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 19" />
+<img src="https://img.shields.io/badge/Tailwind%20CSS%204-0F172A?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8" alt="Tailwind CSS 4" />
+<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+<img src="https://img.shields.io/badge/Node.js%2020-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 20" />
+<img src="https://img.shields.io/badge/Fastify%205-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify 5" />
+<img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white" alt="Zod" />
+<img src="https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white" alt="Leaflet" />
+
+**Engineering**
+
+<img src="https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm" />
+<img src="https://img.shields.io/badge/Turborepo-EF4444?style=for-the-badge&logo=turborepo&logoColor=white" alt="Turborepo" />
+<img src="https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" alt="Vitest" />
+<img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright" />
+<img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+<img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="Installable PWA" />
+
+<br/><br/>
+
+**[▶ Live demo](#-live-demo-and-video)** · **[🎬 Demo video](#-live-demo-and-video)** · **[📸 Screenshots](#-a-tour-of-the-product)** · **[🏗 Architecture](#-architecture)** · **[🚀 Run it locally](#-run-it-locally-in-10-minutes)**
 
 </div>
 
 ---
 
+## 📊 At a glance
+
+<table>
+<tr>
+<td align="center" width="25%"><h2>🗣️ 11</h2><b>languages</b><br/><sub>10 Indian + Portuguese, by voice, text or photo</sub></td>
+<td align="center" width="25%"><h2>📥 5</h2><b>intake channels</b><br/><sub>web, offline app, voice, WhatsApp, SMS</sub></td>
+<td align="center" width="25%"><h2>✨ 7</h2><b>Gemini jobs</b><br/><sub>classify, translate, see, hear, embed, advise, brief</sub></td>
+<td align="center" width="25%"><h2>🗺️ 36</h2><b>states and UTs</b><br/><sub>plus Brazil, on the same code</sub></td>
+</tr>
+<tr>
+<td align="center"><h2>🔁 1</h2><b>closed loop</b><br/><sub>report → rank → fund → fix → citizens confirm</sub></td>
+<td align="center"><h2>📈 +60%</h2><b>people reached</b><br/><sub>budget optimiser vs funding by report volume</sub></td>
+<td align="center"><h2>🧪 328</h2><b>tests</b><br/><sub>plus 69 end-to-end checks on real Gemini</sub></td>
+<td align="center"><h2>₹0</h2><b>to run a pilot</b><br/><sub>Firebase Spark, Render, Gemini API key</sub></td>
+</tr>
+</table>
+
+---
+
 ## Contents
 
-1. [The problem](#-the-problem)
-2. [What Pramaan does](#-what-pramaan-does)
-3. [Live demo and video](#-live-demo-and-video)
-4. [How it maps to the judging criteria](#-how-it-maps-to-the-judging-criteria)
-5. [A tour of the product](#-a-tour-of-the-product) (screenshots)
-6. [Architecture](#-architecture)
-7. [The AI: where Gemini does the work](#-the-ai-where-gemini-does-the-work)
-8. [How a score is built](#-how-a-score-is-built)
-9. [Roles and access control](#-roles-and-access-control)
-10. [Tech stack](#-tech-stack)
-11. [Repository layout](#-repository-layout)
-12. [API overview](#-api-overview)
-13. [Security, privacy and trust](#-security-privacy-and-trust)
-14. [Quality: how we know it works](#-quality-how-we-know-it-works)
-15. [Run it locally in 10 minutes](#-run-it-locally-in-10-minutes)
-16. [Deploy](#-deploy)
-17. [5-minute demo script](#-5-minute-demo-script)
-18. [Roadmap](#-roadmap)
-19. [Data honesty](#-data-honesty)
-20. [Team](#-team)
+1. [At a glance](#-at-a-glance)
+2. [The problem](#-the-problem)
+3. [What Pramaan does](#-what-pramaan-does)
+4. [Live demo and video](#-live-demo-and-video)
+5. [How it maps to the judging criteria](#-how-it-maps-to-the-judging-criteria)
+6. [A tour of the product](#-a-tour-of-the-product) (screenshots)
+7. [Architecture](#-architecture)
+8. [The AI: where Gemini does the work](#-the-ai-where-gemini-does-the-work)
+9. [How a score is built](#-how-a-score-is-built)
+10. [Roles and access control](#-roles-and-access-control)
+11. [Tech stack](#-tech-stack)
+12. [Repository layout](#-repository-layout)
+13. [API overview](#-api-overview)
+14. [Security, privacy and trust](#-security-privacy-and-trust)
+15. [Quality: how we know it works](#-quality-how-we-know-it-works)
+16. [Run it locally in 10 minutes](#-run-it-locally-in-10-minutes)
+17. [Deploy](#-deploy)
+18. [5-minute demo script](#-5-minute-demo-script)
+19. [Roadmap](#-roadmap)
+20. [Data honesty](#-data-honesty)
+21. [Team](#-team)
 
 ---
 
@@ -100,7 +152,7 @@ Three audiences, one platform:
 | State administrator (Brazil) | `brasil@pramaan.demo` | `DemoAdmin!2026` | São Paulo |
 | Citizen | `citizen@pramaan.demo` | `DemoCitizen!2026` | Their own reports |
 
-Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
+Tracking code to try on `/track`, no login needed: **`PR-K7M3P9QD`**.
 
 ---
 
@@ -109,7 +161,7 @@ Tracking code to try on `/track`, no login needed: **`JS-K7M3P9QD`**.
 | Criterion | Weight | Where Pramaan delivers it |
 |---|---|---|
 | **Problem–Solution Fit** | 20% | Every part of the problem statement has a feature: *fragmented* → multilingual, multichannel ingestion with **AI deduplication** (8 reports in Hindi and English collapse into one issue); *misaligned spending* → **explainable scoring**, a **budget optimiser** that reached **60% more people** than funding by report volume on the demo data, a **national scheme matcher**, and a **need-vs-spend map** that measures the misalignment directly (on the demo data, need and investment correlate at just **r = 0.02**, and 8 districts with 2.4 crore people are underserved); *unmeasured impact* → **citizen-confirmed resolution**, an **impact ledger** and **public scorecards**. |
-| **AI / Technical Execution** | 25% | Gemini classifies, translates, reads photos, transcribes voice and writes **grounded** briefs. **Gemini Vision turns a photo into a drafted report** (category, severity, safety hazard) in the citizen's language. Embeddings drive cross-language deduplication. The co-pilot uses **function calling over 8 real tools** with a 3-layer guardrail: numbers it cannot trace are removed and unanswerable questions are refused. A **model-fallback pool** keeps AI features alive when a model hangs or overloads. Exact **0/1-knapsack** optimisation with an equity reserve. ~310 unit and route tests plus a **70-check end-to-end run against real Gemini**. |
+| **AI / Technical Execution** | 25% | Gemini classifies, translates, reads photos, transcribes voice and writes **grounded** briefs. **Gemini Vision turns a photo into a drafted report** (category, severity, safety hazard) in the citizen's language. Embeddings drive cross-language deduplication. The co-pilot uses **function calling over 8 real tools** with a 3-layer guardrail: numbers it cannot trace are removed and unanswerable questions are refused. A **model-fallback pool** keeps AI features alive when a model hangs or overloads. Exact **0/1-knapsack** optimisation with an equity reserve. **328 unit and route tests** plus a **69-check end-to-end run against real Gemini**. |
 | **Depth & Reach across India** | 20% | **11 languages** (10 Indian + Portuguese) across UI, voice and reports; **36 states and UTs** in the reference geography; web, installable **offline PWA**, **voice**, **WhatsApp** and **SMS** intake, with **status by SMS** (`STATUS <code>`, also in Hindi, Tamil, Bengali and more) so a feature phone gets the whole loop; screen-reader and keyboard accessible; works on a phone. **Brazil runs on the same codebase** as proof it travels. |
 | **Impact Potential** | 15% | Connects demand to real central schemes (PMGSY, JJM, AMRUT 2.0, SBM, NHM, Samagra Shiksha, RDSS, MPLADS, 15th FC grants...) with the centre/state split. Measures **people benefited**, **days to resolve**, **cost per person** and **citizen confirmation rate**, overall and **per scheme** in a public **scheme impact ledger** that flags programmes that are slow or whose fixes citizens reject. An **equity audit** checks that vulnerable areas are really served. **Graded escalation** (collector, then state admin) stops issues rotting. |
 | **Deployability & Scalability** | 20% | Runs **entirely on free tiers** (Firebase Spark, Render, Gemini API key) via a one-file **Render blueprint**, or on **Cloud Run + BigQuery** for scale, from the same code. Stateless services, idempotent ingestion, a scheduled sweep/score/escalate job, read caching that keeps a demo inside the free Firestore quota, security headers, request ids, rate limits. **Adding a state is a form; adding a country is a config document.** Runs locally with **no cloud account** on the Firebase emulators. |
@@ -280,7 +332,7 @@ sequenceDiagram
 
     C->>G: Report (voice / text / photo + location)
     G->>DB: Store report, consent, tracking code
-    G-->>C: 202 + tracking code (JS-XXXXXXXX)
+    G-->>C: 202 + tracking code (PR-XXXXXXXX)
     G->>W: Hand-off
     W->>AI: Classify, translate, read photo, transcribe
     W->>AI: Embed the summary
@@ -332,9 +384,203 @@ flowchart TB
 
 The switch between the two is configuration: `WORKER_URL` vs Pub/Sub, `REFERENCE_BACKEND=bigquery` vs Firestore, `GEMINI_API_KEY` vs Vertex AI with application default credentials.
 
+### The life of an issue
+
+Every status change is made on the server, written to the audit log, and sent to the people who reported it, in their language. Only citizens plus an officer's sign-off can close an issue; a "not fixed" majority sends it back.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> open: 🧠 AI merges reports<br/>into an issue
+    open --> verified: ✅ collector verifies
+    open --> disputed: ⚠️ collector disputes
+    disputed --> verified: re-checked
+    verified --> prioritized: 📋 project recommended<br/>(grounded brief)
+    open --> prioritized: 📋 project recommended
+    prioritized --> funded: 💰 plan approved<br/>scheme matched
+    funded --> in_progress: 🏗️ work starts
+    in_progress --> awaiting: officer marks complete
+    state "🗳️ Citizens asked: was it fixed?" as awaiting
+    awaiting --> in_progress: majority "not fixed"<br/>(reopened, officer alerted)
+    awaiting --> resolved: enough "fixed"<br/>+ officer sign-off
+    resolved --> [*]: 📊 impact recorded<br/>(people, days, cost, efficacy)
+
+    note right of open
+        ⏱️ SLA clock by priority:
+        emergency 2d · high 7d · medium 21d · low 45d
+        missed → district collector
+        missed again → state admin
+    end note
+```
+
+### Data model
+
+The core of the Firestore data model (full reference: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)). Many **submissions** (what citizens said) merge into one **issue** (the problem in the world); an issue is scored, may become a **project**, and a finished project gets an **impact record** that citizens confirm.
+
+```mermaid
+erDiagram
+    CITIZEN ||--o{ SUBMISSION : files
+    SUBMISSION }o--|| ISSUE : "merged into"
+    ISSUE ||--o{ PRIORITY_SCORE : "scored as"
+    ISSUE ||--o| PROJECT : "funded as"
+    PROJECT ||--o| IMPACT_RECORD : "confirmed by citizens"
+    PROJECT }o--o| SCHEME : "paid by"
+    ADMIN_REGION ||--o{ ISSUE : contains
+    ADMIN_REGION ||--o{ ADMIN_REGION : "parent of"
+    ADMIN_REGION ||--o{ INVESTMENT_RECORD : "received"
+    OFFICER }o--|| ADMIN_REGION : "has jurisdiction over"
+    OFFICER ||--o{ AUDIT_ENTRY : "acts, logged in"
+    ISSUE ||--o{ NOTIFICATION : "status sent as"
+
+    CITIZEN {
+        string citizen_id PK
+        string phone_hash "one-way hash, never the number"
+        string preferred_language "e.g. ta-IN"
+    }
+    SUBMISSION {
+        string submission_id PK
+        string idempotency_key "no double filing"
+        string channel "web, voice, whatsapp, sms"
+        string pii_scrubbed_text "what the AI sees"
+        string tracking_code "PR-XXXXXXXX"
+        string issue_id FK
+    }
+    ISSUE {
+        string issue_id PK
+        string category
+        string admin_region_id FK
+        int distinct_reporter_count "feeds demand"
+        string status
+        float composite_score
+        string sla_due_at
+    }
+    PRIORITY_SCORE {
+        float demand_score
+        float vulnerability_score
+        float gap_score
+        float duplication_penalty
+        float impact_efficacy
+        float composite_score
+    }
+    PROJECT {
+        string project_id PK
+        string generated_brief "grounded, cited"
+        string status
+        int budget_estimate_inr
+        string scheme_id FK
+    }
+    IMPACT_RECORD {
+        int confirmations_received
+        int confirmations_required
+        int confirmations_negative
+        int reopened_count
+        float efficacy
+    }
+```
+
+### Monorepo map
+
+One typed contract (`shared-types`) is used by all three apps, so the web app, the gateway and the worker cannot disagree about what an issue is.
+
+```mermaid
+flowchart LR
+    subgraph apps["📦 apps"]
+        WEBAPP["🖥️ web<br/>React 19 · Vite · Tailwind"]
+        GW["🛡️ api-gateway<br/>Fastify · 63 routes"]
+        WK["🧠 worker-ai-pipeline<br/>Fastify · understand → dedup → score"]
+    end
+    subgraph packages["🧩 packages"]
+        ST["shared-types<br/>the data contract"]
+        SU["shared-utils<br/>scoring · geohash · PII scrub<br/>Gemini model pool"]
+        AP["ai-prompts<br/>versioned prompts + schemas"]
+    end
+    subgraph tooling["🛠️ scripts · CI"]
+        SEED["seed-demo-data<br/>36 states/UTs + Brazil"]
+        SMOKE["smoke-emulator<br/>69 end-to-end checks"]
+        I18N["translate-i18n<br/>11 languages"]
+        GHA["GitHub Actions<br/>CI + 15-min jobs"]
+    end
+    WEBAPP --> ST
+    GW --> ST & SU & AP
+    WK --> ST & SU & AP
+    SEED --> ST
+    SMOKE -. drives .-> GW & WK
+    GHA -. calls .-> GW & WK
+```
+
 ---
 
 ## ✨ The AI: where Gemini does the work
+
+### The pipeline, step by step
+
+What happens to a single report between "Submit" and a ranked issue on an officer's screen. Every AI step has a fallback, so **a report is never dropped** because a model misbehaved.
+
+```mermaid
+flowchart TD
+    IN(["📥 Report arrives<br/>web · voice · WhatsApp · SMS"]) --> GATE
+    subgraph GATE["🛡️ Gateway"]
+        direction LR
+        G1["Idempotency key<br/>no double filing"] --> G2["Rate limits<br/>burst + geofence checks"] --> G3["🔒 PII scrubbed<br/>before any AI call"] --> G4["🎫 Tracking code<br/>PR-XXXXXXXX"]
+    end
+    GATE -->|hand-off| AUDIO{"Voice only?"}
+    AUDIO -->|yes| STT["🎙️ Gemini transcribes<br/>in the speaker's language"]
+    AUDIO -->|no| PHOTO
+    STT --> PHOTO{"Photo attached?"}
+    PHOTO -->|yes| VIS["👁️ Gemini Vision<br/>is it a real infrastructure problem?"]
+    PHOTO -->|no| CLS
+    VIS -->|"no problem visible"| SOFT["🚩 soft fraud flag<br/>reviewed, never auto-rejected"]
+    VIS --> CLS
+    SOFT --> CLS
+    CLS["🏷️ Gemini classifies<br/>category · severity · summary<br/>language + translation"] -->|"malformed twice"| RAW["raw-text fallback<br/>still becomes an issue"]
+    CLS -->|"personal emergency"| ROUTE["🚑 routed out<br/>never ranked"]
+    CLS --> LOC
+    RAW --> LOC["📍 Resolve location<br/>geohash → district → state"]
+    LOC --> EMB["🧬 gemini-embedding-001<br/>embed the summary"]
+    EMB --> MATCH{"Similar issue nearby?<br/>cosine ≥ 0.72, same area"}
+    MATCH -->|yes| MERGE["🔗 Merge<br/>+1 distinct reporter"]
+    MATCH -->|no| NEW["🆕 New issue"]
+    MERGE & NEW --> SC["📐 Score<br/>demand × vulnerability × gap"]
+    SC --> OUT(["🗂️ Ranked, explained issue<br/>on the officer console"])
+
+    classDef ai fill:#8E75B2,stroke:#5b4a7a,color:#fff
+    classDef guard fill:#0B1A3C,stroke:#0B1A3C,color:#fff
+    classDef warn fill:#FFEED6,stroke:#E8800F,color:#7a3e00
+    class STT,VIS,CLS,EMB ai
+    class G1,G2,G3,G4 guard
+    class SOFT,RAW,ROUTE warn
+```
+
+### The co-pilot's three-layer guardrail
+
+The policy co-pilot answers questions like *"top 3 unaddressed road issues in my district, and are they funded?"* using Gemini **function calling** over real data. It is built so it cannot invent a number.
+
+```mermaid
+flowchart LR
+    Q(["💬 Officer's question<br/>any of 11 languages"]) --> L1
+    subgraph L1["Layer 1 · scope"]
+        T["🔧 8 tools, pinned to the<br/>officer's jurisdiction"]
+    end
+    L1 --> GEM["✨ Gemini plans<br/>and calls tools<br/>(≤ 5 rounds)"]
+    GEM <--> T
+    GEM --> DRAFT["📝 Draft answer"]
+    DRAFT --> L2
+    subgraph L2["Layer 2 · verify"]
+        V{"Every number<br/>found in a<br/>tool result?"}
+    end
+    V -->|yes| OK(["✅ Answer with citations<br/>streamed to the officer"])
+    V -->|no| REGEN["🔁 Regenerate once<br/>with the evidence"]
+    REGEN -->|"now verified"| OK
+    REGEN -->|"still untraceable"| L3
+    subgraph L3["Layer 3 · strip or refuse"]
+        S["✂️ Drop sentences with<br/>untraceable figures"]
+        R["🙅 Refuse if nothing<br/>verifiable is left"]
+    end
+    S --> OK
+    R --> AUD[("🗒️ Audit: unverified<br/>claims recorded")]
+```
+
+### What each stage does
 
 | Stage | What Gemini does | Guardrail |
 |---|---|---|
@@ -350,6 +596,24 @@ The switch between the two is configuration: `WORKER_URL` vs Pub/Sub, `REFERENCE
 
 ```
 priority = (0.40 × demand + 0.30 × vulnerability + 0.30 × gap) × duplication × efficacy
+```
+
+```mermaid
+flowchart LR
+    subgraph IN["Inputs"]
+        D["🧑‍🤝‍🧑 demand<br/>distinct reporters,<br/>log-scaled to the p95"]
+        V["🏚️ vulnerability<br/>literacy · water · health<br/>poverty · roads"]
+        G["⏳ gap<br/>years since the last<br/>investment here"]
+    end
+    D -->|"× 0.40"| B(("base<br/>score"))
+    V -->|"× 0.30"| B
+    G -->|"× 0.30"| B
+    B --> DUP["× duplication<br/>money sanctioned<br/>in the last 2 FYs?"]
+    DUP --> EFF["× efficacy<br/>did past fixes here<br/>satisfy citizens?"]
+    EFF --> P(["🎯 priority<br/>with a full, public<br/>breakdown"])
+    P --> KN["🎒 0/1 knapsack<br/>value = score × reach<br/>cost = budget estimate"]
+    KN --> EQ["⚖️ equity reserve<br/>spent first on<br/>vulnerable areas"]
+    EQ --> PLAN(["📋 Budget plan<br/>+60% people reached"])
 ```
 
 | Component | Meaning | Source |
@@ -393,19 +657,19 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 
 | Layer | Technology | Why |
 |---|---|---|
-| **Frontend** | React 19, React Router 7, Vite 8, Tailwind CSS 4 | Fast, typed, code-split per area (a citizen never downloads the officer console) |
-| **Maps** | Leaflet + OpenStreetMap | Free, no API key, works everywhere |
-| **Charts, icons** | Hand-built SVG components | Zero chart dependencies; accessible and printable |
-| **Offline** | Service worker + offline queue (reports, photos and voice notes upload when the connection returns) | Rural connectivity |
-| **i18n** | 11 languages loaded on demand; Noto Indic fonts, non-blocking | Reach without bloat |
-| **Backend** | Node 20, Fastify 5, Zod | Two stateless services: `api-gateway` and `worker-ai-pipeline` |
-| **AI** | Gemini (`@google/genai`): text, vision, audio, function calling; `gemini-embedding-001` | One API for every AI task; Vertex AI on Cloud Run |
-| **Data** | Firestore (+ BigQuery option for reference data) | Serverless, free tier, scales |
-| **Auth** | Firebase Authentication with custom claims (`role`, `region_id`, `country_code`) | Email, phone OTP; claims drive RBAC |
-| **Monorepo** | pnpm workspaces + Turborepo; shared `shared-types`, `shared-utils`, `ai-prompts` packages | One contract across apps |
-| **Testing** | Vitest + Testing Library; Playwright for UI tours; an end-to-end smoke test on the Firebase emulators | Fast unit tests plus a real-stack proof |
-| **Hosting** | Render (free blueprint) or Cloud Run; GitHub Actions for CI and scheduled jobs | Free to pilot, clear path to scale |
-| **Local dev** | Firebase emulators (Firestore + Auth) | Runs with **no cloud account** |
+| <img src="https://cdn.simpleicons.org/react" width="16" height="16" alt="" /> **Frontend** | React 19, React Router 7, Vite 8, Tailwind CSS 4 | Fast, typed, code-split per area (a citizen never downloads the officer console) |
+| <img src="https://cdn.simpleicons.org/leaflet" width="16" height="16" alt="" /> **Maps** | Leaflet + OpenStreetMap | Free, no API key, works everywhere |
+| 📊 **Charts, icons** | Hand-built SVG components | Zero chart dependencies; accessible and printable |
+| <img src="https://cdn.simpleicons.org/pwa" width="16" height="16" alt="" /> **Offline** | Service worker + offline queue (reports, photos and voice notes upload when the connection returns) | Rural connectivity |
+| 🗣️ **i18n** | 11 languages loaded on demand; Noto Indic fonts, non-blocking | Reach without bloat |
+| <img src="https://cdn.simpleicons.org/fastify/000000" width="16" height="16" alt="" /> **Backend** | Node 20, Fastify 5, Zod | Two stateless services: `api-gateway` and `worker-ai-pipeline` |
+| <img src="https://cdn.simpleicons.org/googlegemini" width="16" height="16" alt="" /> **AI** | Gemini (`@google/genai`): text, vision, audio, function calling; `gemini-embedding-001` | One API for every AI task; Vertex AI on Cloud Run |
+| <img src="https://cdn.simpleicons.org/firebase" width="16" height="16" alt="" /> **Data** | Firestore (+ BigQuery option for reference data) | Serverless, free tier, scales |
+| 🔐 **Auth** | Firebase Authentication with custom claims (`role`, `region_id`, `country_code`) | Email, phone OTP; claims drive RBAC |
+| <img src="https://cdn.simpleicons.org/turborepo" width="16" height="16" alt="" /> **Monorepo** | pnpm workspaces + Turborepo; shared `shared-types`, `shared-utils`, `ai-prompts` packages | One contract across apps |
+| <img src="https://cdn.simpleicons.org/vitest" width="16" height="16" alt="" /> **Testing** | Vitest + Testing Library; Playwright for UI tours; an end-to-end smoke test on the Firebase emulators | Fast unit tests plus a real-stack proof |
+| <img src="https://cdn.simpleicons.org/render/000000" width="16" height="16" alt="" /> **Hosting** | Render (free blueprint) or Cloud Run; GitHub Actions for CI and scheduled jobs | Free to pilot, clear path to scale |
+| 💻 **Local dev** | Firebase emulators (Firestore + Auth) | Runs with **no cloud account** |
 
 ---
 
@@ -425,7 +689,7 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 │   └── ai-prompts/             Versioned prompts and response schemas
 ├── scripts/
 │   ├── seed-demo-data/         Reference geography (36 states/UTs + Brazil), multilingual demo dataset
-│   ├── smoke-emulator.ts       70-check end-to-end test against the real worker and Gemini
+│   ├── smoke-emulator.ts       69-check end-to-end test against the real worker and Gemini
 │   ├── translate-i18n.ts       Gemini translation of UI strings, placeholder-safe
 │   └── create-officer.ts       Officer account tooling
 ├── docs/                       PRD, architecture, data model, AI pipeline, API spec, security, deployment
@@ -462,9 +726,9 @@ Jurisdiction is a **region tree** (country → state → district). An officer c
 | Check | Result |
 |---|---|
 | Typecheck, all 7 packages | ✅ clean |
-| Unit and route tests (Vitest) | ✅ ~310 passing: gateway 205, worker 46, shared utils 39, web 16, scripts 5 |
-| **End-to-end smoke test** on the emulators with **real Gemini** | ✅ **70 / 70** |
-| UI tour of 30 screens (desktop + phone) on the production build | ✅ zero browser errors |
+| Unit and route tests (Vitest) | ✅ **328 passing**: gateway 207, worker 46, shared utils 39, shared types 15, web 16, scripts 5 |
+| **End-to-end smoke test** on the emulators with **real Gemini** | ✅ **69 / 69** |
+| Browser sweep: **32 routes × 6 roles × desktop and phone** (Chrome) | ✅ zero console errors, zero failed requests, zero horizontal overflow, zero untranslated strings |
 | CI on every pull request | ✅ typecheck + test + build |
 
 The smoke test (`scripts/smoke-emulator.ts`) drives the whole product the way people would:
@@ -490,7 +754,7 @@ pnpm install
 cp .env.example .env          # then put your GEMINI_API_KEY in .env
 
 # 1. Emulators (two terminals)
-java -jar ~/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar --host=127.0.0.1 --port=8085
+java -jar ~/.cache/firebase/emulators/cloud-firestore-emulator-v*.jar --host=127.0.0.1 --port=8085
 npx firebase-tools@13.35.1 emulators:start --only auth --project pramaan-a0c00
 
 # 2. Services (every terminal below needs these three variables)
@@ -505,7 +769,7 @@ WORKER_URL=http://127.0.0.1:8081 WORKER_SHARED_SECRET=localsecret ./node_modules
 WORKER_URL=http://127.0.0.1:8081 WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx seed-demo-data/seedDemoData.ts
 
 # 4. Open http://localhost:5173, then prove it end to end:
-WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx smoke-emulator.ts      # 60 checks
+WORKER_SHARED_SECRET=localsecret ./node_modules/.bin/tsx smoke-emulator.ts      # 69 checks
 ```
 
 The first time you use the Firestore emulator, run `npx firebase-tools@13.35.1 emulators:start --only firestore` once to download the jar. Full guide and Windows notes: [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
