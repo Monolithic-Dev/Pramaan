@@ -137,9 +137,9 @@ Three audiences, one platform:
 
 | | Link |
 |---|---|
-| **Live app** | `https://pramaan-web.onrender.com/` |
-| **Demo video (3–5 min)** | `https://drive.google.com/file/d/1EO_zlQRVnI0SWJzGrAAuJGwYaaphchzS/view?usp=sharing` |
-| **Pitch deck** | `https://storage.googleapis.com/vision-hack2skill-production/innovator/USER01427916/1790787908088-PramaanPitchDeck.pdf` |
+| **Live app** | [🌐 pramaan-web.onrender.com](https://pramaan-web.onrender.com/) |
+| **Demo video (3–5 min)** | [▶️ Watch the demo on Google Drive](https://drive.google.com/file/d/1EO_zlQRVnI0SWJzGrAAuJGwYaaphchzS/view?usp=sharing) |
+| **Pitch deck** | [📑 Pramaan pitch deck (PDF)](https://storage.googleapis.com/vision-hack2skill-production/innovator/USER01427916/1790787908088-PramaanPitchDeck.pdf) |
 
 **Demo logins** (seeded by `scripts/seed-demo-data/seedDemoData.ts`):
 
